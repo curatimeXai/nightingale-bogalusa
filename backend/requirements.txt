@@ -1,6 +1,13 @@
-Flask
 pandas
 scikit-learn
 shap
 joblib
 numpy
+Flask-CORS
+scikit-learn
+xgboost
+keras
+joblib
+numpy
+pandas
+matplotlib
