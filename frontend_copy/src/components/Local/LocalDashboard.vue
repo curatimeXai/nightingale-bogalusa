@@ -14,6 +14,7 @@ const chartsRef = ref([])
 const localOverview = ref(null)
 const modules = [
   {
+    chartUrl: `/${dashboardStore.model}/breakdown`,
     title: 'Break Down Chart',
     explanations: [
       'The intercept stands for the mean probability of having heart disease across the whole dataset.',
@@ -22,6 +23,7 @@ const modules = [
       'Positive contribution increases the risk factor and negative contribution decreases it.'
     ]
   }, {
+    chartUrl: `/${dashboardStore.model}/shapley`,
     title: 'Shapley Chart',
     explanations: [
       "This chart helps you compare each risk factor and see it's contribution, given the current input.",
