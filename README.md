@@ -111,3 +111,16 @@ curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -
 ```
 
 This will return the risk predictions and the corresponding pie chart images.
+
+
+Added original frontend folder as frontend_copy. To run locate to folder:
+```bash
+cd frontend_copy
+
+npm install
+
+// npm audit fix , if necessary
+
+npm run dev
+```
+
