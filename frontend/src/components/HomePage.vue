@@ -1,19 +1,21 @@
+
 <template>
   <div id="app">
     <div class="container">
       <!-- Sidebar for Input Fields -->
       <div class="sidebar">
         <h2>Enter Measurements</h2>
-        <form @submit.prevent="computeRisk">
-          <!-- Weight and Height -->
-          <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
-          <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
-          <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
-          
-          <input v-model="formData.Alcohol" placeholder="Alcohol drinking per day" required />
-          <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" required />
-          <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" required />
-          <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" required />
+        <div class="scrollable-content">
+          <form @submit.prevent="computeRisk">
+            
+            <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
+            <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
+            <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
+
+            <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week" required />
+            <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" required />
+            <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" required />
+            <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" required />
 
           <!-- Gender Dropdown -->
           <label>Gender*</label>
@@ -23,93 +25,96 @@
             <option>Female</option>
           </select>
 
-          <!-- Age Category Dropdown -->
-          <label>Age Category*</label>
-          <select v-model="formData.AgeCategory" required>
-            <option disabled value="">Select Age Range</option>
-            <option>18-24</option>
-            <option>25-29</option>
-            <option>30-34</option>
-            <option>35-39</option>
-            <option>40-44</option>
-            <option>45-49</option>
-            <option>50-54</option>
-            <option>55-59</option>
-            <option>60-64</option>
-            <option>65-69</option>
-            <option>70-74</option>
-            <option>75-79</option>
-          </select>
+           
+            <label>Age Category*</label>
+            <select v-model="formData.AgeCategory" required>
+              <option disabled value="">Select Age Range</option>
+              <option>18-24</option>
+              <option>25-29</option>
+              <option>30-34</option>
+              <option>35-39</option>
+              <option>40-44</option>
+              <option>45-49</option>
+              <option>50-54</option>
+              <option>55-59</option>
+              <option>60-64</option>
+              <option>65-69</option>
+              <option>70-74</option>
+              <option>75-79</option>
+            </select>
 
-          
-          <!-- Lifestyle Factors -->
-          <label>Smoking*</label>
-          <select v-model="formData.Smoking" required>
-            <option disabled value="">Select Smoking Status</option>
-            <option>Not at all</option>
-            <option>Sometimes</option>
-            <option>Everyday</option>
-          </select>
+           
+            <label>Smoking*</label>
+            <select v-model="formData.Smoking" required>
+              <option disabled value="">Select Smoking Status</option>
+              <option>Not at all</option>
+              <option>Sometimes</option>
+              <option>Everyday</option>
+            </select>
 
-          
-          <!-- Health Conditions -->
-          <h3>Check any that apply:</h3>
-          <div class="checkbox-group">
-            <label ><input type="checkbox" v-model="formData.Diabetes" /> Diabetes</label>
-            <label><input type="checkbox" v-model="formData.Kidney" /> Kidney Disease</label>
-            <label><input type="checkbox" v-model="formData.Stroke" /> Stroke</label>
-          </div>
+            
+            <h3>Check any that apply:</h3>
+            <div class="checkbox-group">
+              <label><input type="checkbox" v-model="formData.Diabetes" /> Diabetes</label>
+              <label><input type="checkbox" v-model="formData.Kidney" /> Kidney Disease</label>
+              <label><input type="checkbox" v-model="formData.Stroke" /> Stroke</label>
+            </div>
 
-          <button type="submit">Analyze</button>
-        </form>
+            <button type="submit">Analyze</button>
+          </form>
+        </div>
       </div>
 
-      <!-- Right Section for Results -->
+     
       <div class="results">
         <h2>Prediction Results</h2>
-
-        <div v-if="result">
-
-          <div class="results-container">
-            <div v-for="(value, key) in formattedResults" :key="key" class="result-card">
-              <strong>{{ key }}</strong>: {{ value.text }}
+        <div class="scrollable-content">
+          <div v-if="result">
+            <div class="results-container">
+              <div v-for="(value, key) in formattedResults" :key="key" class="result-card">
+                <strong>{{ key }}</strong>: {{ value.text }}
                 <div :class="value.percentage >= 0 ? 'negative' : 'positive'">
-                {{ value.percentage }}%
-                <span v-if="value.percentage >= 0">👎</span>
-                <span v-else>👍</span>
+                  {{ value.percentage }}%
+                  <span v-if="value.percentage >= 0">👎</span>
+                  <span v-else>👍</span>
                 </div>
               </div>
             </div>
 
             <div class="p-6">
-              <canvas  ref="barChart" style="height: 400px;"></canvas>
+              <canvas ref="barChart" style="height: 400px;"></canvas>
             </div>
 
-          <div class="chart-container">
-            <div>
-              <h3>SVM Prediction</h3>
-              <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
+            <div class="chart-container">
+              <div v-if="isValidBase64(result.svm_pie_chart)">
+                <h3>SVM Prediction</h3>
+                <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
+              </div>
+              <!-- XGBoost Pie Chart -->
+              <div v-if="isValidBase64(result.xgb_pie_chart)">
+                <h3>XGBoost Prediction</h3>
+                <img :src="'data:image/png;base64,' + result.xgb_pie_chart" alt="XGBoost Pie Chart" />
+              </div>
+              <!-- Keras Pie Chart -->
+              <div v-if="isValidBase64(result.keras_pie_chart)">
+                <h3>Keras Prediction</h3>
+                <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
+              </div>
             </div>
-            <div>
-              <h3>XGBoost Prediction</h3>
-              <img :src="'data:image/png;base64,' + result.xgb_pie_chart" alt="XGBoost Pie Chart" />
-            </div>
-            <div>
-              <h3>Keras Prediction</h3>
-              <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
-            </div>
-          </div>
 
-          <!-- Display the risk summary -->
-          <div class="summary">
-            <h3>Risk Summary</h3>
-            <p>{{ riskSummary }}</p>
+            
+            <div class="summary">
+              <h3>Risk Summary</h3>
+              <p>{{ riskSummary }}</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
+
+
 
 <script>
 import axios from 'axios';
@@ -175,11 +180,28 @@ export default {
       };
 
       this.formData.Age = ageMapping[this.formData.AgeCategory];
+      // Prepare the data object to be sent to the backend
+      const apiData = {
+        Weight: this.formData.Weight,
+        Height: this.formData.Height,
+        BMI: this.formData.BMI,
+        Alcohol: this.formData.Alcohol,
+        Sleep: this.formData.Sleep,
+        Exercise: this.formData.Exercise,
+        Fruit: this.formData.Fruit,
+        Gender: this.formData.Gender,
+        Age: this.formData.Age,
+        Smoking: this.formData.Smoking,
+        Diabetes: this.formData.Diabetes,
+        Kidney: this.formData.Kidney,
+        Stroke: this.formData.Stroke
+      };
 
       try {
-        const response = await axios.post('http://localhost:5000/predict', this.formData);
+        const response = await axios.post('http://localhost:5000/predict', apiData);
         this.result = response.data;
         this.riskSummary = this.generateRiskSummary(response.data);
+        console.log(this.formattedResults);
       } catch (error) {
         console.error("There was an error making the API request:", error);
       }
@@ -190,6 +212,10 @@ export default {
         XGBoost model: ${ (data.xgb_prediction * 100).toFixed(2) }% risk.
         Keras model: ${ (data.keras_prediction * 100).toFixed(2) }% risk.
       `;
+    },
+    isValidBase64(base64) {
+      // Ensure the base64 string starts with 'data:image/png;base64,'
+      return typeof base64 === 'string' && base64.startsWith('iVBORw0KGgo') || base64.length > 0;
     },
     // Helper function to determine if the result is positive
     isPositiveResult(key, value) {
@@ -281,7 +307,8 @@ export default {
     formattedResults: {
       handler() {
         this.$nextTick(() => {
-          this.renderChart();
+         this.renderChart();
+        
         });
       },
       deep: true
@@ -303,53 +330,95 @@ export default {
 
 
 <style scoped>
+
+/* Full Page Background */
+body, #app {
+  background-color: #c53030; /* Red background */
+  height: 100vh;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 /* Container with Sidebar and Results */
+/* Layout Styles */
 .container {
   display: flex;
-  justify-content: space-between;
-  padding: 20px;
+  height: 95vh;
+  width: 100%;
+  /*max-width: 1400px;*/
+  gap:20px;
+  
+  
 }
 
-/* Sidebar */
+/* Sidebar (White Background) */
 .sidebar {
   width: 30%;
+  background-color: #ffffff; /* White */
+  color: red;
   padding: 20px;
-  background-color: #80d849;
+  overflow-y: auto;
+  height: 92vh;
   border-radius: 16px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);  
-}
+  border-color: red;
 
-/* Results Section */
+  margin-left: 20px;
+  margin-top:20px;
+  
+  
+}
+/* Results Section (White Background) */
 .results {
-  width: 55%;
+  flex-grow: 1;
   padding: 20px;
-  background-color: white;
+  background-color: #ffffff; /* White */
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  height: 92vh;
+  margin-right: 20px;
+  margin-top:20px;
+  
 }
+
 
 /* Form Styling */
 form input, form select, form button {
-  display: block;
+  display: flex;
+  flex-direction: column;
   margin: 10px auto;
   padding: 8px;
-  width: 90%;
+  width: 90%;  
+  border-radius: 16px;
+  border-color: #a02121;
+  justify-content: space-between;
+  
+  /*flex: 2; 
+  padding: 8px;
+  width: 40%;
+  border-radius: 16px;
+  border: 2px solid #a02121;*/
 }
 
 form label {
   display: block;
   margin: 5px 0;
+  
 }
 
 button[type="submit"] {
-  background-color: #444444;
+  background-color: #c53030; 
   color: white;
+  border: none;
+  padding: 10px;
+  width: 50%;
+  border-radius: 16px;
   cursor: pointer;
-  width: 100%;
 }
 
 button[type="submit"]:hover {
-  background-color: #666666;
+  background-color: #a02121;
 }
 
 /* Pie Chart Display */
@@ -380,7 +449,8 @@ img {
 .checkbox-group {
   display: flex;
   gap: 15px;
-  flex-wrap: wrap; /* Wrap to the next line if space is limited */
+  flex-wrap: wrap; 
+  
 }
 
 .checkbox-group label {
@@ -396,6 +466,7 @@ img {
   justify-content: center;
 }
 
+/* Results Cards */
 .result-card {
   border: 2px solid #ccc;
   border-radius: 8px;
@@ -403,6 +474,7 @@ img {
   text-align: center;
   width: 160px;
   background: #fff;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .result-card .positive {
@@ -420,5 +492,65 @@ img {
   width: 100%;
   max-width: 800px;
   height: 400px;
+}
+/* Layout Styles */
+.container {
+  display: flex;
+  height: 100vh;
+}
+
+
+
+/* Scrollable Content */
+.scrollable-content {
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Scrollbar Styling */
+.scrollable-content::-webkit-scrollbar {
+  width: 10px;
+}
+.scrollable-content::-webkit-scrollbar-track {
+  background:whitesmoke;
+}
+.scrollable-content::-webkit-scrollbar-thumb {
+  background: #c53030;
+  border-radius: 10px;
+}
+.scrollable-content::-webkit-scrollbar-thumb:hover {
+  background: #a02121;
+}
+
+/* Results Cards */
+.result-card {
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Positive & Negative Colors */
+.negative {
+  color: red;
+}
+.positive {
+  color: green;
+}
+
+/* Button Styling */
+button {
+  background-color: white;
+  color: #c53030;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 5px;
+  cursor: pointer;
+}
+button:hover {
+  background-color: #f8d7da;
 }
 </style>

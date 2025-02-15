@@ -44,9 +44,9 @@ def predict():
             'Sleep': float(data['Sleep']),
             'Exercise': float(data['Exercise']),
             'Fruit': float(data['Fruit']),
-            'Diabetes': int(data['Diabetes']),
-            'Kidney': int(data['Kidney']),
-            'Stroke': int(data['Stroke'])
+            'Diabetes': int(data['Diabetes']),  # Ensure int type
+            'Kidney': int(data['Kidney']),      # Ensure int type
+            'Stroke': int(data['Stroke'])       # Ensure int type
         }
         print("Processed input data:", input_data)
 
@@ -71,7 +71,8 @@ def predict():
         # Get predictions (convert NumPy float32 to Python float)
         svm_pred = float(svm_model.predict_proba(input_scaled)[0][1])
         xgb_pred = float(xgb_model.predict_proba(input_scaled)[0][1])
-        keras_pred = float(keras_model.predict(input_scaled)[0][0])
+        keras_pred = float(keras_model.predict(input_scaled)[0][0])  # Ensure float type
+
         print(f"SVM prediction: {svm_pred}, XGBoost prediction: {xgb_pred}, Keras prediction: {keras_pred}")
 
         # Convert predictions into "Up" or "Down"
@@ -124,9 +125,8 @@ def create_pie_chart(probability, title):
     buf.seek(0)
     
     # Encode to base64 for sending to frontend
-    img_base64 = base64.b64encode(buf.read()).decode('utf-8') 
-    
-    return img_base64
+    encoded_img = base64.b64encode(buf.getvalue()).decode("utf-8")
+    return f"data:image/png;base64,{encoded_img}"
 
 
 if __name__ == '__main__':
