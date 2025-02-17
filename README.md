@@ -71,6 +71,7 @@ rub python train_model.py
    ```bash
    npm install
    ```
+   npm install chart.js (for displaying chart on frontend)
 
 3. Run the Vue.js development server:
 
