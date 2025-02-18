@@ -55,7 +55,7 @@ Before running the project, ensure you have the following installed:
    ```bash
    python app.py
    ```
-rub python train_model.py
+run python train_model.py
    The Flask API will be running on `http://localhost:5000`.
 
 ### Step 2: Set Up the Frontend (Vue.js)

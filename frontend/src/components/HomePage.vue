@@ -55,9 +55,9 @@
             
             <h3>Check any that apply:</h3>
             <div class="checkbox-group">
-              <label><input type="checkbox" v-model="formData.Diabetes" /> Diabetes</label>
-              <label><input type="checkbox" v-model="formData.Kidney" /> Kidney Disease</label>
-              <label><input type="checkbox" v-model="formData.Stroke" /> Stroke</label>
+              <label>Diabetes<input type="checkbox" v-model="formData.Diabetes" /></label>
+              <label>Kidney Disease<input type="checkbox" v-model="formData.Kidney" /></label>
+              <label>Stroke<input type="checkbox" v-model="formData.Stroke" /></label>
             </div>
 
             <button type="submit">Analyze</button>
@@ -448,16 +448,23 @@ img {
 }
 .checkbox-group {
   display: flex;
-  gap: 15px;
-  flex-wrap: wrap; 
-  
+  gap: 25px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .checkbox-group label {
-  display: inline-flex;
-  align-items: center;
+  display: flex; /* Ändra till flex för att styra layouten */
+  flex-direction: column; /* Placera checkboxen under texten */
+  align-items: center; /* Centrera innehållet horisontellt */
+  text-align: center; /* Säkerställ att texten är centrerad */
   gap: 5px;
+  padding: 5px;
+  border: 2px;
+  border-style: dashed;
+  border-color: rgb(129, 67, 67);
 }
+
 
 .results-container {
   display: flex;
