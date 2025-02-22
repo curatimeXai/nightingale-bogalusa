@@ -71,14 +71,54 @@
         <div class="scrollable-content">
           <div v-if="result">
             <div class="results-container">
-              <div v-for="(value, key) in formattedResults" :key="key" class="result-card">
-                <strong>{{ key }}</strong>: {{ value.text }}
-                <div :class="value.percentage >= 0 ? 'negative' : 'positive'">
-                  {{ value.percentage }}%
+             <div v-for="(value, key) in formattedResults" :key="key" class="result-card">
+                <div class="icon-up">
                   <span v-if="value.percentage >= 0">👎</span>
                   <span v-else>👍</span>
                 </div>
+
+                <div class="result-content">
+                  <strong>{{ key }}</strong>: {{ value.text }}
+                  <div :class="value.percentage >= 0 ? 'negative' : 'positive'">
+                  {{ value.percentage.toFixed(2) }}%
+                </div>
               </div>
+
+                
+            </div>
+         </div>
+
+         <div class="results-container">
+            <h3>Feature Impact</h3>
+            <table class="impact-table">
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Value</th>
+                  <th>Impact (%)</th>
+                  <th>Color</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(value, key) in formattedResults" :key="key">
+                  <td><strong>{{ key }}</strong></td>
+                  <td>{{ value.text }}</td>
+                  <td>{{ value.percentage.toFixed(2) }}%</td>
+                  
+                  <td :style="{ color: value.forceRed ? 'red' : (value.percentage < 0 ? 'green' : 'red'), fontWeight: 'bold' }">
+                  {{ value.icon }} {{ value.forceRed || value.percentage >= 0 ? 'Red' : 'Green' }}
+                </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+
+
+            <!-- SHAP Feature Importance Plot -->
+            <div v-if="isValidBase64(result.shap_plot)">
+            <h3>SHAP Feature Importance</h3>
+            <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Plot" />
             </div>
 
             <div class="p-6">
@@ -101,12 +141,45 @@
                 <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
               </div>
             </div>
-
             
+            
+            <!--
             <div class="summary">
               <h3>Risk Summary</h3>
               <p>{{ riskSummary }}</p>
             </div>
+          -->
+            <!-- Risk Prediction Summary Section -->
+            <div class="risk-summary">
+              <h3>🩺 Risk Prediction Summary</h3>
+              <h4>🔍 SHAP Feature Importance</h4>
+              <ul>
+                <li><strong>Major Contributors:</strong> Sleep duration, Kidney Disease, Fruit Intake</li>
+                <li><strong>Other Factors:</strong> Alcohol consumption, Smoking, Exercise, Gender, Diabetes, Stroke, BMI, Age</li>
+              </ul>
+
+              <h4>📊 Model Predictions Comparison</h4>
+              <div>
+                <strong>SVM Model:</strong>
+                <p>High Risk: {{ (result.svm_prediction * 100).toFixed(2) }}%</p>
+                <p>No Risk: {{ (1 - result.svm_prediction) * 100 }}%</p>
+                <p>🛑 Most conservative model, predicting the lowest risk percentage.</p>
+              </div>
+              <div>
+                <strong>XGBoost Model:</strong>
+                <p>High Risk: {{ (result.xgb_prediction * 100).toFixed(2) }}%</p>
+                <p>No Risk: {{ (1 - result.xgb_prediction) * 100 }}%</p>
+                <p>🚨 Most aggressive in identifying high-risk individuals.</p>
+              </div>
+              <div>
+                <strong>Keras Model:</strong>
+                <p>High Risk: {{ (result.keras_prediction * 100).toFixed(2) }}%</p>
+                <p>No Risk: {{ (1 - result.keras_prediction) * 100 }}%</p>
+                <p>⚖️ Balanced approach between sensitivity and specificity.</p>
+              </div>
+            </div>
+
+
           </div>
         </div>
       </div>
@@ -147,20 +220,25 @@ export default {
   },
   computed: {
     formattedResults() {
+      if (!this.result || !this.result.shap_impact) {
+      console.log("No results found in computed property");
+      return {};
+    }
+    console.log("SHAP Impact Data:", this.result.shap_impact);
       return {
-        "Weight (kg)": { text: this.formData.Weight, percentage: this.result?.weightImpact || 0 },
-        "Height (cm)": { text: this.formData.Height, percentage: this.result?.heightImpact || 0 },
-        "BMI": { text: this.formData.BMI, percentage: this.result?.bmiImpact || 0 },
-        "Alcohol (drinks/day)": { text: this.formData.Alcohol, percentage: this.result?.alcoholImpact || 0 },
-        "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result?.sleepImpact || 0 },
-        "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result?.exerciseImpact || 0 },
-        "Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result?.fruitImpact || 0 },
-        "Gender": { text: this.formData.Gender, percentage: this.result?.genderImpact || 0 },
-        "Age Category": { text: this.formData.AgeCategory, percentage: this.result?.ageImpact || 0 },
-        "Smoking": { text: this.formData.Smoking, percentage: this.result?.smokingImpact || 0 },
-        "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result?.diabetesImpact || 0 },
-        "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result?.kidneyImpact || 0 },
-        "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result?.strokeImpact || 0 }
+        "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎" },
+        "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
+        "BMI": { text: this.formData.BMI, percentage: this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎" },
+        "Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon: (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎"},
+        "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon: (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" },
+        "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon: (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎" },
+        "Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
+        "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
+        "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: this.result.shap_impact.Age < 0 ? "👍" : "👎" },
+        "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon: (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" },
+        "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon: (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" },
+        "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎"},
+        "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon: (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
       };
     }
     
@@ -202,6 +280,10 @@ export default {
         this.result = response.data;
         this.riskSummary = this.generateRiskSummary(response.data);
         console.log(this.formattedResults);
+        // Debugging - Check if SHAP data is coming correctly
+        console.log("SHAP Impact:", response.data.shap_impact);
+        console.log("API Response:", response.data); // Debugging
+    
       } catch (error) {
         console.error("There was an error making the API request:", error);
       }
@@ -277,7 +359,7 @@ export default {
               {
                 label: "Impact Percentage",
                 data: values,
-                backgroundColor: colors,
+                backgroundColor: values.map((val) => (val >= 0 ? "rgba(255, 99, 132, 0.7)" : "rgba(75, 192, 75, 0.7)")),
                 borderColor: colors.map(c => c.replace("0.7", "1")),
                 borderWidth: 1
               }
@@ -553,4 +635,66 @@ button {
 button:hover {
   background-color: #f8d7da;
 }
+/*Table*/
+.impact-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.impact-table th, 
+.impact-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.impact-table thead {
+  background-color: #007bff;
+  color: white;
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.impact-table tbody tr:hover {
+  background-color: rgba(0, 123, 255, 0.1);
+}
+
+.impact-table td {
+  font-size: 16px;
+}
+
+.impact-table td:nth-child(4) {
+  font-weight: bold;
+}
+/* risk summary*/
+.risk-summary {
+  background-color: #e7f3fe; /* Light blue background for the summary */
+  border: 1px solid #bcdff1; /* Slightly darker border for emphasis */
+  border-radius: 5px; /* Rounded corners */
+  padding: 20px; /* Padding inside the box */
+  margin-top: 20px; /* Space above the summary */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+.risk-summary h3 {
+  color: #0d6efd; /* Blue color for the heading */
+  margin-bottom: 10px; /* Space below the heading */
+}
+
+.risk-summary p {
+  font-size: 16px; /* Font size for the text */
+  line-height: 1.5; /* Line height for better readability */
+  color: #212529; /* Dark text color */
+}
+
+.risk-summary .highlight {
+  font-weight: bold; /* Bold text for key phrases */
+  color: #dc3545; /* Red color for high-risk warnings */
+}
+
 </style>

@@ -5,6 +5,7 @@ import numpy as np
 from keras.models import load_model
 from flask_cors import CORS
 import io
+import shap
 import base64
 import matplotlib
 matplotlib.use('Agg')
@@ -83,9 +84,13 @@ def predict():
         svm_pie_chart = create_pie_chart(svm_pred, "SVM Prediction")
         xgb_pie_chart = create_pie_chart(xgb_pred, "XGBoost Prediction")
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
+        # Get SHAP feature impact for the current prediction
+        shap_explanation = get_shap_explanation(input_scaled)
 
         # Return predictions as Python native float values for serialization
         return jsonify({
+           "shap_impact": shap_explanation["feature_impact"], 
+            "shap_plot": shap_explanation["shap_plot"],
             "svm_prediction": float(svm_pred),  # Explicit conversion to float
             "xgb_prediction": float(xgb_pred),  # Explicit conversion to float
             "keras_prediction": float(keras_pred),  # Explicit conversion to float
@@ -127,7 +132,28 @@ def create_pie_chart(probability, title):
     img_base64 = base64.b64encode(buf.read()).decode('utf-8') 
     
     return img_base64
+def get_shap_explanation(input_scaled):
+    """Get SHAP explanation for the input data"""
+    # Use the TreeExplainer for XGBoost model
+    explainer = shap.TreeExplainer(xgb_model)
+    shap_values = explainer.shap_values(input_scaled)
 
+    # Calculate feature impact for the first instance
+    individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
+    feature_impact = {scaler.feature_names_in_[i]: individual_shap_values[i] for i in range(len(scaler.feature_names_in_))}
+    # Convert feature_impact values to native Python float
+    feature_impact = {k: float(v) for k, v in feature_impact.items()}
+    # Generate SHAP summary plot
+    plt.figure()
+    shap.summary_plot(shap_values, input_scaled, feature_names=scaler.feature_names_in_,show=False)
+    
+    # Save to buffer and encode for frontend use
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png")
+    buf.seek(0)
+    shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    print(f"SHAP plot base64 length: {len(shap_plot_base64)}") 
+    return {"feature_impact": feature_impact, "shap_plot": shap_plot_base64}
 
 if __name__ == '__main__':
     app.run(debug=True)

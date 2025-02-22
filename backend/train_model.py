@@ -11,6 +11,7 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import shap
 
 # Ensure models directory exists
 os.makedirs("models", exist_ok=True)
@@ -30,7 +31,7 @@ df["Age"] = pd.to_numeric(df["Age"], errors="coerce")
 df["Age"].fillna(df["Age"].median(), inplace=True)
 
 # Define relevant features
-features = ["Gender", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
+features = ["Gender","Age", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
 X = df[features]
 y = df["Heartdis"]
 
@@ -86,6 +87,25 @@ plt.xlabel("Importance")
 plt.ylabel("Features")
 plt.tight_layout()
 plt.savefig("models/feature_importance.png")
+# SHAP Values Calculation (Using XGBoost model)
+explainer = shap.TreeExplainer(xgb_model)
+shap_values = explainer.shap_values(X_train_scaled)
+# SHAP Summary Plot
+shap.summary_plot(shap_values, X_train_scaled, feature_names=X.columns)
+plt.savefig("models/shap_summary.png")
+
+# Calculating the impact of each feature for the first instance in the training data
+individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
+feature_impact = {X.columns[i]: individual_shap_values[i] for i in range(len(X.columns))}
+# Save SHAP values for frontend use
+with open("models/shap_results.json", "w") as json_file:
+    json.dump(shap_impact, json_file)
+# Print out the calculated feature impact for the first instance
+print("Feature Impact for the first instance:", feature_impact)
+
+# Save SHAP values and feature impact for future use
+joblib.dump(feature_impact, "models/feature_impact.pkl")
+joblib.dump(shap_values, "models/shap_values.pkl")
 
 print("✅ Training completed. Models saved successfully!")
 
