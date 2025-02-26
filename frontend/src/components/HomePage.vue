@@ -7,15 +7,35 @@
         <h2>Enter Measurements</h2>
         <div class="scrollable-content">
           <form @submit.prevent="computeRisk">
-            
-            <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
-            <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
-            <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
-
-            <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week" required />
-            <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" required />
-            <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" required />
-            <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" required />
+            <!-- Form questions with user inputs -->
+            <div>
+              <p>Enter your weight</p>
+              <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
+            </div>
+            <div>
+              <p>Enter your height</p>
+              <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
+            </div>
+            <div>
+              <p>Calculated BMI</p>
+              <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
+            </div>
+            <div>
+              <p>How many drinks of alcohol do you consume per week?</p>
+              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week" required />
+            </div>
+            <div>
+              <p>How many hours of sleep do you get?</p>
+              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" required />
+            </div>
+            <div>
+              <p>How many minutes do you exercise?</p>
+              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" required />
+            </div>
+            <div>
+              <p>How many fruits do you consume?</p>
+              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" required />
+            </div>
 
           <!-- Gender Dropdown -->
           <label>Gender*</label>
@@ -55,9 +75,9 @@
             
             <h3>Check any that apply:</h3>
             <div class="checkbox-group">
-              <label><input type="checkbox" v-model="formData.Diabetes" /> Diabetes</label>
-              <label><input type="checkbox" v-model="formData.Kidney" /> Kidney Disease</label>
-              <label><input type="checkbox" v-model="formData.Stroke" /> Stroke</label>
+              <label>Diabetes<input type="checkbox" v-model="formData.Diabetes" /></label>
+              <label>Kidney Disease<input type="checkbox" v-model="formData.Kidney" /></label>
+              <label>Stroke<input type="checkbox" v-model="formData.Stroke" /></label>
             </div>
 
             <button type="submit">Analyze</button>
@@ -106,7 +126,7 @@
                   <td>{{ value.percentage.toFixed(2) }}%</td>
                   
                   <td :style="{ color: value.forceRed ? 'red' : (value.percentage < 0 ? 'green' : 'red'), fontWeight: 'bold' }">
-                  {{ value.icon }} {{ value.forceRed || value.percentage >= 0 ? 'Red' : 'Green' }}
+                  {{ value.icon }} {{ value.forceRed || value.percentage >= 0 ? 'Negative' : 'Posetive' }}
                 </td>
                 </tr>
               </tbody>
@@ -115,33 +135,35 @@
 
 
 
-            <!-- SHAP Feature Importance Plot -->
-            <div v-if="isValidBase64(result.shap_plot)">
-            <h3>SHAP Feature Importance</h3>
-            <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Plot" />
-            </div>
-
-            <div class="p-6">
-              <canvas ref="barChart" style="height: 400px;"></canvas>
-            </div>
-
-            <div class="chart-container">
-              <div v-if="isValidBase64(result.svm_pie_chart)">
-                <h3>SVM Prediction</h3>
-                <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
+          <!-- SHAP Feature Importance Plot 
+          <div v-if="isValidBase64(result.shap_plot)">
+                <h3>SHAP Feature Importance</h3>
+                <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Plot" />
               </div>
-              <!-- XGBoost Pie Chart -->
+              
+              <div class="p-6">
+                <canvas ref="barChart" style="height: 400px;"></canvas>
+              </div>
+              
+              <div class="chart-container">
+                <div v-if="isValidBase64(result.svm_pie_chart)">
+                  <h3>SVM Prediction</h3>
+                  <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
+                </div>
+              -->
+              <!-- XGBoost Pie Chart 
               <div v-if="isValidBase64(result.xgb_pie_chart)">
                 <h3>XGBoost Prediction</h3>
                 <img :src="'data:image/png;base64,' + result.xgb_pie_chart" alt="XGBoost Pie Chart" />
               </div>
-              <!-- Keras Pie Chart -->
+              -->
+              <!-- Keras Pie Chart
               <div v-if="isValidBase64(result.keras_pie_chart)">
                 <h3>Keras Prediction</h3>
                 <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
               </div>
             </div>
-            
+            -->
             
             <!--
             <div class="summary">
@@ -530,16 +552,24 @@ img {
 }
 .checkbox-group {
   display: flex;
-  gap: 15px;
-  flex-wrap: wrap; 
-  
+  gap: 25px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .checkbox-group label {
-  display: inline-flex;
-  align-items: center;
+  display: flex; /* Ändra till flex för att styra layouten */
+  flex-direction: column; /* Placera checkboxen under texten */
+  align-items: center; /* Centrera innehållet horisontellt */
+  text-align: center; /* Säkerställ att texten är centrerad */
   gap: 5px;
+  padding: 5px;
+  border: 2px;
+  border-style: dashed;
+  border-color: rgb(129, 67, 67);
+  width: 30%;
 }
+
 
 .results-container {
   display: flex;
