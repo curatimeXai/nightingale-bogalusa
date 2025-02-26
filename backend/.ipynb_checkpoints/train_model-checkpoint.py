@@ -11,6 +11,7 @@ import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import shap
 
 # Ensure models directory exists
 os.makedirs("models", exist_ok=True)
@@ -30,7 +31,7 @@ df["Age"] = pd.to_numeric(df["Age"], errors="coerce")
 df["Age"].fillna(df["Age"].median(), inplace=True)
 
 # Define relevant features
-features = ["Gender", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
+features = ["Gender","Age", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
 X = df[features]
 y = df["Heartdis"]
 
@@ -86,7 +87,36 @@ plt.xlabel("Importance")
 plt.ylabel("Features")
 plt.tight_layout()
 plt.savefig("models/feature_importance.png")
+# SHAP calculation for XGBoost
+explainer = shap.Explainer(xgb_model, X_train_scaled)
+shap_values = explainer(X_train_scaled)
 
+# SHAP summary plot for the training data
+shap.summary_plot(shap_values, X_train)
+
+# Save SHAP summary plot as an image
+shap.summary_plot(shap_values, X_train, show=False)
+plt.savefig("models/shap_summary_plot.png")
+
+# Extract the SHAP values impact for each feature
+shap_impact = {
+    feature: np.mean(np.abs(shap_values[:, i].values)) for i, feature in enumerate(X.columns)
+}
+# SHAP calculation for XGBoost
+explainer = shap.Explainer(xgb_model, X_train_scaled)
+shap_values = explainer(X_train_scaled)
+
+# SHAP summary plot for the training data
+shap.summary_plot(shap_values, X_train)
+
+# Save SHAP summary plot as an image
+shap.summary_plot(shap_values, X_train, show=False)
+plt.savefig("models/shap_summary_plot.png")
+
+# Extract the SHAP values impact for each feature
+shap_impact = {
+    feature: np.mean(np.abs(shap_values[:, i].values)) for i, feature in enumerate(X.columns)
+}
 print("✅ Training completed. Models saved successfully!")
 
 
