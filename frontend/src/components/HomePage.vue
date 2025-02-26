@@ -81,6 +81,7 @@
             </div>
 
             <button type="submit">Analyze</button>
+            <button type="submit" @click="randomizeData">🔀 Randomize</button>
           </form>
         </div>
       </div>
@@ -149,10 +150,8 @@
               </tbody>
             </table>
           </div>
-
-
-
-          <!-- SHAP Feature Importance Plot 
+          <!-- SHAP Feature Importance Plot -->
+          <!-- 
           <div v-if="isValidBase64(result.shap_plot)">
                 <h3>SHAP Feature Importance</h3>
                 <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Plot" />
@@ -168,19 +167,21 @@
                   <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
                 </div>
               -->
-              <!-- XGBoost Pie Chart 
+              <!-- XGBoost Pie Chart -->
+               <!--
               <div v-if="isValidBase64(result.xgb_pie_chart)">
                 <h3>XGBoost Prediction</h3>
                 <img :src="'data:image/png;base64,' + result.xgb_pie_chart" alt="XGBoost Pie Chart" />
-              </div>
-              -->
-              <!-- Keras Pie Chart
+              </div>-->
+           
+              <!-- Keras Pie Chart-->
+               <!--
               <div v-if="isValidBase64(result.keras_pie_chart)">
                 <h3>Keras Prediction</h3>
                 <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
               </div>
-            </div>
-            -->
+            </div>-->
+         
             
             <!--
             <div class="summary">
@@ -263,11 +264,11 @@ export default {
       console.log("No results found in computed property");
       return {};
     }
-    console.log("SHAP Impact Data:", this.result.shap_impact);
+    console.log("SHAP Impact Data:", this.result.shap_impact);   
       return {
         "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎"},
         "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
-        "BMI": { text: this.formData.BMI, percentage: this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?.BMI ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎" },
+        "BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?. BMI ?? 0) === 0 ? "⚖️" : (this.result.shap_impact.BMI) < 0 ? "👍" : "👎" },
         "Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon: (this.result.shap_impact?.Alcohol ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎"},
         "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon: (this.result.shap_impact?.Sleep ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" },
         "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon: (this.result.shap_impact?.Exercise ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎" },
@@ -289,6 +290,28 @@ export default {
         this.formData.BMI = (this.formData.Weight / (heightInMeters ** 2)).toFixed(2);
       }
     },
+
+    /* Function for randomlize button*/
+    randomizeData() {
+      const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+      this.formData.Weight = randomBetween(30, 120);// Between 30kg-120kg
+      this.formData.Height = randomBetween(140, 200);// between 140cm -200cm
+      this.calculateBMI();
+      this.formData.Alcohol = randomBetween(0, 10);// max to 10 times per week
+      this.formData.Sleep = randomBetween(4, 10); // between 4h -10h per day
+      this.formData.Exercise = randomBetween(0, 300); // between 0-300 minutes/weekly
+      this.formData.Fruit = randomBetween(0, 5);// max to 5 times per days
+      this.formData.Gender = randomChoice(["Male", "Female"]);
+      this.formData.AgeCategory = randomChoice(["18-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79"]);
+      this.formData.Smoking = randomChoice(["Not at all", "Sometimes", "Everyday"]);
+      this.formData.Diabetes = Math.random() < 0.2;
+      this.formData.Kidney = Math.random() < 0.1;
+      this.formData.Stroke = Math.random() < 0.05;
+    },
+  
+
     async computeRisk() {
       const ageMapping = {
         '18-24': 21, '25-29': 27, '30-34': 32, '35-39': 37,
@@ -342,11 +365,11 @@ export default {
     isPositiveResult(key, value) {
       switch(key) {
         case 'BMI':
-          return value >= 18 && value <= 24;
-        case 'Alcohol (drinks/day)':
-          return value > 2;
+          return value <= 18.5 && value <= 24.9;
+        case 'Alcohol (drinks/week)':
+          return value <= 2;
         case 'Sleep (hours/day)':
-          return value >= 6 && value <= 9;
+          return value >= 6 && value <= 11;
         case 'Smoking':
           return value === 'No';
         case 'Diabetes':
@@ -356,7 +379,7 @@ export default {
         case 'Stroke':
           return value === 'No';
         case 'Exercise (min/week)':
-          return value >= 60 && value <= 120;
+          return value >= 60 && value <= 300;
         default:
           return false;
       }
