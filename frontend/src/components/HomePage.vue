@@ -123,7 +123,7 @@
                   <th>Feature</th>
                   <th>Value</th>
                   <th>Impact (%)</th>
-                  <th>Color</th>
+                  <th>Effect</th>
                 </tr>
               </thead>
               <tbody>
@@ -166,7 +166,7 @@
                   <h3>SVM Prediction</h3>
                   <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
                 </div>
-              -->
+              --> 
               <!-- XGBoost Pie Chart -->
                <!--
               <div v-if="isValidBase64(result.xgb_pie_chart)">
