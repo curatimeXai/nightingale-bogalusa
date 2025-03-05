@@ -268,7 +268,7 @@ export default {
       return {
        // "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎"},
        // "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
-        "BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?. BMI ?? 0) === 0 ? "⚖️" : (this.result.shap_impact.BMI) < 0 ? "👍" : "👎" },
+        "BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?. BMI ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎" },
         "Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon: (this.result.shap_impact?.Alcohol ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎"},
         "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon: (this.result.shap_impact?.Sleep ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" },
         "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon: (this.result.shap_impact?.Exercise ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎" },
@@ -365,7 +365,7 @@ export default {
     isPositiveResult(key, value) {
       switch(key) {
         case 'BMI':
-          return value <= 18.5 && value <= 24.9;
+          return value <= 18.5 || value >= 24.9;
         case 'Alcohol (drinks/week)':
           return value <= 2;
         case 'Sleep (hours/day)':
