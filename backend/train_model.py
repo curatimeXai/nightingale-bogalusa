@@ -100,7 +100,7 @@ individual_shap_values = shap_values[0]  # Getting SHAP values for the first dat
 feature_impact = {X.columns[i]: individual_shap_values[i] for i in range(len(X.columns))}
 # Save SHAP values for frontend use
 with open("models/shap_results.json", "w") as json_file:
-    json.dump(shap_impact, json_file)
+    json.dump({k: float(v) for k, v in feature_impact.items()}, json_file)
 # Print out the calculated feature impact for the first instance
 print("Feature Impact for the first instance:", feature_impact)
 
