@@ -9,14 +9,14 @@
           <form @submit.prevent="computeRisk">
             <!-- Form questions with user inputs -->
             <div>
-              <p>Enter your weight</p>
-              <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
+             <p>Enter your weight</p>
+             <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
             </div>
             <div>
               <p>Enter your height</p>
               <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
             </div>
-            <div>
+            <div class="bmi">
               <p>Calculated BMI</p>
               <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
             </div>
@@ -38,7 +38,7 @@
             </div>
 
           <!-- Gender Dropdown -->
-          <label>Gender*</label>
+          <label>Gender *</label>
           <select v-model="formData.Gender" required>
             <option disabled value="">Select Gender</option>
             <option>Male</option>
@@ -46,7 +46,7 @@
           </select>
 
            
-            <label>Age Category*</label>
+            <label>Age Category *</label>
             <select v-model="formData.AgeCategory" required>
               <option disabled value="">Select Age Range</option>
               <option>18-24</option>
@@ -64,7 +64,7 @@
             </select>
 
            
-            <label>Smoking*</label>
+            <label>Smoking *</label>
             <select v-model="formData.Smoking" required>
               <option disabled value="">Select Smoking Status</option>
               <option>Not at all</option>
@@ -92,13 +92,16 @@
         <div class="scrollable-content">
           <div v-if="result">
             <div class="results-container">
-             <div v-for="(value, key) in formattedResults" :key="key" class="result-card">
-                <div class="icon-up">
-                  <span v-if="value.percentage > 0">👎</span>
-                  <span v-else-if="value.percentage === 0">⚖️</span>
-                  <span v-else>👍</span>
-                </div>
-
+             <div v-for="(value, key) in formattedResults" :key="key" class="result-card" :class="{
+              'card-negative': value.percentage > 0,
+              'card-positive': value.percentage < 0,
+              'card-neutral': value.percentage === 0
+             }">
+              <div class="icon-up">
+                <i v-if="value.percentage > 0" class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+                <i v-else-if="value.percentage === 0" class="bi bi-slash-circle neutral-icon"></i>
+                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+              </div>
                 <div class="result-content">
                   <strong>{{ key }}</strong>: {{ value.text }}
                   <div :class="{
@@ -108,12 +111,9 @@
                       }">
                     {{ value.percentage.toFixed(2) }}%
                   </div>
-
-              </div>
-
-                
+              </div>             
             </div>
-         </div>
+          </div>
 
          <div class="results-container">
             <h3>Feature Impact</h3>
@@ -498,18 +498,16 @@ body, #app {
 
 /* Sidebar (White Background) */
 .sidebar {
-  width: 30%;
-  background-color: #ffffff; /* White */
+  width: 30vw;
+  background-color: #e8d8c3; /* White */
   color: red;
   padding: 20px;
   overflow-y: auto;
   height: 92vh;
   border-radius: 16px;
   border-color: red;
-
   margin-left: 20px;
   margin-top:20px;
-  
   
 }
 /* Results Section (White Background) */
@@ -523,7 +521,6 @@ body, #app {
   height: 92vh;
   margin-right: 20px;
   margin-top:20px;
-  
 }
 
 
@@ -549,6 +546,15 @@ form label {
   display: block;
   margin: 5px 0;
   
+}
+
+.bmi {
+  color: black;
+  font-weight: bold;
+  margin: 20px auto;
+}
+.bmi input{
+  width: 60%;
 }
 
 button[type="submit"] {
@@ -598,14 +604,15 @@ img {
 }
 
 .checkbox-group label {
-  display: flex; /* Ändra till flex för att styra layouten */
-  flex-direction: column; /* Placera checkboxen under texten */
-  align-items: center; /* Centrera innehållet horisontellt */
-  text-align: center; /* Säkerställ att texten är centrerad */
+  display: flex;
+  flex-direction: column; 
+  align-items: center; 
+  text-align: center; 
   gap: 5px;
   padding: 5px;
   border: 2px;
   border-style: dashed;
+  border-radius: 20px;
   border-color: rgb(129, 67, 67);
   width: 30%;
 }
@@ -629,7 +636,23 @@ img {
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
+/* Results Cards borders*/
+.card-positive {
+  border-color: green;
+  background-color: #d4f8d4;
+}
 
+.card-negative {
+  border-color: red;
+  background-color: #f8d4d4;
+}
+
+.card-neutral {
+  border-color: black;
+  background-color: #f0f0f0;
+}
+
+/* Results Cards text*/
 .result-card .positive {
   color: green;
   font-weight: bold;
@@ -645,6 +668,24 @@ img {
   font-weight: bold;
 }
 
+/* Results Cards icons */
+.icon-up i {
+  font-size: 30px;
+  margin: 5px;
+  display: block;
+}
+
+.positive-icon {
+  color: green;
+}
+
+.negative-icon {
+  color: red;
+}
+
+.neutral-icon {
+  color: rgb(65, 65, 65);
+}
 
 .p-6 {
   width: 100%;
@@ -656,8 +697,6 @@ img {
   display: flex;
   height: 100vh;
 }
-
-
 
 /* Scrollable Content */
 .scrollable-content {
