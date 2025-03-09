@@ -113,7 +113,6 @@ curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -
 
 This will return the risk predictions and the corresponding pie chart images.
 
-
 Added original frontend folder as frontend_copy. To run locate to folder:
 ```bash
 cd frontend_copy
@@ -124,4 +123,29 @@ npm install
 
 npm run dev
 ```
-
+## Training Model Overview:
+### Trained Models:
+#### Support Vector Machine (SVM)
+- A powerful classification model that finds the optimal hyperplane for separating classes.
+- Trained with probability estimation enabled for confidence scoring.
+#### XGBoost Classifier
+- A gradient boosting model optimized for structured data.
+- Uses log loss as the evaluation metric to improve classification accuracy.
+#### Keras Deep Learning Model
+- A neural network with two hidden layers:
+   64 neurons (ReLU activation)
+   32 neurons (ReLU activation)
+- Final output layer uses sigmoid activation for binary classification (Heart Disease: Yes/No).
+### Training Pipeline:
+✔ Step 1: Data Preprocessing
+- Handling missing values
+- Encoding categorical features
+- Scaling numeric features
+✔ Step 2: Train-Test Split
+- Splitting dataset into 80% training / 20% testing
+✔ Step 3: Model Training
+- Each model is trained on scaled data
+✔ Step 4: Model Saving
+- Trained models are saved for future use (.pkl for SVM/XGBoost, .h5 for Keras)
+✔ Step 5: Feature Importance Analysis
+- SHAP values and feature importance are computed for XGBoost to improve model interpretability
