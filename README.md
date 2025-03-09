@@ -137,15 +137,15 @@ npm run dev
    32 neurons (ReLU activation)
 - Final output layer uses sigmoid activation for binary classification (Heart Disease: Yes/No).
 ### Training Pipeline:
-✔ Step 1: Data Preprocessing
+#### Step 1: Data Preprocessing
 - Handling missing values
 - Encoding categorical features
 - Scaling numeric features
-✔ Step 2: Train-Test Split
+#### Step 2: Train-Test Split
 - Splitting dataset into 80% training / 20% testing
-✔ Step 3: Model Training
+#### Step 3: Model Training
 - Each model is trained on scaled data
-✔ Step 4: Model Saving
+#### Step 4: Model Saving
 - Trained models are saved for future use (.pkl for SVM/XGBoost, .h5 for Keras)
-✔ Step 5: Feature Importance Analysis
+#### Step 5: Feature Importance Analysis
 - SHAP values and feature importance are computed for XGBoost to improve model interpretability
