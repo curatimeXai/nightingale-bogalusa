@@ -28,30 +28,30 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Get user input from frontend
+        # Get user input from frontend request (JSON format)
         data = request.get_json()
         print("Received data:", data)
 
-        # Mappings for categorical data
+        # Define mappings for categorical variables (convert text to numerical values)
         gender_map = {'Male': 1, 'Female': 0}
         smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Everyday': 2}
 
         # Convert user input into a DataFrame
         input_data = {
-            'Gender': gender_map.get(data['Gender'], 0),
-            'BMI': float(data['BMI']),
-            'Smoking': smoking_map.get(data['Smoking'], 0),
-            'Alcohol': float(data['Alcohol']),
-            'Sleep': float(data['Sleep']),
-            'Exercise': float(data['Exercise']),
-            'Fruit': float(data['Fruit']),
-            'Diabetes': int(data['Diabetes']),
-            'Kidney': int(data['Kidney']),
-            'Stroke': int(data['Stroke'])
+            'Gender': gender_map.get(data['Gender'], 0),# Convert gender to numeric
+            'BMI': float(data['BMI']),# Convert BMI to float
+            'Smoking': smoking_map.get(data['Smoking'], 0),# Convert smoking to numeric
+            'Alcohol': float(data['Alcohol']),  # Convert alcohol consumption to float
+            'Sleep': float(data['Sleep']), # Convert sleep hours to float
+            'Exercise': float(data['Exercise']),# Convert exercise frequency to float
+            'Fruit': float(data['Fruit']),# Convert fruit intake to float
+            'Diabetes': int(data['Diabetes']),# Convert diabetes (0/1)
+            'Kidney': int(data['Kidney']),# Convert kidney disease (0/1)
+            'Stroke': int(data['Stroke'])# Convert stroke history (0/1)
         }
         print("Processed input data:", input_data)
 
-        # Convert to DataFrame
+        # Convert dictionary into a Pandas DataFrame for model compatibility
         df_input = pd.DataFrame([input_data])
 
         # Apply one-hot encoding (same as training)
@@ -70,24 +70,24 @@ def predict():
         print("Scaled input data:", input_scaled)
 
         # Get predictions (convert NumPy float32 to Python float)
-        svm_pred = float(svm_model.predict_proba(input_scaled)[0][1])
-        xgb_pred = float(xgb_model.predict_proba(input_scaled)[0][1])
-        keras_pred = float(keras_model.predict(input_scaled)[0][0])
+        svm_pred = float(svm_model.predict_proba(input_scaled)[0][1]) # SVM prediction probability
+        xgb_pred = float(xgb_model.predict_proba(input_scaled)[0][1]) # XGBoost prediction probability
+        keras_pred = float(keras_model.predict(input_scaled)[0][0]) # Keras model probability
         print(f"SVM prediction: {svm_pred}, XGBoost prediction: {xgb_pred}, Keras prediction: {keras_pred}")
 
-        # Convert predictions into "Up" or "Down"
+        # Convert prediction probability to "Up" (High Risk) or "Down" (Low Risk)
         svm_label = get_thumb_value(svm_pred)
         xgb_label = get_thumb_value(xgb_pred)
         keras_label = get_thumb_value(keras_pred)
 
-        # Generate pie charts
+        # Generate pie charts for risk visualization
         svm_pie_chart = create_pie_chart(svm_pred, "SVM Prediction")
         xgb_pie_chart = create_pie_chart(xgb_pred, "XGBoost Prediction")
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
         # Get SHAP feature impact for the current prediction
         shap_explanation = get_shap_explanation(input_scaled)
 
-        # Return predictions as Python native float values for serialization
+        # Return JSON response with predictions, labels, charts, and SHAP values
         return jsonify({
            "shap_impact": shap_explanation["feature_impact"], 
             "shap_plot": shap_explanation["shap_plot"],
@@ -109,15 +109,29 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 def get_thumb_value(probability):
-    """Convert probability into 'Up' or 'Down' label"""
+    """
+    Convert probability into a risk label:
+    - If probability is >= 0.5, return "Up" (High Risk)
+    - Otherwise, return "Down" (Low Risk)
+    """
+   
     return "Up" if probability >= 0.5 else "Down"
 
 def create_pie_chart(probability, title):
-    """Generate a pie chart showing risk probability"""
-    labels = ["No Risk", "High Risk"]
-    sizes = [1 - probability, probability]
-    colors = ["green", "red"]
+    """
+    Generate a pie chart that visualizes heart disease risk probability.
 
+    Parameters:
+    - probability (float): Predicted risk score (between 0 and 1).
+    - title (str): Title for the pie chart.
+
+    Returns:
+    - A base64-encoded string of the pie chart image (for frontend display).
+    """
+    labels = ["No Risk", "High Risk"] # Labels for pie chart segments
+    sizes = [1 - probability, probability] # Size of "No Risk" vs "High Risk"
+    colors = ["green", "red"] # Green for low risk, red for high risk
+    # Create a pie chart figure
     fig, ax = plt.subplots()
     ax.pie(sizes, labels=labels, autopct="%1.1f%%", colors=colors, startangle=90)
     ax.set_title(title)
