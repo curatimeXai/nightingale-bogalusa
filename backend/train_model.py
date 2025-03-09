@@ -14,25 +14,28 @@ import seaborn as sns
 import os
 import shap
 
-# Ensure models directory exists
+# Ensure models directory exists for saving trained models and results
 os.makedirs("models", exist_ok=True)
 
-# Load the dataset
+# Load the dataset from CSV file. But this 
 df = pd.read_csv("brfss13.csv")
 
-# Display initial dataset size
+# Display initial dataset size for reference
 print(f"Original dataset size: {df.shape}")
 
 # Convert 'Heartdis' to binary (1 = Yes, 0 = No)
 df["Heartdis"] = df["Heartdis"].map({"Yes": 1, "No": 0})
+# Remove any rows where 'Heartdis' is still missing after mapping
 df.dropna(subset=["Heartdis"], inplace=True)
 
 # Convert Age to numeric and handle missing values
-df["Age"] = pd.to_numeric(df["Age"], errors="coerce")
-df["Age"].fillna(df["Age"].median(), inplace=True)
+df["Age"] = pd.to_numeric(df["Age"], errors="coerce") # conver to non - numeric to NaN
+df["Age"].fillna(df["Age"].median(), inplace=True) # Fill missing valueas with  median age
 
-# Define relevant features
+# Define relevant features to be used for prediction
 features = ["Gender","Age", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
+
+# Extract feature variables (x) and target variable (y)
 X = df[features]
 y = df["Heartdis"]
 
@@ -40,24 +43,24 @@ y = df["Heartdis"]
 for col in ["Gender", "Smoking", "Alcohol", "Diabetes", "Kidney", "Stroke"]:
     X[col] = LabelEncoder().fit_transform(X[col].astype(str))  # Ensures categorical values are numeric
 
-# Fill any remaining NaN values
+# Fill any remaining missing values in the dataset with 0 
 X.fillna(0, inplace=True)
 
 # Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Scale features
+# Normalize feature values using StandardScaler features
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+X_train_scaled = scaler.fit_transform(X_train) # fit and transform training data
+X_test_scaled = scaler.transform(X_test) # Transform test data using same scaler
 
-# Save the scaler
+# Save the scaler for later use 
 joblib.dump(scaler, "models/scaler.pkl")
 
-# Train SVM Model
-svm_model = SVC(probability=True, random_state=42)
-svm_model.fit(X_train_scaled, y_train)
-joblib.dump(svm_model, "models/svm_model.pkl")
+# Train Support Vector Machine SVM Model
+svm_model = SVC(probability=True, random_state=42) # Initialize SVM with probability estimation
+svm_model.fit(X_train_scaled, y_train) # Train the model on the training set
+joblib.dump(svm_model, "models/svm_model.pkl")  # Save the trained SVM model
 
 # Train XGBoost Model
 xgb_model = xgb.XGBClassifier(eval_metric="logloss", random_state=42)
@@ -66,34 +69,42 @@ joblib.dump(xgb_model, "models/xgb_model.pkl")
 
 # Train Keras Model
 keras_model = Sequential([
+    # First hidden layer with 64 neurons
     Dense(64, input_dim=X_train_scaled.shape[1], activation="relu"),
-    Dense(32, activation="relu"),
-    Dense(1, activation="sigmoid"),
+    Dense(32, activation="relu"),# Second hidden layer with 32 neurons
+    Dense(1, activation="sigmoid"),# Output layer with sigmoid activation for binary classification
 ])
-
+# Compile the model using Adam optimizer and binary cross-entropy loss
 keras_model.compile(optimizer=Adam(), loss="binary_crossentropy", metrics=["accuracy"])
+# Train the neural network model for 10 epochs with batch size of 32
 keras_model.fit(X_train_scaled, y_train, epochs=10, batch_size=32, verbose=1)
 
-# Save Keras Model
+# Save the trained Keras model
 keras_model.save("models/keras_model.h5")
 
 # Feature Importance Plot (for XGBoost)
+# Extract feature importance scores from XGBoost
 feature_importance = xgb_model.feature_importances_
+# Store feature names for labeling
 feature_names = X.columns
 
+# Plot the feature importance
 plt.figure(figsize=(10, 6))
-sns.barplot(x=feature_importance, y=feature_names)
+sns.barplot(x=feature_importance, y=feature_names) # Create a bar plot of feature importance
 plt.title("Feature Importance (XGBoost)")
 plt.xlabel("Importance")
 plt.ylabel("Features")
 plt.tight_layout()
-plt.savefig("models/feature_importance.png")
+plt.savefig("models/feature_importance.png") # Save the plot
+
+# SHAP (SHapley Additive exPlanations) for Model Interpretability
 # SHAP Values Calculation (Using XGBoost model)
 explainer = shap.TreeExplainer(xgb_model)
+# Compute SHAP values for training data
 shap_values = explainer.shap_values(X_train_scaled)
-# SHAP Summary Plot
+# # Generate a SHAP summary plot to visualize feature contributions
 shap.summary_plot(shap_values, X_train_scaled, feature_names=X.columns)
-plt.savefig("models/shap_summary.png")
+plt.savefig("models/shap_summary.png") # Save the SHAP summary plot
 
 # Calculating the impact of each feature for the first instance in the training data
 individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
