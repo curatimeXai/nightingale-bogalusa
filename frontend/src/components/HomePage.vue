@@ -8,33 +8,33 @@
         <div class="scrollable-content">
           <form @submit.prevent="computeRisk">
             <!-- Form questions with user inputs -->
-            <div>
+            <div class="input">
              <p>Enter your weight</p>
-             <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" required />
+             <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" min="30" max="220" required />
             </div>
-            <div>
+            <div class="input">
               <p>Enter your height</p>
-              <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" required />
+              <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" min="120" max="240" required />
             </div>
             <div class="bmi">
               <p>Calculated BMI</p>
               <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
             </div>
-            <div>
+            <div class="input">
               <p>How many drinks of alcohol do you consume per week?</p>
-              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week" required />
+              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week *" min="0" max="35" required />
             </div>
-            <div>
-              <p>How many hours of sleep do you get?</p>
-              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" required />
+            <div class="input">
+              <p>How many hours of sleep do you get per 24 hours?</p>
+              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" min="4" max="14" required />
             </div>
-            <div>
-              <p>How many minutes do you exercise?</p>
-              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" required />
+            <div class="input">
+              <p>How many minutes do you exercise per week?</p>
+              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" min="0" max="2400" required />
             </div>
-            <div>
-              <p>How many fruits do you consume?</p>
-              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" required />
+            <div class="input">
+              <p>How many fruits do you eat per day?</p>
+              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" min="0" max="10" required />
             </div>
 
           <!-- Gender Dropdown -->
@@ -100,7 +100,7 @@
               <div class="icon-up">
                 <i v-if="value.percentage > 0" class="bi bi-hand-thumbs-down-fill negative-icon"></i>
                 <i v-else-if="value.percentage === 0" class="bi bi-slash-circle neutral-icon"></i>
-                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>  
               </div>
                 <div class="result-content">
                   <strong>{{ key }}</strong>: {{ value.text }}
@@ -296,11 +296,11 @@ export default {
       const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
       const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
-      this.formData.Weight = randomBetween(30, 120);// Between 30kg-120kg
-      this.formData.Height = randomBetween(140, 200);// between 140cm -200cm
+      this.formData.Weight = randomBetween(30, 220);// Between 30kg-220kg
+      this.formData.Height = randomBetween(120, 240);// between 120cm -240cm
       this.calculateBMI();
-      this.formData.Alcohol = randomBetween(0, 10);// max to 10 times per week
-      this.formData.Sleep = randomBetween(4, 10); // between 4h -10h per day
+      this.formData.Alcohol = randomBetween(0, 35);// max to 35 times per week
+      this.formData.Sleep = randomBetween(4, 14); // between 4h -14h per day
       this.formData.Exercise = randomBetween(0, 300); // between 0-300 minutes/weekly
       this.formData.Fruit = randomBetween(0, 5);// max to 5 times per days
       this.formData.Gender = randomChoice(["Male", "Female"]);
@@ -499,7 +499,7 @@ body, #app {
 /* Sidebar (White Background) */
 .sidebar {
   width: 30vw;
-  background-color: #e8d8c3; /* White */
+  background-color: white; /* White */
   color: red;
   padding: 20px;
   overflow-y: auto;
@@ -546,6 +546,14 @@ form label {
   display: block;
   margin: 5px 0;
   
+}
+
+.input input:invalid {
+  background-color: #ffa2a2;
+}
+
+.input ::placeholder {
+  color: #515152;
 }
 
 .bmi {
@@ -603,6 +611,7 @@ img {
   justify-content: center;
 }
 
+/* Checkbox label css */
 .checkbox-group label {
   display: flex;
   flex-direction: column; 
@@ -610,13 +619,38 @@ img {
   text-align: center; 
   gap: 5px;
   padding: 5px;
-  border: 2px;
-  border-style: dashed;
+  border: 2px dashed #a02121;
   border-radius: 20px;
-  border-color: rgb(129, 67, 67);
   width: 30%;
 }
 
+/* Checkboxes styling */
+
+.checkbox-group input[type="checkbox"] {
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  border: 2px solid #555;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+}
+
+.checkbox-group input[type="checkbox"]:checked {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+.checkbox-group input[type="checkbox"]:checked::after {
+  content: '✔';
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 
 .results-container {
   display: flex;
