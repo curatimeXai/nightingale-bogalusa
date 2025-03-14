@@ -7,14 +7,14 @@
         <h2>Enter Measurements</h2>
         <div class="scrollable-content">
           <form @submit.prevent="computeRisk">
-            <!-- Form questions with user inputs -->
+            <!-- Form questions with user inputs that includes limited value ranges -->
             <div class="input">
              <p>Enter your weight</p>
-             <input v-model.number="formData.Weight" type="number" placeholder="Weight (kg)*" @input="calculateBMI" min="30" max="220" required />
+             <input v-model.number="formData.Weight" type="number" placeholder="Weight ( 30 - 400 kg max)*" @input="calculateBMI" min="30" max="400" required />
             </div>
             <div class="input">
               <p>Enter your height</p>
-              <input v-model.number="formData.Height" type="number" placeholder="Height (cm)*" @input="calculateBMI" min="120" max="240" required />
+              <input v-model.number="formData.Height" type="number" placeholder="Height (90 - 240 cm max)*" @input="calculateBMI" min="90" max="240" required />
             </div>
             <div class="bmi">
               <p>Calculated BMI</p>
@@ -22,19 +22,19 @@
             </div>
             <div class="input">
               <p>How many drinks of alcohol do you consume per week?</p>
-              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week *" min="0" max="35" required />
+              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week (70 max)*" min="0" max="70" required />
             </div>
             <div class="input">
               <p>How many hours of sleep do you get per 24 hours?</p>
-              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" min="4" max="14" required />
+              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" min="0" max="24" required />
             </div>
             <div class="input">
               <p>How many minutes do you exercise per week?</p>
-              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week)*" min="0" max="2400" required />
+              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week, 3000 max)*" min="0" max="3000" required />
             </div>
             <div class="input">
               <p>How many fruits do you eat per day?</p>
-              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day)*" min="0" max="10" required />
+              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day, 20 max)*" min="0" max="20" required />
             </div>
 
           <!-- Gender Dropdown -->
@@ -273,15 +273,14 @@ export default {
         "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon: (this.result.shap_impact?.Sleep ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" },
         "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon: (this.result.shap_impact?.Exercise ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎" },
         "Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
-        "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
-        "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: (this.result.shap_impact?.Age ?? 0) === 0 ? "⚖️" : this.result.shap_impact.Age < 0 ? "👍" : "👎" },
+        // "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
+        // "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: (this.result.shap_impact?.Age ?? 0) === 0 ? "⚖️" : this.result.shap_impact.Age < 0 ? "👍" : "👎" },
         "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon: (this.result.shap_impact?.Smoking ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" },
         "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon: (this.result.shap_impact?.Diabetes ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" },
         "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎"},
         "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon: (this.result.shap_impact?.Stroke ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
       };
-    }
-    
+    } 
   },
   methods: {
     calculateBMI() {
@@ -297,10 +296,10 @@ export default {
       const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
       this.formData.Weight = randomBetween(30, 220);// Between 30kg-220kg
-      this.formData.Height = randomBetween(120, 240);// between 120cm -240cm
+      this.formData.Height = randomBetween(90, 240);// between 90cm -240cm
       this.calculateBMI();
       this.formData.Alcohol = randomBetween(0, 35);// max to 35 times per week
-      this.formData.Sleep = randomBetween(4, 14); // between 4h -14h per day
+      this.formData.Sleep = randomBetween(0, 24); // between 0 -24h per day
       this.formData.Exercise = randomBetween(0, 300); // between 0-300 minutes/weekly
       this.formData.Fruit = randomBetween(0, 5);// max to 5 times per days
       this.formData.Gender = randomChoice(["Male", "Female"]);
@@ -472,9 +471,7 @@ export default {
 };
 </script>
 
-
 <style scoped>
-
 /* Full Page Background */
 body, #app {
   background-color: #c53030; /* Red background */
@@ -606,7 +603,7 @@ img {
 }
 .checkbox-group {
   display: flex;
-  gap: 25px;
+  gap: 20px;
   flex-wrap: wrap;
   justify-content: center;
 }
@@ -830,5 +827,4 @@ button:hover {
   font-weight: bold; /* Bold text for key phrases */
   color: #dc3545; /* Red color for high-risk warnings */
 }
-
 </style>
