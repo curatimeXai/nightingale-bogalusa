@@ -149,3 +149,7 @@ npm run dev
 - Trained models are saved for future use (.pkl for SVM/XGBoost, .h5 for Keras)
 #### Step 5: Feature Importance Analysis
 - SHAP values and feature importance are computed for XGBoost to improve model interpretability
+## Deployment:
+#### Build and run the Docker container:
+- docker build -t xai-heart-disease-app .
+- docker run -p 5000:5000 xai-heart-disease-app
