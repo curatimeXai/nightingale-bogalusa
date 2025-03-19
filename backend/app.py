@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import pandas as pd
 import joblib
 import numpy as np
@@ -12,7 +12,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
-app = Flask(__name__)
+app = Flask(__name__,static_folder ="static")
 CORS(app, origins=["http://localhost:8080"])
 
 # Load trained models
@@ -23,8 +23,8 @@ scaler = joblib.load('models/scaler.pkl')
 
 @app.route('/')
 def home():
-    return "Welcome to the Heart Disease Prediction API!"
-
+    #return "Welcome to the Heart Disease Prediction API!"
+    return send_from_directory('static', 'index.html')
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
