@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 app = Flask(__name__,static_folder ="static")
-CORS(app, origins=["http://localhost:8080"])
+CORS(app, origins=["http://localhost:8080", "https://xai-heart-disease-app-206040473281.europe-north2.run.app"])
 
 # Load trained models
 svm_model = joblib.load('models/svm_model.pkl')
