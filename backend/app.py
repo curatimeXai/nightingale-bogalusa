@@ -11,9 +11,16 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__,static_folder ="static")
-CORS(app, origins=["http://localhost:8080", "https://xai-heart-disease-app-206040473281.europe-north2.run.app"])
+
+# Get API_URL from .env
+allowed_origins = ["http://localhost:8080", os.getenv("VITE_API_URL")]
+CORS(app, origins=allowed_origins)
 
 # Load trained models
 svm_model = joblib.load('models/svm_model.pkl')

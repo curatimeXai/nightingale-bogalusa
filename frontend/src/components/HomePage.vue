@@ -337,7 +337,7 @@ export default {
       };
 
       try {
-        const response = await axios.post('https://xai-heart-disease-app-206040473281.europe-north2.run.app/predict', apiData);
+        const response = await axios.post(import.meta.env.VITE_API_URL + '/predict', apiData);
         this.result = response.data;
         this.riskSummary = this.generateRiskSummary(response.data);
         console.log(this.formattedResults);
