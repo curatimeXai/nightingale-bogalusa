@@ -1,6 +1,8 @@
 
 <template>
+  <Disclaimer />
   <div id="app">
+  
     <div class="container">
       <!-- Sidebar for Input Fields -->
       <div class="sidebar">
@@ -477,6 +479,7 @@ body, #app {
   background-color: #c53030; /* Red background */
   height: 100vh;
   margin: 0;
+  padding-top: 40px;
   display: flex;
   justify-content: center;
   align-items: center;
