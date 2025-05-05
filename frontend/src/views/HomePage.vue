@@ -516,7 +516,7 @@ export default {
 <style scoped>
 /* Full Page Background */
 body, #app {
-  background-color: #c53030; /* Red background */
+  background-color: #c53030;
   height: 100vh;
   margin: 0;
   margin-top: 110px;
@@ -524,6 +524,18 @@ body, #app {
   display: flex;
   justify-content: center;
   align-items: center;
+  font-family: 'Roboto', sans-serif;
+  font-weight: 400;
+}
+
+/* Fonts */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Montserrat';
+  font-weight: 600;
+}
+
+input, textarea, button, label {
+  font-family: 'Roboto', sans-serif;
 }
 /* Container with Sidebar and Results */
 /* Layout Styles */
@@ -534,13 +546,12 @@ body, #app {
   /*max-width: 1400px;*/
   gap:20px;
   
-  
 }
 
 /* Sidebar (White Background) */
 .sidebar {
   width: 30vw;
-  background-color: white; /* White */
+  background-color: white;
   color: red;
   padding: 20px;
   overflow-y: auto;
@@ -601,7 +612,7 @@ body, #app {
 .results {
   flex-grow: 1;
   padding: 20px;
-  background-color: #ffffff; /* White */
+  background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
@@ -896,27 +907,27 @@ button:hover {
 }
 /* risk summary*/
 .risk-summary {
-  background-color: #e7f3fe; /* Light blue background for the summary */
-  border: 1px solid #bcdff1; /* Slightly darker border for emphasis */
-  border-radius: 5px; /* Rounded corners */
-  padding: 20px; /* Padding inside the box */
-  margin-top: 20px; /* Space above the summary */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  background-color: #e7f3fe; 
+  border: 1px solid #bcdff1;
+  border-radius: 5px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .risk-summary h3 {
-  color: #0d6efd; /* Blue color for the heading */
-  margin-bottom: 10px; /* Space below the heading */
+  color: #0d6efd;
+  margin-bottom: 10px;
 }
 
 .risk-summary p {
-  font-size: 16px; /* Font size for the text */
-  line-height: 1.5; /* Line height for better readability */
-  color: #212529; /* Dark text color */
+  font-size: 16px;
+  line-height: 1.5;
+  color: #212529;
 }
 
 .risk-summary .highlight {
-  font-weight: bold; /* Bold text for key phrases */
-  color: #dc3545; /* Red color for high-risk warnings */
+  font-weight: bold;
+  color: #dc3545;
 }
 </style>

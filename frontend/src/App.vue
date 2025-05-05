@@ -8,7 +8,7 @@
       <nav class="navbar">
         <div class="navbar-left">
         <router-link to="/">
-          <img src="https://nightingale.uni-mainz.de/images/logoHigh.svg" alt="Logo" class="logo" />
+          <img :src="logoJGU" alt="Logo" class="logo" />
         </router-link>
         </div>
         <div class="navbar-center">
@@ -24,6 +24,7 @@
 
 <script>
 import DisclaimerPopup from './components/DisclaimerPopup.vue'
+import logoJGU  from '@/assets/logoJGU.svg'
 
 export default {
   name: 'App',
@@ -32,7 +33,8 @@ export default {
   },
   data() {
     return {
-      showDisclaimer: true
+      showDisclaimer: true,
+      logoJGU
     }
   },
   created() {

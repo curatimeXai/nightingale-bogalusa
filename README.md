@@ -1,155 +1,164 @@
-# Heart Disease Prediction 
+![alt text](frontend/src/assets/logoJGU.svg)
+
+# Heart Disease Prediction
 
 This project consists of two main components:
-- **Backend (Flask API)**: It receives user input, processes it, and returns heart disease risk predictions using machine learning models (SVM, XGBoost, Keras).
-- **Frontend (Vue.js)**: A user interface that allows users to input their health data and displays the risk predictions and charts.
 
-## Prerequisites
+Backend (Flask API): It receives user input, processes it, and returns heart disease risk predictions using machine learning models (SVM, XGBoost, Keras).
+Frontend (Vue.js): A user interface that allows users to input their health data and displays the risk predictions and charts.
+<hr>
+
+## Table of content
+
+- [Heart Disease Prediction](#heart-disease-prediction)
+  - [Table of content](#table-of-content)
+  - [Tech Stack](#tech-stack)
+      - [Frontend (Client-Side)](#frontend-client-side)
+      - [Backend (Server-side)](#backend-server-side)
+      - [Hosting \& Deployment](#hosting--deployment)
+      - [Development Tools](#development-tools)
+  - [Getting Started](#getting-started)
+      - [Step 1: Set up Backend (Flask API)](#step-1-set-up-backend-flask-api)
+      - [Step 2: Set up Frontend (Vue.js)](#step-2-set-up-frontend-vuejs)
+      - [Deployment](#deployment)
+  - [Design section](#design-section)
+    - [Color Palette](#color-palette)
+  - [Functions](#functions)
+
+<hr>
+
+## Tech Stack
 
 Before running the project, ensure you have the following installed:
 
-- **Python 3.x** (for the backend)
-- **Node.js and npm** (for the frontend)
-- **Vue CLI** (for frontend development)
-- **Required Python libraries** (for backend)
+Python 3.x (for the backend)
+Node.js and npm (for the frontend)
+Vue CLI (for frontend development)
+Required Python libraries (for backend)
 
-## Setup Instructions
+#### Frontend (Client-Side)
 
-### Step 1: Set Up the Backend (Flask API)
+- HTML
+- CSS
+- JavaScript
+- **Frameworks/Libraries:**
+  - Express.js (Node.js)
+  - Vue
 
-1. Clone the repository:
+#### Backend (Server-side)
 
-   ```bash
-   git clone https://github.com/IvyAnalisa/XAI_heart_disease.git
+- **Languages**: Node.js (JavaScript), Python 3.x
+- **Frameworks:**: Flask
+
+- **APIs:** REST, GraphQL
+
+
+#### Hosting & Deployment
+
+- **Platforms:** Google Cloud Run (temporary)
+
+#### Development Tools
+
+- **Version Control:** Git + GitHub
+- **Package Managers:** npm, yarn
+- **Linters/Formatters:**
+
+## Getting Started
+
+#### Step 1: Set up Backend (Flask API)
+
+1. To begin, clone the repository to your local machine:
+
+            git clone https://github.com/curatimeXai/XAI-heart-disease.git
+    
+2. Set up and run a virtual environment for Python (optional but recommended):
+    
+            python3 -m venv venv
+            source venv/bin/activate
+            # On Windows use `venv\Scripts\activate`
+
+3. Navigate into the backend/ directory:
+
+        cd .\backend\
+
+4. Install the required Python packages:
+
+        pip install -r requirements.txt
+
+
+requirements.txt should include the following libraries:
+
+pandas
+scikit-learn
+shap
+joblib
+numpy
+Flask-CORS
+scikit-learn
+xgboost
+keras
+joblib
+numpy
+pandas
+matplotlib
+tensorflow
+seaborn
+
+5. Train AI model
+
+        python train_model.py
+
+6. Run Backend
+
+        python app.py
+
+#### Step 2: Set up Frontend (Vue.js)
+
+1. Navigate to the frontend/ directory:
+> **Note:** `cd ..` moves you up one directory level*
    
-
-2. Set up a virtual environment for Python (optional but recommended):
-
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   # On Windows use `venv\Scripts\activate`
-   ```
-
-3. Install the required Python packages:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-   **requirements.txt** should include the following libraries:
-   - Flask
-   - Flask-CORS
-   - scikit-learn
-   - xgboost
-   - keras
-   - joblib
-   - numpy
-   - pandas
-   - matplotlib
-
-4. Place the trained models (`svm_model.pkl`, `xgb_model.pkl`, `keras_model.h5`, `scaler.pkl`) in the `models/` folder.
-   
-6. Run the Flask application:
-
-   ```bash
-   python app.py
-   ```
-run python train_model.py
-   The Flask API will be running on `http://localhost:5000`.
-
-### Step 2: Set Up the Frontend (Vue.js)
-
-1. Navigate to the `frontend/` folder:
-
-   ```bash
-   cd frontend
-   ```
+        cd frontend
 
 2. Install the required dependencies:
+   
+        npm install
 
-   ```bash
-   npm install
-   ```
-   npm install chart.js (for displaying chart on frontend)
+3. Run Frontend
+   
+        npm run serve
 
-3. Run the Vue.js development server:
 
-   ```bash
-   npm run serve
-   ```
+#### Deployment
+For deployment we run a dockerfile where the docker image contains both backend and frontend.
+Make sure you have Docker installed and run Docker Desktop if needed.
 
-   The frontend will be available at `http://localhost:8080`.
+Build and run the Docker container with the following commands:
+    
+        docker build -t xai-heart-disease-app .
+        docker run -p 5000:5000 xai-heart-disease-app
 
-### Step 3: Using the Application
+[Back to top](#table-of-content)
 
-1. Open your browser and go to `http://localhost:8080`.
-2. Enter the required health data in the "Enter Measurements" section.
-3. Submit the form, and the backend will predict the risk percentages for heart disease using the models (SVM, XGBoost, Keras).
-4. The frontend will display:
-   - Pie charts showing predictions for each model.
-   - A text summary of the predicted risk percentages from each model.
+<hr>
 
-### Step 4: Testing the API (Optional)
+## Design section
 
-To test the backend independently, you can use any API testing tool like Postman, or use `curl`:
+We decided to follow the Nightingale projects theme usins red colors for alot of the backgrounds and text. Both green and red colors are used to clarify whether the results are positive or negative.
 
-```bash
-curl -X POST http://localhost:5000/predict -H "Content-Type: application/json" -d '{
-  "Gender": "Male",
-  "AgeCategory": "40-44",
-  "Weight": 70,
-  "Height": 175,
-  "Smoking": "Sometimes",
-  "Alcohol": 2,
-  "Sleep": 8,
-  "Exercise": 150,
-  "Fruit": 2,
-  "Diabetes": false,
-  "Kidney": false,
-  "Stroke": false
-}'
-```
+The fonts used are Montserrat for headings and Roboto for text.
 
-This will return the risk predictions and the corresponding pie chart images.
+### Color Palette
 
-Added original frontend folder as frontend_copy. To run locate to folder:
-```bash
-cd frontend_copy
 
-npm install
+| Color | Colorcode    | Usage   | Location               |
+| ----- | ------------ | ------- | ---------------------- |
+| Red (variants)   | #c53030, #a02121, #dc3545, #f8d4d4, #FF0000, #ffa2a2 | Background, Text, Input | [HomePage.vue](./frontend/src/views/HomePage.vue) |
+| Green (variants) | #008000, #d4f8d4, #4CAF50 | Background, Text | [HomePage.vue](./frontend/src/views/HomePage.vue) |
+| Blue (variants) | #0d6efd, #bcdff1, #e7f3fe, #007bff | Risk summary background | [HomePage.vue](./frontend/src/views/HomePage.vue) |
+| Grey (variants) | #333333, #414141, #515152 | Background, Placeholder | [HomePage.vue](./frontend/src/views/HomePage.vue) |
 
-// npm audit fix , if necessary
+<hr>
 
-npm run dev
-```
-## Training Model Overview:
-### Trained Models:
-#### Support Vector Machine (SVM)
-- A powerful classification model that finds the optimal hyperplane for separating classes.
-- Trained with probability estimation enabled for confidence scoring.
-#### XGBoost Classifier
-- A gradient boosting model optimized for structured data.
-- Uses log loss as the evaluation metric to improve classification accuracy.
-#### Keras Deep Learning Model
-- A neural network with two hidden layers:
-   64 neurons (ReLU activation)
-   32 neurons (ReLU activation)
-- Final output layer uses sigmoid activation for binary classification (Heart Disease: Yes/No).
-### Training Pipeline:
-#### Step 1: Data Preprocessing
-- Handling missing values
-- Encoding categorical features
-- Scaling numeric features
-#### Step 2: Train-Test Split
-- Splitting dataset into 80% training / 20% testing
-#### Step 3: Model Training
-- Each model is trained on scaled data
-#### Step 4: Model Saving
-- Trained models are saved for future use (.pkl for SVM/XGBoost, .h5 for Keras)
-#### Step 5: Feature Importance Analysis
-- SHAP values and feature importance are computed for XGBoost to improve model interpretability
-## Deployment:
-#### Build and run the Docker container:
-- docker build -t xai-heart-disease-app .
-- docker run -p 5000:5000 xai-heart-disease-app
+## Functions
+
+[Back to top](#table-of-content)
