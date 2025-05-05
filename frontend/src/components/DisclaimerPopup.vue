@@ -6,14 +6,14 @@
         This application uses AI models to assess the risk of heart disease based on entered lifestyle habits.
         The result is only an estimate and not a medical diagnosis. 
         <br><br>
-        Always seek the advice of your doctor or other qualified 
+        <strong>Always seek the advice of your doctor or other qualified 
         health provider with any questions you may have regarding a medical treatment.
-        
+        </strong> 
         <br><br>
         The AI model is trained based on a dataset from
         The USA which could have an impact on the results you recieve.
         <br><br>
-        No personal information is stored from your inputs. 
+        No personal information is stored nor saved from your inputs or results.
       </p>
 
       <div class="form-check mt-3">

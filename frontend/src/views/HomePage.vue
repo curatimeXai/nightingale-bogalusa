@@ -11,31 +11,66 @@
           <form @submit.prevent="computeRisk">
             <!-- Form questions with user inputs that includes limited value ranges -->
             <div class="input">
-             <p>Enter your weight</p>
-             <input v-model.number="formData.Weight" type="number" placeholder="Weight ( 30 - 400 kg max)*" @input="calculateBMI" min="30" max="400" required />
+             <p>Enter your weight
+               <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Your weight in kilograms (used to calculate BMI). Acceptable inputs limited between 30 - 400</span>
+                </span>
+              </p>
+              <input v-model.number="formData.Weight" type="number" placeholder="Weight ( 30 - 400 kg max)*" @input="calculateBMI" min="30" max="400" required />
             </div>
             <div class="input">
-              <p>Enter your height</p>
+              <p>Enter your height
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Your height in centimeters (used to calculate BMI). Acceptable inputs limited between 90 - 240</span>
+                </span>
+              </p>
               <input v-model.number="formData.Height" type="number" placeholder="Height (90 - 240 cm max)*" @input="calculateBMI" min="90" max="240" required />
             </div>
             <div class="bmi">
-              <p>Calculated BMI</p>
+              <p>Calculated BMI
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">This displays BMI based on what height and weight you entered. NOTE: BMI can not differentiate between bodyfat and muscle mass</span>
+                </span>
+              </p>
               <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
             </div>
             <div class="input">
-              <p>How many drinks of alcohol do you consume per week?</p>
-              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week (70 max)*" min="0" max="70" required />
+              <p>How many drinks of alcohol do you consume per week?
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Average amount of units of alcohol you consume in a week. Max limit set at 70</span>
+                </span>
+              </p>
+              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week (70 max)*" type="number" min="0" max="70" required />
             </div>
             <div class="input">
-              <p>How many hours of sleep do you get per 24 hours?</p>
+              <p>How many hours of sleep do you get per 24 hours?
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Average amount of hours you sleep in a day</span>
+                </span>
+              </p>
               <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" min="0" max="24" required />
             </div>
             <div class="input">
-              <p>How many minutes do you exercise per week?</p>
+              <p>How many minutes do you exercise per week?
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Amount of minutes you exercise on an average week including activities like cycling, hiking, walking etc. Max limit set att 3000 (50 hours)</span>
+                </span>
+              </p>
               <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week, 3000 max)*" min="0" max="3000" required />
             </div>
             <div class="input">
-              <p>How many fruits do you eat per day?</p>
+              <p>How many fruits do you eat per day?
+                <span class="tooltip-wrapper">
+                 <span class="tooltip-icon">?</span>
+                 <span class="tooltip-text">Amount of fruits you eat on average everyday. Max limit set at 20</span>
+                </span>
+              </p>
               <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day, 20 max)*" min="0" max="20" required />
             </div>
 
@@ -75,7 +110,12 @@
             </select>
 
             
-            <h3>Check any that apply:</h3>
+            <h3>Check any that apply:  
+              <span class="tooltip-wrapper">
+                <span class="tooltip-icon">?</span>
+                <span class="tooltip-text">Check one or multiple boxes if you have experienced any of these</span>
+              </span>
+            </h3>
             <div class="checkbox-group">
               <label>Diabetes<input type="checkbox" v-model="formData.Diabetes" /></label>
               <label>Kidney Disease<input type="checkbox" v-model="formData.Kidney" /></label>
@@ -479,6 +519,7 @@ body, #app {
   background-color: #c53030; /* Red background */
   height: 100vh;
   margin: 0;
+  margin-top: 110px;
   padding-top: 40px;
   display: flex;
   justify-content: center;
@@ -508,8 +549,54 @@ body, #app {
   border-color: red;
   margin-left: 20px;
   margin-top:20px;
-  
 }
+
+/* Tooltip CSS in sidebar*/
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px;
+}
+
+.tooltip-icon {
+  background-color: #333;
+  color: #fff;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: rgba(0,0,0,0.95);
+  color: #fff;
+  text-align: left;
+  border-radius: 6px;
+  padding: 12px 10px;
+  min-height: 40px;
+  box-sizing: border-box;
+  position: absolute;
+  z-index: 10;
+  top: 200%;
+  right: 0;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  white-space: normal;
+}
+
+.tooltip-wrapper:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}
+
+
 /* Results Section (White Background) */
 .results {
   flex-grow: 1;
@@ -735,8 +822,10 @@ img {
 /* Scrollable Content */
 .scrollable-content {
   max-height: 80vh;
-  overflow-y: auto;
+  overflow-y: visible;
+  position: relative;
   padding-right: 10px;
+  z-index: 1;
 }
 
 /* Scrollbar Styling */

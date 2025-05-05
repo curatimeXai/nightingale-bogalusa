@@ -1,19 +1,23 @@
 <template>
 <!-- <Home msg="Welcome to Your Vue.js App" /> -->
     <div id="app">
+    <router-view />
     <DisclaimerPopup v-if="showDisclaimer" @accepted="handleAccepted" />
 
     <div v-else>
       <nav class="navbar">
         <div class="navbar-left">
-        <img src="https://nightingale.uni-mainz.de/images/logoHigh.svg" alt="Logo" class="logo" />
+        <router-link to="/">
+          <img src="https://nightingale.uni-mainz.de/images/logoHigh.svg" alt="Logo" class="logo" />
+        </router-link>
+        </div>
+        <div class="navbar-center">
+          <router-link to="/" class="nav-link">Home</router-link>
         </div>
         <div class="navbar-right">
-          <router-link to="/" class="nav-link">Home</router-link>
           <router-link to="/info" class="nav-link">About Service</router-link>
         </div>
       </nav>
-      <router-view />
     </div>
   </div>
 </template>
@@ -70,29 +74,35 @@ export default {
   align-items: center;
   padding: 0 1.5rem;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  border-bottom: 4px solid red;
   z-index: 1000;
 }
 
-.navbar-left {
+.navbar-left, .navbar-center, .navbar-right {
+  flex: 1;
   display: flex;
   align-items: center;
+}
+
+.navbar-center {
+  justify-content: center;
+}
+
+.navbar-right {
+  justify-content: flex-end;
+  margin-right: 3%;
 }
 
 .logo {
   height: 70px;
 }
 
-.navbar-right {
-  display: flex;
-  justify-content: center; /* This will center the nav links horizontally */
-  flex: 1; /* This makes the navbar-right container take up the available space */
-  gap: 1rem;
-}
-
 .nav-link {
   text-decoration: none;
   color: #333;
   font-weight: bold;
+  font-size: 26px;
+  padding: 0 10px;
 }
 
 .nav-link:hover {
