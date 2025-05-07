@@ -12,7 +12,7 @@
         </router-link>
         </div>
         <div class="navbar-center">
-          <router-link to="/" class="nav-link">Home</router-link>
+          <router-link to="/" class="nav-link">Heart Disease Prediction App</router-link>
         </div>
         <div class="navbar-right">
           <router-link to="/info" class="nav-link">About Service</router-link>

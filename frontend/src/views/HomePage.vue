@@ -6,7 +6,7 @@
     <div class="container">
       <!-- Sidebar for Input Fields -->
       <div class="sidebar">
-        <h2>Enter Measurements</h2>
+        <h2>Enter Your Health & Lifestyle Information</h2>
         <div class="scrollable-content">
           <form @submit.prevent="computeRisk">
             <!-- Form questions with user inputs that includes limited value ranges -->
@@ -130,26 +130,29 @@
 
      
       <div class="results">
-        <h2>Prediction Results</h2>
+        <h2>Heart Disease Risk Prediction Results</h2>
+        <p>Based on your health data, here's how your lifestyle factors contribute to your risk</p>
         <div class="scrollable-content">
           <div v-if="result">
             <div class="results-container">
              <div v-for="(value, key) in formattedResults" :key="key" class="result-card" :class="{
-              'card-negative': value.percentage > 0,
-              'card-positive': value.percentage < 0,
-              'card-neutral': value.percentage === 0
+              'card-negative': value.forceRed ,
+              'card-positive': !value.forceRed 
+              //'card-neutral': !value.forceRed && !value.forcedRed && value.percentage === 0
              }">
               <div class="icon-up">
-                <i v-if="value.percentage > 0" class="bi bi-hand-thumbs-down-fill negative-icon"></i>
-                <i v-else-if="value.percentage === 0" class="bi bi-slash-circle neutral-icon"></i>
+                <i v-if="value.forceRed " class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+               <!-- <i v-else-if="value.percentage === 0" class="bi bi-slash-circle neutral-icon"></i>-->
                 <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>  
               </div>
+             
                 <div class="result-content">
                   <strong>{{ key }}</strong>: {{ value.text }}
                   <div :class="{
-                        'negative': value.percentage > 0, 
-                        'positive': value.percentage < 0, 
-                        'neutral': value.percentage === 0
+                        'negative': value.forceRed ,
+                        'positive': !value.forceRed  ,
+                       // 'positive': !value.forceRed && !value.forcedRed && value.percentage < 0,
+                       // 'neutral': !value.forceRed && !value.forcedRed && value.percentage === 0
                       }">
                     {{ value.percentage.toFixed(2) }}%
                   </div>
@@ -158,11 +161,18 @@
           </div>
 
          <div class="results-container">
-            <h3>Feature Impact</h3>
+            <h3>Explaining Heart Disease Predictions Through Feature Importance</h3>
             <table class="impact-table">
               <thead>
                 <tr>
                   <th>Feature</th>
+                  <th>
+                   
+                    <span class="tooltip-wrapper"> WHO Recommendation / Guidance 
+                    <span class="tooltip-icon">*</span>
+                    <span class="tooltip-text">These are benchmarks recommended by the World Health Organization (WHO) for a healthy lifestyle.</span>
+                    </span>
+                  </th>
                   <th>Value</th>
                   <th>Impact (%)</th>
                   <th>Effect</th>
@@ -171,23 +181,31 @@
               <tbody>
                 <tr v-for="(value, key) in formattedResults" :key="key">
                   <td><strong>{{ key }}</strong></td>
+                  <td>{{ getGuideline (key)  }}</td>
                   <td>{{ value.text }}</td>
                   <td>{{ value.percentage.toFixed(2) }}%</td>
-                  
+                  <!--
                   <td :style="{ 
                     color: value.forceRed 
                       ? 'red' 
-                      : value.percentage === 0 
-                        ? 'black' 
-                        : value.percentage < 0 
+                     // : value.percentage === 0 
+                     //   ? 'black' 
+                        : value.percentage <= 0 
                           ? 'green' 
                           : 'red',
                     fontWeight: 'bold' 
                   }">
                   {{ value.icon }} 
                   {{ value.percentage === 0 ? 'Neutral' : (value.forceRed || value.percentage > 0 ? 'Negative' : 'Positive') }}
-                 </td>
-
+                 {{  value.forceRed ? 'Negative':'Positive'}}
+                </td>-->
+                                <td :style="{
+                  color: value.forceRed ? 'red' : 'green',
+                  fontWeight: 'bold'
+                }">
+                  {{ value.icon }} 
+                  {{ value.forceRed ? 'Negative' : 'Positive' }}
+                </td>
                 </tr>
               </tbody>
             </table>
@@ -295,6 +313,18 @@ export default {
         Kidney: false,
         Stroke: false
       },
+      whoGuidelines: {
+      BMI: "18.5 – 24.9 kg/m² is considered healthy. Over 25 is overweight; over 30 is obese.",
+      Alcohol: "Limit to ≤2 standard drinks/day for men, ≤1 for women. Avoid binge drinking.",
+      Sleep: "7–9 hours of sleep per night for adults recommended .",
+      Exercise: " At least 150 min of moderate  activity/week.",
+      Fruit: "At least 400grams or 5 servings /day",
+      Smoking:"No level of smoking is safe",
+      Diabetes:" Maintain a healthy diet, regular physical activity, and a healthy weight to prevent type 2 diabetes",
+      Kidney:"Manage blood pressure and blood sugar to prevent kidney disease. Avoid smoking and excessive alcohol.",
+      Stroke:"Manage blood pressure, reduce cholesterol, and avoid smoking to lower stroke risk.",
+      
+    },
       result: null,
       chart: null,
       riskSummary: ''
@@ -310,21 +340,48 @@ export default {
       return {
        // "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎"},
        // "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
-        "BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon: (this.result.shap_impact?. BMI ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎" },
-        "Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon: (this.result.shap_impact?.Alcohol ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎"},
-        "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon: (this.result.shap_impact?.Sleep ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" },
-        "Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon: (this.result.shap_impact?.Exercise ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎" },
-        "Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
-        // "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
+        //"BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon:  (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },
+       "BMI (normal between 18.5 - 24.9)": {  text: this.formData.BMI,  percentage: this.result.shap_impact?.BMI ?? 0,  icon: this.formData.BMI < 18.5 ? "👎" : (this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎"),  forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },     
+        //"Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Alcohol > 7},
+        "Alcohol (drinks/week)": {text: this.formData.Alcohol,  percentage: this.result.shap_impact?.Alcohol ?? 0,  icon: this.formData.Alcohol <= 3 ? "👍": "👎", forceRed: this.formData.Alcohol > 4 },    
+       // "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon:  (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" ,forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 9)},
+        "Sleep (hours/day)": {  text: this.formData.Sleep,  percentage: this.result.shap_impact?.Sleep ?? 0,  icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍":"👎" , forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)},
+       //"Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon:  (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Exercise <= 150 },
+       "Exercise (min/week)": {   text: this.formData.Exercise,  percentage: this.result.shap_impact?.Exercise ?? 0,  icon: this.formData.Exercise > 150 ? "👍" : "👎",  forceRed: this.formData.Exercise <= 150 },
+       //"Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
+       "Fruit Intake (servings/day)": {  text: this.formData.Fruit,  percentage: this.result.shap_impact?.Fruit ?? 0,  icon: this.formData.Fruit >= 5 ? "👍" : "👎", forceRed: this.formData.Fruit < 5},
+       // "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
         // "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: (this.result.shap_impact?.Age ?? 0) === 0 ? "⚖️" : this.result.shap_impact.Age < 0 ? "👍" : "👎" },
-        "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon: (this.result.shap_impact?.Smoking ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" },
-        "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon: (this.result.shap_impact?.Diabetes ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" },
-        "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎"},
-        "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon: (this.result.shap_impact?.Stroke ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
+       // "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon:  (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" ,forceRed: this.formData.Smoking === 'Everyday'},
+       // "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon:  (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" ,forcedRed:true},
+       // "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎",forcedRed:true},
+       // "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon:  (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
+        "Smoking": {   text: this.formData.Smoking ,   percentage: this.result.shap_impact?.Smoking ?? 0,  icon: this.formData.Smoking === 'Not at all' ? "👍" :  "👎" ,forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes'},
+
+        "Diabetes": {  text: this.formData.Diabetes ? "Yes" : "No",  percentage: this.result.shap_impact?.Diabetes ?? 0,  icon: this.formData.Diabetes ? "👎" : "👍",  forceRed: this.formData.Diabetes ? true : false },
+        "Kidney Disease": {  text: this.formData.Kidney ? "Yes" : "No",  percentage: this.result.shap_impact?.Kidney ?? 0,  icon: this.formData.Kidney ? "👎" : "👍",  forceRed: this.formData.Kidney ? true : false },
+        "Stroke": {   text: this.formData.Stroke ? "Yes" : "No",  percentage: this.result.shap_impact?.Stroke ?? 0,  icon: this.formData.Stroke ? "👎" : "👍",  forceRed: this.formData.Stroke ? true : false}
+
+      
+
       };
     } 
   },
   methods: {
+    getGuideline(key) {
+    const map = {
+      "BMI (normal between 18.5 - 24.9)": "BMI",
+      "Alcohol (drinks/week)": "Alcohol",
+      "Sleep (hours/day)": "Sleep",
+      "Exercise (min/week)": "Exercise",
+      "Fruit Intake (servings/day)": "Fruit",
+      "Smoking": "Smoking",
+      "Diabetes": "Diabetes",
+      "Kidney Disease": "Kidney",
+      "Stroke": "Stroke"
+    };
+    return this.whoGuidelines[map[key]] || "—";
+  },
     calculateBMI() {
       if (this.formData.Weight && this.formData.Height) {
         const heightInMeters = this.formData.Height / 100;
@@ -406,13 +463,13 @@ export default {
     isPositiveResult(key, value) {
       switch(key) {
         case 'BMI':
-          return value <= 18.5 || value >= 24.9;
+          return value <= 18.5 && value >= 24.9;
         case 'Alcohol (drinks/week)':
-          return value <= 2;
+          return value <= 3  && value == 0;
         case 'Sleep (hours/day)':
-          return value >= 6 && value <= 11;
+          return value >= 6 && value <= 10;
         case 'Smoking':
-          return value === 'No';
+          return value === 'Not at all';
         case 'Diabetes':
           return value === 'No';
         case 'Kidney Disease':
@@ -420,7 +477,9 @@ export default {
         case 'Stroke':
           return value === 'No';
         case 'Exercise (min/week)':
-          return value >= 60 && value <= 300;
+          return value >150;
+        case 'Fruit Intake (servings/day)':
+          return value >= 5  ;
         default:
           return false;
       }
@@ -532,8 +591,14 @@ body, #app {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Montserrat';
   font-weight: 600;
+  color :	#c53030;
+ 
 }
-
+h1,h2 {
+  font-family: 'Montserrat';
+  font-size: larger;
+  color :	#c53030;
+}
 input, textarea, button, label {
   font-family: 'Roboto', sans-serif;
 }
