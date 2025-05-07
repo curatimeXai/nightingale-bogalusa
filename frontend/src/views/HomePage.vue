@@ -436,7 +436,7 @@ export default {
       };
 
       try {
-        const response = await axios.post('http://localhost:5000/predict', apiData);
+        const response = await axios.post('https://bogalusa.nightingale.uni-mainz.de/predict', apiData);
         this.result = response.data;
         this.riskSummary = this.generateRiskSummary(response.data);
         console.log(this.formattedResults);
