@@ -1018,6 +1018,7 @@ button:hover {
   font-weight: bold;
   color: #dc3545;
 }
+
 .shap-section {
   background-color: #f9f9fc;
   border: 1px solid #dcdde1;
@@ -1056,3 +1057,4 @@ button:hover {
 }
 
 </style>
+
