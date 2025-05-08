@@ -50,6 +50,9 @@ def predict():
             'Stroke': int(data['Stroke'])# Convert stroke history (0/1)
         }
         print("Processed input data:", input_data)
+        print("Diabetes:", data['Diabetes'])  # Check raw input
+        print("Processed Diabetes:", input_data['Diabetes'])  # After conversion
+
 
         # Convert dictionary into a Pandas DataFrame for model compatibility
         df_input = pd.DataFrame([input_data])
@@ -90,7 +93,8 @@ def predict():
         # Return JSON response with predictions, labels, charts, and SHAP values
         return jsonify({
            "shap_impact": shap_explanation["feature_impact"], 
-            "shap_plot": shap_explanation["shap_plot"],
+            "shap_plot": shap_explanation["shap_plot"],  
+            "shap_summary_text": shap_explanation["shap_summary_text"],          
             "svm_prediction": float(svm_pred),  # Explicit conversion to float
             "xgb_prediction": float(xgb_pred),  # Explicit conversion to float
             "keras_prediction": float(keras_pred),  # Explicit conversion to float
@@ -146,28 +150,74 @@ def create_pie_chart(probability, title):
     img_base64 = base64.b64encode(buf.read()).decode('utf-8') 
     
     return img_base64
+def summarize_shap_impact(feature_impact, top_n=3, exclude=["Age", "Gender"]):
+    """
+    Generate a summary sentence for the top features contributing to prediction.
+
+    Args:
+    - feature_impact (dict): feature -> SHAP value
+    - top_n (int): number of top features to include
+    - exclude (list): features to skip in the summary
+
+    Returns:
+    - summary_text (str): readable explanation
+    """
+    # Remove excluded features and sort by absolute impact
+    filtered = {k: v for k, v in feature_impact.items() if k not in exclude}
+    top_features = sorted(filtered.items(), key=lambda item: abs(item[1]), reverse=True)[:top_n]
+
+    readable_names = [f.replace("_", " ").capitalize() for f, _ in top_features]
+
+    if not readable_names:
+        return "No strong influencing factors were identified in your prediction."
+
+    return f"This result is mostly influenced by {', '.join(readable_names[:-1])}" + \
+           (f", and {readable_names[-1]}." if len(readable_names) > 1 else f"{readable_names[0]}.")
+
 def get_shap_explanation(input_scaled):
     """Get SHAP explanation for the input data"""
     # Use the TreeExplainer for XGBoost model
     explainer = shap.TreeExplainer(xgb_model)
     shap_values = explainer.shap_values(input_scaled)
-
+    
     # Calculate feature impact for the first instance
     individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
-    feature_impact = {scaler.feature_names_in_[i]: individual_shap_values[i] for i in range(len(scaler.feature_names_in_))}
+    feature_names = scaler.feature_names_in_
+    feature_impact = {feature_names[i]: float(individual_shap_values[i]) for i in range(len(feature_names))}
+    shap_summary_text = summarize_shap_impact(feature_impact)
+    # feature_impact = {scaler.feature_names_in_[i]: individual_shap_values[i] for i in range(len(scaler.feature_names_in_))}
     # Convert feature_impact values to native Python float
-    feature_impact = {k: float(v) for k, v in feature_impact.items()}
+    #feature_impact = {k: float(v) for k, v in feature_impact.items()}
     # Generate SHAP summary plot
-    plt.figure()
-    shap.summary_plot(shap_values, input_scaled, feature_names=scaler.feature_names_in_,show=False)
+    #plt.figure()
+   # shap.summary_plot(shap_values, input_scaled, feature_names=scaler.feature_names_in_,show=False)
+    # --- Filter out "Age" and "Gender" ---
+    filtered_features = [f for f in feature_impact if f not in ['Age', 'Gender']]
+    filtered_values = [feature_impact[f] for f in filtered_features]
+
+    colors = ['green' if val < 0 else 'red' for val in filtered_values]
+    # --- Create SHAP Bar Chart (Horizontal) ---
+    plt.figure(figsize=(10, 6))
+   # features = list(feature_impact.keys())
+   # values = list(feature_impact.values())
+   # colors = ['green' if val < 0 else 'red' for val in values]
     
+    bars = plt.barh(filtered_features, filtered_values, color=colors)
+    plt.xlabel("SHAP Value (Impact on Model Output)")
+    plt.title("SHAP Impact for Individual Prediction")
+    plt.axvline(x=0, color='black', linestyle='--')
+    plt.gca().invert_yaxis()  # Highest impact on top
+
+    for bar, val in zip(bars, filtered_values):
+        plt.text(val + 0.05 if val >= 0 else val - 0.4, bar.get_y() + bar.get_height() / 2,
+                 f"{val:.2f}", va='center', ha='left' if val >= 0 else 'right', color='black')
     # Save to buffer and encode for frontend use
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
     buf.seek(0)
     shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
     print(f"SHAP plot base64 length: {len(shap_plot_base64)}") 
-    return {"feature_impact": feature_impact, "shap_plot": shap_plot_base64}
+    return {"feature_impact": feature_impact, "shap_plot": shap_plot_base64,"shap_summary_text": shap_summary_text}
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -210,17 +210,37 @@
               </tbody>
             </table>
           </div>
-          <!-- SHAP Feature Importance Plot -->
-          <!-- 
+
+          <div v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
+            <h3>What Affected Your Results Most</h3>
+
+            <div v-if="isValidBase64(result.shap_plot)">
+              <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
+            </div>
+
+            <div v-if="shap_summary_text">
+              <h4>Main Risk Factors Identified</h4>
+              <p>{{ shap_summary_text }}</p>
+            </div>
+          </div>
+
+          <!-- SHAP Feature Importance Plot 
+         
           <div v-if="isValidBase64(result.shap_plot)">
                 <h3>SHAP Feature Importance</h3>
-                <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Plot" />
-              </div>
-              
+                <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
+                
+          </div>
+          
+          <div v-if="shap_summary_text">
+            <h4>Summary of Risk Factors</h4>
+            <p>{{ shap_summary_text }}</p>
+          </div>-->
+              <!--
               <div class="p-6">
                 <canvas ref="barChart" style="height: 400px;"></canvas>
               </div>
-              
+                
               <div class="chart-container">
                 <div v-if="isValidBase64(result.svm_pie_chart)">
                   <h3>SVM Prediction</h3>
@@ -249,7 +269,7 @@
               <p>{{ riskSummary }}</p>
             </div>
           -->
-            <!-- Risk Prediction Summary Section -->
+            <!-- Risk Prediction Summary Section
             <div class="risk-summary">
               <h3>🩺 Risk Prediction Summary</h3>
               <h4>🔍 SHAP Feature Importance</h4>
@@ -278,7 +298,7 @@
                 <p>⚖️ Balanced approach between sensitivity and specificity.</p>
               </div>
             </div>
-
+               -->
 
           </div>
         </div>
@@ -327,7 +347,8 @@ export default {
     },
       result: null,
       chart: null,
-      riskSummary: ''
+      riskSummary: '',
+      shap_summary_text:'',
     };
   },
   computed: {
@@ -439,6 +460,8 @@ export default {
         const response = await axios.post('http://localhost:5000/predict', apiData);
         this.result = response.data;
         this.riskSummary = this.generateRiskSummary(response.data);
+        this.shap_summary_text =response.data.shap_summary_text;
+        console.log("SHAP Summary:",response.data.shap_summary_text);
         console.log(this.formattedResults);
         // Debugging - Check if SHAP data is coming correctly
         console.log("SHAP Impact:", response.data.shap_impact);
@@ -995,4 +1018,41 @@ button:hover {
   font-weight: bold;
   color: #dc3545;
 }
+.shap-section {
+  background-color: #f9f9fc;
+  border: 1px solid #dcdde1;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.shap-section h3 {
+  color: green;
+  font: size 30px;;
+  margin-bottom: 16px;
+}
+
+.shap-section h4 {
+  color: green;
+  font-size: large;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.shap-section p {
+  color: red;
+  font-size: 30px;
+  line-height: 1.6;
+}
+
+.shap-section img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #e1e1e1;
+}
+
 </style>
