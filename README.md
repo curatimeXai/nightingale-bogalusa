@@ -193,14 +193,17 @@ The layers of the neural network consist of fully connected neurons that process
 **a) Creating the SHAP explainer:**
 - For the **XGBoost model** ,'shap.TreeExplainer'  was used to leverage the efficiency and accuracy of tree-based models.
 - For the **neural network model (Keras)**, 'shap.Explainer' was used in combination with keras.models.load_model to generate SHAP values based on the model's structure and weights.
+  
 **b) Generating SHAP values:**
 - When a user submits data to /predict, the input is converted into a DataFrame and normalized.
 - SHAP values are then calculated for that specific observation — meaning the model explains how much each individual factor influenced the result, either positively or negatively.
+  
 **c) Visualization of SHAP Results:**
 - Two types of charts are generated to illustrate the impact:
   + A bar chart showing SHAP values for the most influential features.
   + A pie chart illustrating the proportion of influence from different features.
 - These charts are generated in the backend using matplotlib and shap.plots, saved as PNGs in memory, converted to Base64 strings, and sent to the frontend as part of the JSON response.
+  
  **d) Text-Based Summary:**
 SHAP values are also used to generate a textual explanation that summarizes which factors had the greatest impact on the decision.
 
