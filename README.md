@@ -142,6 +142,7 @@ Build and run the Docker container with the following commands:
 
 <hr>
 ## Training Model Overview
+
 ### Trained Models:
 #### Support Vector Machine (SVM)
 - A powerful classification model that finds the optimal hyperplane for separating classes.
