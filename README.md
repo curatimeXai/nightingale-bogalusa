@@ -141,20 +141,40 @@ Build and run the Docker container with the following commands:
 [Back to top](#table-of-content)
 
 <hr>
+
 ## Training Model Overview
 
 ### Trained Models:
 #### Support Vector Machine (SVM)
-- A powerful classification model that finds the optimal hyperplane for separating classes.
-- Trained with probability estimation enabled for confidence scoring.
+##### Training and Parameters:
+- Kernel: RBF (Radial Basis Function) was chosen because preliminary tests showed that the data was not linearly separable.
+- C (Regularization parameter): Set to 1.0 to balance between bias and variance.
+- Gamma: Set to 'scale', which means the value is adjusted based on the standard deviation of the variables.
+- Scaler: StandardScaler was used before training to ensure the SVM performs optimally
+SVM maps the input data into a higher-dimensional space and finds a hyperplane that maximizes the margin between the two classes (presence or absence of heart disease). The model is trained to predict class labels, and the setting probability=True allows it to estimate class probabilities, which contributes to the final outcome.  
 #### XGBoost Classifier
 - A gradient boosting model optimized for structured data.
 - Uses log loss as the evaluation metric to improve classification accuracy.
+##### Training and Parameters:
+- n_estimators: 100 – the number of trees built in the model.
+- max_depth: 4 – limited the depth of the trees to reduce the risk of overfitting.
+- learning_rate: 0.1 – to make the training more stable.
+- subsample: 0.8 – to prevent overfitting by training on only a subset of the data.
+- random_state: 42 – used to ensure the results can be reproduced.
+XGBoost uses an ensemble method where each tree improves the predictions made by the previous one. The model assigns importance scores to features, helping us understand how each feature contributes to decision-making. In this app, XGBoost predicts the probability of heart disease based on patterns learned during training.
+
 #### Keras Deep Learning Model
-- A neural network with two hidden layers:
-   64 neurons (ReLU activation)
-   32 neurons (ReLU activation)
-- Final output layer uses sigmoid activation for binary classification (Heart Disease: Yes/No).
+##### Model Architecture:
+- Input Layer: Number of nodes corresponds to the number of features (approximately 12)
+- Hidden Layers: Two layers with 32 and 16 neurons respectively, using ReLU activation function
+- Dropout: 0.2 after each layer to reduce overfitting
+- Output Layer: 1 neuron with sigmoid activation (since this is binary classification)
+##### Training and Parameters:
+- Loss function: binary_crossentropy
+- Optimizer: Adam with a learning rate of 0.001
+- Epochs: 50
+- Batch size: 32
+The layers of the neural network consist of fully connected neurons that process the input through activation functions. The model is trained using the Adam optimizer and binary cross-entropy loss to minimize the error between predicted and actual labels. The final output layer uses a sigmoid activation to produce a probability between 0 and 1, representing the likelihood of heart disease.
 ### Training Pipeline:
 #### Step 1: Data Preprocessing
 - Handling missing values
@@ -168,6 +188,22 @@ Build and run the Docker container with the following commands:
 - Trained models are saved for future use (.pkl for SVM/XGBoost, .h5 for Keras)
 #### Step 5: Feature Importance Analysis
 - SHAP values and feature importance are computed for XGBoost to improve model interpretability
+### SHAP Integration
+#### How SHAP Was Implemented
+**a) Creating the SHAP explainer:**
+- For the **XGBoost model** ,'shap.TreeExplainer'  was used to leverage the efficiency and accuracy of tree-based models.
+- For the **neural network model (Keras)**, 'shap.Explainer' was used in combination with keras.models.load_model to generate SHAP values based on the model's structure and weights.
+**b) Generating SHAP values:**
+- When a user submits data to /predict, the input is converted into a DataFrame and normalized.
+- SHAP values are then calculated for that specific observation — meaning the model explains how much each individual factor influenced the result, either positively or negatively.
+**c) Visualization of SHAP Results:**
+- Two types of charts are generated to illustrate the impact:
+  + A bar chart showing SHAP values for the most influential features.
+  + A pie chart illustrating the proportion of influence from different features.
+- These charts are generated in the backend using matplotlib and shap.plots, saved as PNGs in memory, converted to Base64 strings, and sent to the frontend as part of the JSON response.
+ **d) Text-Based Summary:**
+SHAP values are also used to generate a textual explanation that summarizes which factors had the greatest impact on the decision.
+
 [Back to top](#table-of-content)
 
 <hr>
