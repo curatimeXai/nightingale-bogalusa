@@ -218,11 +218,28 @@
               <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
             </div>
 
+            <div class="info-box">
+              <h5>📊 How This Chart Works</h5>
+              <p>
+                This chart shows which health factors had the biggest effect on your heart disease risk. 
+              </p>
+              <ul>
+                <li><strong>Green bars</strong> = lower your risk</li>
+                <li><strong style="color:#dc3545;">Red bars</strong> = increase your risk</li>
+                <li>The longer the bar, the more important the effect</li>
+              </ul>
+              <p>
+                Even if you don't have a condition like stroke or kidney disease, it may still appear. That's because your good health (not having it) helped lower your risk — and the model shows that.
+              </p>
+            </div>
+
+
             <div v-if="shap_summary_text">
               <h4>Main Risk Factors Identified</h4>
               <p>{{ shap_summary_text }}</p>
             </div>
           </div>
+
 
           <!-- SHAP Feature Importance Plot 
          
@@ -1054,6 +1071,46 @@ button:hover {
   border-radius: 8px;
   margin-bottom: 16px;
   border: 1px solid #e1e1e1;
+}
+.info-box {
+  background-color: #ffffff; 
+  border-radius: 10px;
+  padding: 20px 25px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  font-family: 'Segoe UI', sans-serif;
+  color: #212529;
+  margin-top: 20px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.info-box h5 {
+  color: #007BFF;
+  font-weight: 600;
+  font-size: 20px;
+  margin-bottom: 15px;
+}
+
+.info-box p {
+  font-size: 16px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.info-box ul {
+  padding-left: 20px;
+  margin-bottom: 12px;
+}
+
+.info-box li {
+  font-size: 16px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.info-box strong {
+  color: #28a745;
 }
 
 </style>

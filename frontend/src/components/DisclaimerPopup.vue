@@ -10,8 +10,11 @@
         health provider with any questions you may have regarding a medical treatment.
         </strong> 
         <br><br>
-        The AI model is trained based on a dataset from
-        The USA which could have an impact on the results you recieve.
+       <!-- The AI model is trained based on a dataset from
+        The USA which could have an impact on the results you recieve.-->
+        The AI model is trained based on input data provided directly by the user. 
+        This makes the prediction personalized and specific to your health profile.
+
         <br><br>
         No personal information is stored nor saved from your inputs or results.
       </p>
