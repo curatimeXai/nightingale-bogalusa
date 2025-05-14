@@ -210,6 +210,7 @@ SHAP values are also used to generate a textual explanation that summarizes whic
 [Back to top](#table-of-content)
 
 <hr>
+
 ## Design section
 
 We decided to follow the Nightingale projects theme usins red colors for alot of the backgrounds and text. Both green and red colors are used to clarify whether the results are positive or negative.
