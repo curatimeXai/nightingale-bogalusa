@@ -14,10 +14,9 @@
       </p>
       <h1>Use of AI and personal information</h1>
       <p>
-        <!--The AI model is trained based on a dataset from the website Kaggle called "Indicators of Heart Disease".
-        The participants were all US residents which could have an impact on the results you receive.-->
-        The AI model is trained based on input data provided directly by the user. 
-        This makes the prediction personalized and specific to your health profile.
+        The AI model is trained based on a dataset from the website Kaggle called "Indicators of Heart Disease".
+        The participants were all US residents,and uses your personal input only for making predictions — not for training.
+        
         <br><br>
         No personal information is stored nor saved from your inputs or results. 
       </p>
