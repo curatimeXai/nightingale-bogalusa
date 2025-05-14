@@ -1,9 +1,10 @@
 import json
+from typing import Counter
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.svm import SVC
+from sklearn.svm import SVC 
 import xgboost as xgb
 from keras.models import Sequential
 from keras.layers import Dense
@@ -58,12 +59,18 @@ X_test_scaled = scaler.transform(X_test) # Transform test data using same scaler
 joblib.dump(scaler, "models/scaler.pkl")
 
 # Train Support Vector Machine SVM Model
-svm_model = SVC(probability=True, random_state=42) # Initialize SVM with probability estimation
+svm_model = SVC(kernel="rbf",C=1.0,gamma="scale",probability=True, random_state=42,class_weight='balanced') # Initialize SVM with probability estimation
 svm_model.fit(X_train_scaled, y_train) # Train the model on the training set
 joblib.dump(svm_model, "models/svm_model.pkl")  # Save the trained SVM model
 
 # Train XGBoost Model
-xgb_model = xgb.XGBClassifier(eval_metric="logloss", random_state=42)
+xgb_model = xgb.XGBClassifier(n_estimators=100,
+                              max_depth=4,
+                              learning_rate=0.1,
+                              subsample=0.8,
+                              eval_metric="logloss",
+                                random_state=42,
+                               )
 xgb_model.fit(X_train_scaled, y_train)
 joblib.dump(xgb_model, "models/xgb_model.pkl")
 
