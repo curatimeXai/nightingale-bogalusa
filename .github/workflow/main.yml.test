@@ -1,0 +1,54 @@
+name: Deploy to EKS
+
+on:
+  push:
+    branches: [ aws_deploy ] # Choose GitHub branch
+
+env:
+  AWS_REGION: eu-central-1 # set this to your preferred AWS region, e.g. us-west-1
+  ECR_REPOSITORY: heartaware # set this to your Amazon ECR repository name
+  EKS_CLUSTER_NAME: DevOps_ClusterEU1 # set this to your Amazon ECS cluster name
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest # Uses ubuntu-latest GitHub-provided Runner to run this GitHub Action
+
+    steps:
+    - name: Set short git commit SHA
+      id: commit
+      uses: prompt/actions-commit-hash@v2
+
+    - name: Check out code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials # Authenticates versus AWS through secrets
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Login to Amazon ECR # Logs in to ECR using AWS Credentials
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      
+    - name: Build, tag, and push image to Amazon ECR # Builds Dockerfile and pushes it to ECR repo
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ steps.commit.outputs.short }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+    - name: Update kube config
+      run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+
+    - name: Deploy to EKS
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ steps.commit.outputs.short }}
+      run: |
+        sed -i.bak "s|DOCKER_IMAGE|$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG|g" k8s/deployment.yaml
+        kubectl apply -f k8s/deployment.yaml
+        kubectl apply -f k8s/service.yaml
