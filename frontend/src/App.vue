@@ -10,6 +10,7 @@
         <router-link to="/">
           <img :src="logoJGU" alt="Logo" class="logo" />
         </router-link>
+        <a href="https://nightingale.uni-mainz.de/demos/healthlife" style="text-decoration:none"><v-btn class="button">Return to Healthlife</v-btn></a>
         </div>
         <div class="navbar-center">
           <router-link to="/" class="nav-link">Heart Disease Prediction App</router-link>
@@ -97,6 +98,24 @@ export default {
 
 .logo {
   height: 70px;
+}
+.button{
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  background-color: #c1002a;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  position: relative;
+  z-index: 100;
+  font-weight: bold;
+}
+
+.button:hover {
+  background-color: #a11b1b;
 }
 
 .nav-link {
