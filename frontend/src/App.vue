@@ -10,7 +10,7 @@
         <router-link to="/">
           <img :src="logoJGU" alt="Logo" class="logo" />
         </router-link>
-        <a href="https://nightingale.uni-mainz.de/demos/healthlife" style="text-decoration:none"><v-btn class="button">Return to Healthlife</v-btn></a>
+        <a href="https://nightingaleheart.com/demos/healthlife" style="text-decoration:none"><v-btn class="button">Return to Healthlife</v-btn></a>
         </div>
         <div class="navbar-center">
           <router-link to="/" class="nav-link">Heart Disease Prediction App</router-link>
