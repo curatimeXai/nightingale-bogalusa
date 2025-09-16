@@ -503,9 +503,9 @@ export default {
     isPositiveResult(key, value) {
       switch(key) {
         case 'BMI':
-          return value <= 18.5 && value >= 24.9;
+          return value >= 18.5 && value <= 24.9;
         case 'Alcohol (drinks/week)':
-          return value <= 3  && value == 0;
+          return value <= 3;
         case 'Sleep (hours/day)':
           return value >= 6 && value <= 10;
         case 'Smoking':
