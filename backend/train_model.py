@@ -56,9 +56,18 @@ features = ["Gender","Age", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "F
 X = df[features]
 y = df["Heartdis"]
 
-# Encode categorical variables properly
-for col in ["Gender", "Smoking", "Alcohol", "Diabetes", "Kidney", "Stroke"]:
-    X[col] = LabelEncoder().fit_transform(X[col].astype(str))  # Ensures categorical values are numeric
+# I choose to manually set instead of using LabelEncoder to be certain of consistency through the app
+gender_map = {'Male': 1, 'Female': 0}
+smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Everyday': 2}
+bool_map = {'No': 0, 'Yes': 1}
+
+X['Gender'] = X['Gender'].map(gender_map)
+X['Smoking'] = X['Smoking'].map(smoking_map)
+X['Alcohol'] = pd.to_numeric(X['Alcohol'], errors='coerce')  # if already numeric
+X['Diabetes'] = X['Diabetes'].map(bool_map)
+X['Kidney'] = X['Kidney'].map(bool_map)
+X['Stroke'] = X['Stroke'].map(bool_map)
+
 
 # Fill any remaining missing values in the dataset with 0 
 X.fillna(0, inplace=True)
