@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 import shap
+import re
 
 # Ensure models directory exists for saving trained models and results
 os.makedirs("models", exist_ok=True)
@@ -30,8 +31,23 @@ df["Heartdis"] = df["Heartdis"].map({"Yes": 1, "No": 0})
 df.dropna(subset=["Heartdis"], inplace=True)
 
 # Convert Age to numeric and handle missing values
-df["Age"] = pd.to_numeric(df["Age"], errors="coerce") # conver to non - numeric to NaN
-df["Age"].fillna(df["Age"].median(), inplace=True) # Fill missing valueas with  median age
+# Parse age from CSV (Age 50 to 54 => 52)
+def parse_age_range(value):
+    if isinstance(value, str):
+        # Look for two numbers in the string
+        numbers = re.findall(r'\d+', value)
+        print(numbers)
+        if len(numbers) == 2:
+            # Get the average of those 2
+            low, high = map(int, numbers)
+            return (low + high) / 2
+    return np.nan  # Return NaN else
+
+# Convert Age ranges to numeric midpoints
+df["Age"] = df["Age"].apply(parse_age_range)
+
+# Fill out NaN with median
+df["Age"].fillna(df["Age"].median(), inplace=True)
 
 # Define relevant features to be used for prediction
 features = ["Gender","Age", "BMI", "Smoking", "Alcohol", "Sleep", "Exercise", "Fruit", "Diabetes", "Kidney", "Stroke"]
