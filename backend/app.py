@@ -43,19 +43,19 @@ def calculate_risk_score(predictions):
 
 def get_risk_level(score):
     if score >= 0.75:
-        return "Élevé"
+        return "high"
     elif score >= 0.5:
-        return "Modéré"
+        return "mid"
     else:
-        return "Faible"
+        return "low"
 
 def get_risk_description(score):
     if score >= 0.75:
-        return "Risque cardiovasculaire important - Consultation médicale recommandée"
+        return "High cardiovascular risk important - Recommended medical consultation"
     elif score >= 0.5:
-        return "Risque cardiovasculaire modéré - Surveillance conseillée"
+        return "Moderate cardiovascular risk - Recommended monitoring"
     else:
-        return "Risque cardiovasculaire faible - Maintenir les bonnes habitudes"
+        return "Low cardiovascular risk - Maintaining good habits"
 
 def analyze_lifestyle_factors(data):
     """Analyze individual lifestyle factors and provide recommendations"""
@@ -68,14 +68,14 @@ def analyze_lifestyle_factors(data):
             'factor': 'BMI',
             'status': 'Critique',
             'value': bmi,
-            'recommendation': 'Consultation médicale recommandée pour la gestion du poids'
+            'recommendation': 'Recommended medical consultation for your management'
         })
     elif bmi >= 25:
         analysis.append({
             'factor': 'BMI',
             'status': 'À surveiller',
             'value': bmi,
-            'recommendation': 'Considérez un régime équilibré et plus d\'exercice'
+            'recommendation': 'balanced diet and more exercise'
         })
     
     # Sleep Analysis
@@ -85,14 +85,14 @@ def analyze_lifestyle_factors(data):
             'factor': 'Sommeil',
             'status': 'Insuffisant',
             'value': sleep,
-            'recommendation': 'Augmentez votre temps de sommeil à 7-9 heures par nuit'
+            'recommendation': 'Increase your sleep time to 7-9 hours per night'
         })
     elif sleep > 9:
         analysis.append({
             'factor': 'Sommeil',
             'status': 'Excessif',
             'value': sleep,
-            'recommendation': 'Un sommeil prolongé peut indiquer d\'autres problèmes de santé'
+            'recommendation': 'sleep can indicate other health problems'
         })
     # Exercise Analysis
     exercise = float(data['Exercise'])
@@ -101,7 +101,7 @@ def analyze_lifestyle_factors(data):
             'factor': 'Activité physique',
             'status': 'Insuffisant',
             'value': exercise,
-            'recommendation': 'Visez au moins 150 minutes d\'activité modérée par semaine'
+            'recommendation': 'Aim for at least 150 minutes of moderate activity per week'
         })
     
     return analysis
