@@ -135,28 +135,23 @@
         <div class="scrollable-content">
           <div v-if="result">
             <div class="results-container">
-             <div v-for="(value, key) in formattedResults" :key="key" class="result-card" :class="{
-              'card-negative': value.forceRed ,
-              'card-positive': !value.forceRed 
-              //'card-neutral': !value.forceRed && !value.forcedRed && value.percentage === 0
-             }">
+            <div v-for="(value, key) in formattedResults" 
+                 :key="key" 
+                 class="result-card" 
+                 :class="{
+                   'card-negative': value.forceRed,
+                   'card-positive': !value.forceRed
+                 }">
               <div class="icon-up">
-                <i v-if="value.forceRed " class="bi bi-hand-thumbs-down-fill negative-icon"></i>
-               <!-- <i v-else-if="value.percentage === 0" class="bi bi-slash-circle neutral-icon"></i>-->
-                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>  
+                <i v-if="value.forceRed" class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>
               </div>
-             
-                <div class="result-content">
-                  <strong>{{ key }}</strong>: {{ value.text }}
-                  <div :class="{
-                        'negative': value.forceRed ,
-                        'positive': !value.forceRed  ,
-                       // 'positive': !value.forceRed && !value.forcedRed && value.percentage < 0,
-                       // 'neutral': !value.forceRed && !value.forcedRed && value.percentage === 0
-                      }">
-                    {{ value.percentage.toFixed(2) }}%
-                  </div>
-              </div>             
+              <div class="result-content">
+                <strong>{{ key }}</strong>: {{ value.text }}
+                <div :class="{'negative': value.forceRed, 'positive': !value.forceRed}">
+                  {{ value.percentage.toFixed(2) }}%
+                </div>
+              </div>
             </div>
           </div>
 
@@ -164,50 +159,29 @@
             <h3>Explaining Heart Disease Predictions Through Feature Importance</h3>
             <table class="impact-table">
               <thead>
-                <tr>
-                  <th>Feature</th>
-                  <th>
-                   
-                    <span class="tooltip-wrapper"> WHO Recommendation / Guidance 
-                    <span class="tooltip-icon">*</span>
-                    <span class="tooltip-text">These are benchmarks recommended by the World Health Organization (WHO) for a healthy lifestyle.</span>
-                    </span>
-                  </th>
-                  <th>Value</th>
-                  <th>Impact (%)</th>
-                  <th>Effect</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(value, key) in formattedResults" :key="key">
-                  <td><strong>{{ key }}</strong></td>
-                  <td>{{ getGuideline (key)  }}</td>
-                  <td>{{ value.text }}</td>
-                  <td>{{ value.percentage.toFixed(2) }}%</td>
-                  <!--
-                  <td :style="{ 
-                    color: value.forceRed 
-                      ? 'red' 
-                     // : value.percentage === 0 
-                     //   ? 'black' 
-                        : value.percentage <= 0 
-                          ? 'green' 
-                          : 'red',
-                    fontWeight: 'bold' 
-                  }">
-                  {{ value.icon }} 
-                  {{ value.percentage === 0 ? 'Neutral' : (value.forceRed || value.percentage > 0 ? 'Negative' : 'Positive') }}
-                 {{  value.forceRed ? 'Negative':'Positive'}}
-                </td>-->
-                                <td :style="{
-                  color: value.forceRed ? 'red' : 'green',
-                  fontWeight: 'bold'
-                }">
-                  {{ value.icon }} 
-                  {{ value.forceRed ? 'Negative' : 'Positive' }}
-                </td>
-                </tr>
-              </tbody>
+    <tr>
+      <th>Factor</th>
+      <th>Currently</th>
+      <th>Recommendation WHO</th>
+      <th>Risck level</th>
+      <th>State</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr v-for="(value, key) in formattedResults" :key="key">
+      <td><strong>{{ key }}</strong></td>
+      <td>{{ value.text }}</td>
+      <td>{{ getGuideline(key) }}</td>
+      <td :class="getRiskClass(value.impact)">{{ value.impact }}</td>
+      <td :style="{
+        color: value.forceRed ? '#dc3545' : '#28a745',
+        fontWeight: 'bold'
+      }">
+        {{ value.icon }} 
+        {{ value.forceRed ? 'unwell' : 'good health' }}
+      </td>
+    </tr>
+  </tbody>
             </table>
           </div>
 
@@ -239,6 +213,35 @@
               <p>{{ shap_summary_text }}</p>
             </div>
           </div>
+          <div class="risk-assessment" v-if="result && result.risk_assessment">
+  <div class="risk-level" :class="result.risk_assessment.level.toLowerCase()">
+    <h3>{{ result.risk_assessment.level }}</h3>
+    <p>{{ result.risk_assessment.description }}</p>
+    <div class="risk-score">
+      Risck Score : {{ (result.risk_assessment.score * 100).toFixed(1) }}%
+    </div>
+  </div>
+
+  <div class="lifestyle-factors">
+    <h3>Analyse des Facteurs de Style de Vie</h3>
+    <div class="factors-grid">
+      <div v-for="(value, key) in formattedResults" 
+           :key="key" 
+           class="factor-card"
+           :class="{ 'warning': value.forceRed, 'good': !value.forceRed }">
+        <div class="factor-header">
+          <span class="factor-icon">{{ value.icon }}</span>
+          <h4>{{ key }}</h4>
+        </div>
+        <div class="factor-content">
+          <p class="value">{{ value.text }}</p>
+          <p class="impact">Impact : {{ value.percentage.toFixed(1) }}%</p>
+          <p class="recommendation">{{ value.recommendation }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 
           <!-- SHAP Feature Importance Plot 
@@ -368,43 +371,80 @@ export default {
       shap_summary_text:'',
     };
   },
-  computed: {
-    formattedResults() {
-      if (!this.result || !this.result.shap_impact) {
+computed: {
+  formattedResults() {
+    if (!this.result || !this.result.shap_impact) {
       console.log("No results found in computed property");
       return {};
     }
-    console.log("SHAP Impact Data:", this.result.shap_impact);   
-      return {
-       // "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎"},
-       // "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
-        //"BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon:  (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },
-       "BMI (normal between 18.5 - 24.9)": {  text: this.formData.BMI,  percentage: this.result.shap_impact?.BMI ?? 0,  icon: this.formData.BMI < 18.5 ? "👎" : (this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎"),  forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },     
-        //"Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Alcohol > 7},
-        "Alcohol (drinks/week)": {text: this.formData.Alcohol,  percentage: this.result.shap_impact?.Alcohol ?? 0,  icon: this.formData.Alcohol <= 3 ? "👍": "👎", forceRed: this.formData.Alcohol > 4 },    
-       // "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon:  (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" ,forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 9)},
-        "Sleep (hours/day)": {  text: this.formData.Sleep,  percentage: this.result.shap_impact?.Sleep ?? 0,  icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍":"👎" , forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)},
-       //"Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon:  (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Exercise <= 150 },
-       "Exercise (min/week)": {   text: this.formData.Exercise,  percentage: this.result.shap_impact?.Exercise ?? 0,  icon: this.formData.Exercise > 150 ? "👍" : "👎",  forceRed: this.formData.Exercise <= 150 },
-       //"Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
-       "Fruit Intake (servings/day)": {  text: this.formData.Fruit,  percentage: this.result.shap_impact?.Fruit ?? 0,  icon: this.formData.Fruit >= 5 ? "👍" : "👎", forceRed: this.formData.Fruit < 5},
-       // "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
-        // "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: (this.result.shap_impact?.Age ?? 0) === 0 ? "⚖️" : this.result.shap_impact.Age < 0 ? "👍" : "👎" },
-       // "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon:  (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" ,forceRed: this.formData.Smoking === 'Everyday'},
-       // "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon:  (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" ,forcedRed:true},
-       // "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎",forcedRed:true},
-       // "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon:  (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
-        "Smoking": {   text: this.formData.Smoking ,   percentage: this.result.shap_impact?.Smoking ?? 0,  icon: this.formData.Smoking === 'Not at all' ? "👍" :  "👎" ,forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes'},
-
-        "Diabetes": {  text: this.formData.Diabetes ? "Yes" : "No",  percentage: this.result.shap_impact?.Diabetes ?? 0,  icon: this.formData.Diabetes ? "👎" : "👍",  forceRed: this.formData.Diabetes ? true : false },
-        "Kidney Disease": {  text: this.formData.Kidney ? "Yes" : "No",  percentage: this.result.shap_impact?.Kidney ?? 0,  icon: this.formData.Kidney ? "👎" : "👍",  forceRed: this.formData.Kidney ? true : false },
-        "Stroke": {   text: this.formData.Stroke ? "Yes" : "No",  percentage: this.result.shap_impact?.Stroke ?? 0,  icon: this.formData.Stroke ? "👎" : "👍",  forceRed: this.formData.Stroke ? true : false}
-
-      
-
-      };
-    } 
-  },
+    
+    return {
+      "BMI (normal between 18.5 - 24.9)": {
+        text: this.formData.BMI,
+        percentage: this.result.shap_impact?.BMI ?? 0,
+        icon: this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
+        forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5,
+        impact: this.getRiskLevel(this.result.shap_impact?.BMI ?? 0)
+      },
+      "Alcohol (drinks/week)": {
+        text: this.formData.Alcohol,
+        percentage: this.result.shap_impact?.Alcohol ?? 0,
+        icon: this.formData.Alcohol <= 3 ? "👍" : "👎",
+        forceRed: this.formData.Alcohol > 4,
+        impact: this.getRiskLevel(this.result.shap_impact?.Alcohol ?? 0)
+      },
+      "Sleep (hours/day)": {
+        text: this.formData.Sleep,
+        percentage: this.result.shap_impact?.Sleep ?? 0,
+        icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
+        forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10),
+        impact: this.getRiskLevel(this.result.shap_impact?.Sleep ?? 0)
+      },
+      "Exercise (min/week)": {
+        text: this.formData.Exercise,
+        percentage: this.result.shap_impact?.Exercise ?? 0,
+        icon: this.formData.Exercise > 150 ? "👍" : "👎",
+        forceRed: this.formData.Exercise <= 150,
+        impact: this.getRiskLevel(this.result.shap_impact?.Exercise ?? 0)
+      },
+      "Fruit Intake (servings/day)": {
+        text: this.formData.Fruit,
+        percentage: this.result.shap_impact?.Fruit ?? 0,
+        icon: this.formData.Fruit >= 5 ? "👍" : "👎",
+        forceRed: this.formData.Fruit < 5,
+        impact: this.getRiskLevel(this.result.shap_impact?.Fruit ?? 0)
+      },
+      "Smoking": {
+        text: this.formData.Smoking,
+        percentage: this.result.shap_impact?.Smoking ?? 0,
+        icon: this.formData.Smoking === 'Not at all' ? "👍" : "👎",
+        forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes',
+        impact: this.getRiskLevel(this.result.shap_impact?.Smoking ?? 0)
+      },
+      "Diabetes": {
+        text: this.formData.Diabetes ? "Yes" : "No",
+        percentage: this.result.shap_impact?.Diabetes ?? 0,
+        icon: this.formData.Diabetes ? "👎" : "👍",
+        forceRed: this.formData.Diabetes,
+        impact: this.getRiskLevel(this.result.shap_impact?.Diabetes ?? 0)
+      },
+      "Kidney Disease": {
+        text: this.formData.Kidney ? "Yes" : "No",
+        percentage: this.result.shap_impact?.Kidney ?? 0,
+        icon: this.formData.Kidney ? "👎" : "👍",
+        forceRed: this.formData.Kidney,
+        impact: this.getRiskLevel(this.result.shap_impact?.Kidney ?? 0)
+      },
+      "Stroke": {
+        text: this.formData.Stroke ? "Yes" : "No",
+        percentage: this.result.shap_impact?.Stroke ?? 0,
+        icon: this.formData.Stroke ? "👎" : "👍",
+        forceRed: this.formData.Stroke,
+        impact: this.getRiskLevel(this.result.shap_impact?.Stroke ?? 0)
+      }
+    };
+  }
+},
   methods: {
     getGuideline(key) {
     const map = {
@@ -419,6 +459,25 @@ export default {
       "Stroke": "Stroke"
     };
     return this.whoGuidelines[map[key]] || "—";
+  },
+  getRiskClass(impact) {
+    if (impact === "risk-level-high") {
+      return "risk-level-high";
+    } else if (impact === "risk-level-medium") {
+      return "risk-level-medium";
+    } else {
+      return "risk-level-low";
+    }
+  },
+  getRiskLevel(value) {
+    const absValue = Math.abs(value);
+    if (absValue >= 0.5) {
+      return "risk-level-high";
+    } else if (absValue >= 0.2) {
+      return "risk-level-medium";
+    } else {
+      return "risk-level-low";
+    }
   },
     calculateBMI() {
       if (this.formData.Weight && this.formData.Height) {
@@ -686,7 +745,34 @@ input, textarea, button, label {
   font-size: 12px;
   cursor: pointer;
 }
+.risk-level-high {
+  color: #dc3545;
+  background-color: #f8d7da;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
 
+.risk-level-medium {
+  color: #6f5401ff;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.risk-level-low {
+  color: #28a745;
+  background-color: #d4edda;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.impact-table td {
+  vertical-align: middle;
+  padding: 12px 15px;
+}
 .tooltip-text {
   visibility: hidden;
   width: 200px;
@@ -1113,5 +1199,51 @@ button:hover {
   color: #28a745;
 }
 
+.risk-assessment {
+  margin: 20px 0;
+}
+
+.risk-level {
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.risk-level-low {
+  background-color: #d4edda;
+  border-left: 4px solid #28a745;
+}
+
+.risk-level-medium {
+  background-color: #fff3cd;
+  border-left: 4px solid #e3ac05ff;
+}
+
+.risk-level-high {
+  background-color: #f8d7da;
+  border-left: 4px solid #dc3545;
+}
+
+.factors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.factor-card {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.factor-card.warning {
+  border-left: 4px solid #dc3545;
+}
+
+.factor-card.good {
+  border-left: 4px solid #28a745;
+}
 </style>
 

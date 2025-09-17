@@ -21,6 +21,91 @@ xgb_model = joblib.load('models/xgb_model.pkl')
 keras_model = load_model('models/keras_model.h5')
 scaler = joblib.load('models/scaler.pkl')
 
+def calculate_risk_score(predictions):
+    """Calculate weighted risk score from multiple models"""
+    weights = {
+        'svm': 0.3,
+        'xgb': 0.4,
+        'keras': 0.3
+    }
+    
+    weighted_score = (
+        predictions['svm'] * weights['svm'] +
+        predictions['xgb'] * weights['xgb'] +
+        predictions['keras'] * weights['keras']
+    )
+    
+    return {
+        'score': weighted_score,
+        'level': get_risk_level(weighted_score),
+        'description': get_risk_description(weighted_score)
+    }
+
+def get_risk_level(score):
+    if score >= 0.75:
+        return "Élevé"
+    elif score >= 0.5:
+        return "Modéré"
+    else:
+        return "Faible"
+
+def get_risk_description(score):
+    if score >= 0.75:
+        return "Risque cardiovasculaire important - Consultation médicale recommandée"
+    elif score >= 0.5:
+        return "Risque cardiovasculaire modéré - Surveillance conseillée"
+    else:
+        return "Risque cardiovasculaire faible - Maintenir les bonnes habitudes"
+
+def analyze_lifestyle_factors(data):
+    """Analyze individual lifestyle factors and provide recommendations"""
+    analysis = []
+    
+    # BMI Analysis
+    bmi = float(data['BMI'])
+    if bmi >= 30:
+        analysis.append({
+            'factor': 'BMI',
+            'status': 'Critique',
+            'value': bmi,
+            'recommendation': 'Consultation médicale recommandée pour la gestion du poids'
+        })
+    elif bmi >= 25:
+        analysis.append({
+            'factor': 'BMI',
+            'status': 'À surveiller',
+            'value': bmi,
+            'recommendation': 'Considérez un régime équilibré et plus d\'exercice'
+        })
+    
+    # Sleep Analysis
+    sleep = float(data['Sleep'])
+    if sleep < 6:
+        analysis.append({
+            'factor': 'Sommeil',
+            'status': 'Insuffisant',
+            'value': sleep,
+            'recommendation': 'Augmentez votre temps de sommeil à 7-9 heures par nuit'
+        })
+    elif sleep > 9:
+        analysis.append({
+            'factor': 'Sommeil',
+            'status': 'Excessif',
+            'value': sleep,
+            'recommendation': 'Un sommeil prolongé peut indiquer d\'autres problèmes de santé'
+        })
+    # Exercise Analysis
+    exercise = float(data['Exercise'])
+    if exercise < 150:
+        analysis.append({
+            'factor': 'Activité physique',
+            'status': 'Insuffisant',
+            'value': exercise,
+            'recommendation': 'Visez au moins 150 minutes d\'activité modérée par semaine'
+        })
+    
+    return analysis
+
 @app.route('/')
 def home():
     #return "Welcome to the Heart Disease Prediction API!"
@@ -89,7 +174,44 @@ def predict():
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
         # Get SHAP feature impact for the current prediction
         shap_explanation = get_shap_explanation(input_scaled)
+        
+        predictions_dict = {
+            'svm': float(svm_pred),
+            'xgb': float(xgb_pred),
+            'keras': float(keras_pred)
+        }
+        
+        risk_assessment = calculate_risk_score(predictions_dict)
+        lifestyle_analysis = analyze_lifestyle_factors(data)
 
+        # Modifiez le retour JSON pour inclure les nouvelles informations
+        return jsonify({
+            "risk_assessment": risk_assessment,
+            "lifestyle_analysis": lifestyle_analysis,
+            "model_predictions": {
+                "svm": {
+                    "probability": float(svm_pred),
+                    "label": svm_label
+                },
+                "xgb": {
+                    "probability": float(xgb_pred),
+                    "label": xgb_label
+                },
+                "keras": {
+                    "probability": float(keras_pred),
+                    "label": keras_label
+                }
+            },
+            "shap_impact": shap_explanation["feature_impact"],
+            "shap_plot": shap_explanation["shap_plot"],
+            "shap_summary_text": shap_explanation["shap_summary_text"]
+        })
+
+    except Exception as e:
+        print("Error:", str(e))
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
         # Return JSON response with predictions, labels, charts, and SHAP values
         return jsonify({
            "shap_impact": shap_explanation["feature_impact"], 
