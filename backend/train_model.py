@@ -58,7 +58,7 @@ y = df["Heartdis"]
 
 # I choose to manually set instead of using LabelEncoder to be certain of consistency through the app
 gender_map = {'Male': 1, 'Female': 0}
-smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Everyday': 2}
+smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Every day': 2}
 bool_map = {'No': 0, 'Yes': 1}
 
 X['Gender'] = X['Gender'].map(gender_map)
@@ -69,8 +69,8 @@ X['Kidney'] = X['Kidney'].map(bool_map)
 X['Stroke'] = X['Stroke'].map(bool_map)
 
 
-# Fill any remaining missing values in the dataset with 0 
-X.fillna(0, inplace=True)
+# Fill any remaining missing values in the dataset with median
+X = X.fillna(X.median(numeric_only=True))
 
 # Train-test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
