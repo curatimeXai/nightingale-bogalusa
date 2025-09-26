@@ -51,7 +51,7 @@ def get_risk_level(score):
 
 def get_risk_description(score):
     if score >= 0.75:
-        return "High cardiovascular risk important - Recommended medical consultation"
+        return "High cardiovascular risk - Recommended medical consultation"
     elif score >= 0.5:
         return "Moderate cardiovascular risk - Recommended monitoring"
     else:
@@ -213,26 +213,6 @@ def predict():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
         # Return JSON response with predictions, labels, charts, and SHAP values
-        return jsonify({
-           "shap_impact": shap_explanation["feature_impact"], 
-            "shap_plot": shap_explanation["shap_plot"],  
-            "shap_summary_text": shap_explanation["shap_summary_text"],          
-            "svm_prediction": float(svm_pred),  # Explicit conversion to float
-            "xgb_prediction": float(xgb_pred),  # Explicit conversion to float
-            "keras_prediction": float(keras_pred),  # Explicit conversion to float
-            "svm_label": svm_label,
-            "xgb_label": xgb_label,
-            "keras_label": keras_label,
-            "svm_pie_chart": svm_pie_chart,
-            "xgb_pie_chart": xgb_pie_chart,
-            "keras_pie_chart": keras_pie_chart
-        })
-
-    except Exception as e:
-        print("Error:", str(e))
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
 
 def get_thumb_value(probability):
     """
@@ -303,47 +283,67 @@ def get_shap_explanation(input_scaled):
     shap_values = explainer.shap_values(input_scaled)
     
     # Calculate feature impact for the first instance
-    individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
+    individual_shap_values = shap_values[0]
     feature_names = scaler.feature_names_in_
-    feature_impact = {feature_names[i]: float(individual_shap_values[i]) for i in range(len(feature_names))}
-    shap_summary_text = summarize_shap_impact(feature_impact)
-    # feature_impact = {scaler.feature_names_in_[i]: individual_shap_values[i] for i in range(len(scaler.feature_names_in_))}
-    # Convert feature_impact values to native Python float
-    #feature_impact = {k: float(v) for k, v in feature_impact.items()}
-    # Generate SHAP summary plot
-    #plt.figure()
-   # shap.summary_plot(shap_values, input_scaled, feature_names=scaler.feature_names_in_,show=False)
-    # --- Filter out "Age" and "Gender" ---
-    filtered_features = [f for f in feature_impact if f not in ['Age', 'Gender']]
-    filtered_values = [feature_impact[f] for f in filtered_features]
+    feature_impact = {feature_names[i]: float(individual_shap_values[i]) 
+                     for i in range(len(feature_names))}
 
-    colors = ['green' if val < 0 else 'red' for val in filtered_values]
-    # --- Create SHAP Bar Chart (Horizontal) ---
-    plt.figure(figsize=(10, 6))
-   # features = list(feature_impact.keys())
-   # values = list(feature_impact.values())
-   # colors = ['green' if val < 0 else 'red' for val in values]
+    # Définir l'ordre fixe des caractéristiques
+    fixed_order = [
+        'BMI',
+        'Smoking',
+        'Alcohol',
+        'Sleep',
+        'Exercise',
+        'Fruit',
+        'Diabetes',
+        'Kidney',
+        'Stroke'
+    ]
     
-    bars = plt.barh(filtered_features, filtered_values, color=colors)
-    plt.xlabel("SHAP Value (Impact on Model Output)")
-    plt.title("SHAP Impact for Individual Prediction")
-    plt.axvline(x=0, color='black', linestyle='--')
-    plt.gca().invert_yaxis()  # Highest impact on top
+    # Filtrer et organiser les valeurs selon l'ordre fixe
+    filtered_features = []
+    filtered_values = []
+    for feature in fixed_order:
+        if feature in feature_impact:
+            filtered_features.append(feature)
+            filtered_values.append(feature_impact[feature])
 
+    # Créer le graphique avec Matplotlib
+    plt.figure(figsize=(10, 6))
+    colors = ['green' if val < 0 else 'red' for val in filtered_values]
+    
+    # Créer les barres horizontales avec l'ordre fixe
+    bars = plt.barh(filtered_features, filtered_values, color=colors)
+    
+    # Personnaliser le graphique
+    plt.xlabel("Impact sur le Risque Cardiovasculaire")
+    plt.title("Influence des Facteurs sur le Risque")
+    plt.axvline(x=0, color='black', linestyle='--', alpha=0.5)
+    
+    # Ajouter les valeurs sur les barres
     for bar, val in zip(bars, filtered_values):
-        plt.text(val + 0.05 if val >= 0 else val - 0.4, bar.get_y() + bar.get_height() / 2,
-                 f"{val:.2f}", va='center', ha='left' if val >= 0 else 'right', color='black')
-    # Save to buffer and encode for frontend use
+        plt.text(val + 0.01 if val >= 0 else val - 0.01, 
+                bar.get_y() + bar.get_height()/2,
+                f'{val:.2f}', 
+                va='center',
+                ha='left' if val >= 0 else 'right')
+
+    # Ajuster la mise en page
+    plt.tight_layout()
+    
+    # Sauvegarder en format base64
     buf = io.BytesIO()
-    plt.savefig(buf, format="png")
+    plt.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+    plt.close()
     buf.seek(0)
     shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    print(f"SHAP plot base64 length: {len(shap_plot_base64)}") 
-    return {"feature_impact": feature_impact, "shap_plot": shap_plot_base64,"shap_summary_text": shap_summary_text}
+    
+    return {
+        "feature_impact": feature_impact,
+        "shap_plot": shap_plot_base64,
+        "shap_summary_text": summarize_shap_impact(feature_impact)
+    }
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-

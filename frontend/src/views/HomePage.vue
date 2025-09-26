@@ -1,4 +1,3 @@
-
 <template>
   <Disclaimer />
   <div id="app">
@@ -384,63 +383,63 @@ computed: {
         percentage: this.result.shap_impact?.BMI ?? 0,
         icon: this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
         forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5,
-        impact: this.getRiskLevel(this.result.shap_impact?.BMI ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.BMI ?? 0))
       },
       "Alcohol (drinks/week)": {
         text: this.formData.Alcohol,
         percentage: this.result.shap_impact?.Alcohol ?? 0,
         icon: this.formData.Alcohol <= 3 ? "👍" : "👎",
         forceRed: this.formData.Alcohol > 4,
-        impact: this.getRiskLevel(this.result.shap_impact?.Alcohol ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Alcohol ?? 0))
       },
       "Sleep (hours/day)": {
         text: this.formData.Sleep,
         percentage: this.result.shap_impact?.Sleep ?? 0,
         icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
         forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10),
-        impact: this.getRiskLevel(this.result.shap_impact?.Sleep ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Sleep ?? 0))
       },
       "Exercise (min/week)": {
         text: this.formData.Exercise,
         percentage: this.result.shap_impact?.Exercise ?? 0,
         icon: this.formData.Exercise > 150 ? "👍" : "👎",
         forceRed: this.formData.Exercise <= 150,
-        impact: this.getRiskLevel(this.result.shap_impact?.Exercise ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Exercise ?? 0))
       },
       "Fruit Intake (servings/day)": {
         text: this.formData.Fruit,
         percentage: this.result.shap_impact?.Fruit ?? 0,
         icon: this.formData.Fruit >= 5 ? "👍" : "👎",
         forceRed: this.formData.Fruit < 5,
-        impact: this.getRiskLevel(this.result.shap_impact?.Fruit ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Fruit ?? 0))
       },
       "Smoking": {
         text: this.formData.Smoking,
         percentage: this.result.shap_impact?.Smoking ?? 0,
         icon: this.formData.Smoking === 'Not at all' ? "👍" : "👎",
         forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes',
-        impact: this.getRiskLevel(this.result.shap_impact?.Smoking ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Smoking ?? 0))
       },
       "Diabetes": {
         text: this.formData.Diabetes ? "Yes" : "No",
         percentage: this.result.shap_impact?.Diabetes ?? 0,
         icon: this.formData.Diabetes ? "👎" : "👍",
         forceRed: this.formData.Diabetes,
-        impact: this.getRiskLevel(this.result.shap_impact?.Diabetes ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Diabetes ?? 0))
       },
       "Kidney Disease": {
         text: this.formData.Kidney ? "Yes" : "No",
         percentage: this.result.shap_impact?.Kidney ?? 0,
         icon: this.formData.Kidney ? "👎" : "👍",
         forceRed: this.formData.Kidney,
-        impact: this.getRiskLevel(this.result.shap_impact?.Kidney ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Kidney ?? 0))
       },
       "Stroke": {
         text: this.formData.Stroke ? "Yes" : "No",
         percentage: this.result.shap_impact?.Stroke ?? 0,
         icon: this.formData.Stroke ? "👎" : "👍",
         forceRed: this.formData.Stroke,
-        impact: this.getRiskLevel(this.result.shap_impact?.Stroke ?? 0)
+        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Stroke ?? 0))
       }
     };
   }
