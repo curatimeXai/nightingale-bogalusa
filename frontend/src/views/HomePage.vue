@@ -370,86 +370,40 @@ export default {
   },
   computed: {
     formattedResults() {
-  if (!this.result || !this.result.shap_contrib_pp || !this.result.shap_share_percent) {
-    return {};
-  }
-  const contrib = this.result.shap_contrib_pp;         // signé, en points
-  const share   = this.result.shap_share_percent;      // % (somme ≈ 100)
+      if (!this.result || !this.result.shap_impact) {
+      console.log("No results found in computed property");
+      return {};
+    }
+    console.log("SHAP Impact Data:", this.result.shap_impact);   
+      return {
+       // "Weight (kg)": { text: this.formData.Weight, percentage: this.result.shap_impact?.Weight ?? 0,icon: (this.result.shap_impact?.Weight ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Weight ?? 0) < 0 ? "👍" : "👎"},
+       // "Height (cm)": { text: this.formData.Height, percentage: this.result.shap_impact?.Height ?? 0,icon: (this.result.shap_impact?.Height ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Height ?? 0) < 0 ? "👍" : "👎" },
+        //"BMI (normal between 18.5 - 24.9)": { text: this.formData.BMI, percentage:this.result.shap_impact?.BMI ?? 0,icon:  (this.result.shap_impact?.BMI ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },
+       "BMI (normal between 18.5 - 24.9)": {  text: this.formData.BMI,  percentage: this.result.shap_impact?.BMI ?? 0,  icon: this.formData.BMI < 18.5 ? "👎" : (this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎"),  forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5 },     
+        //"Alcohol (drinks/week)": { text: this.formData.Alcohol, percentage: this.result.shap_impact?.Alcohol ?? 0,icon : (this.result.shap_impact?.Alcohol ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Alcohol > 7},
+        "Alcohol (drinks/week)": {text: this.formData.Alcohol,  percentage: this.result.shap_impact?.Alcohol ?? 0,  icon: this.formData.Alcohol <= 3 ? "👍": "👎", forceRed: this.formData.Alcohol > 4 },    
+       // "Sleep (hours/day)": { text: this.formData.Sleep, percentage: this.result.shap_impact?.Sleep ?? 0,icon:  (this.result.shap_impact?.Sleep ?? 0) < 0 ? "👍" : "👎" ,forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 9)},
+        "Sleep (hours/day)": {  text: this.formData.Sleep,  percentage: this.result.shap_impact?.Sleep ?? 0,  icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍":"👎" , forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)},
+       //"Exercise (min/week)": { text: this.formData.Exercise, percentage: this.result.shap_impact?.Exercise ?? 0,icon:  (this.result.shap_impact?.Exercise ?? 0) < 0 ? "👍" : "👎",forceRed: this.formData.Exercise <= 150 },
+       "Exercise (min/week)": {   text: this.formData.Exercise,  percentage: this.result.shap_impact?.Exercise ?? 0,  icon: this.formData.Exercise > 150 ? "👍" : "👎",  forceRed: this.formData.Exercise <= 150 },
+       //"Fruit Intake (servings/day)": { text: this.formData.Fruit, percentage: this.result.shap_impact?.Fruit ?? 0,icon: (this.result.shap_impact?.Fruit ?? 0) < 0 ? "👍" : "👎" },
+       "Fruit Intake (servings/day)": {  text: this.formData.Fruit,  percentage: this.result.shap_impact?.Fruit ?? 0,  icon: this.formData.Fruit >= 5 ? "👍" : "👎", forceRed: this.formData.Fruit < 5},
+       // "Gender": { text: this.formData.Gender, percentage: this.result.shap_impact?.Gender ?? 0, icon: (this.result.shap_impact?.Gender ?? 0) === 0 ? "⚖️" : (this.result.shap_impact?.Gender?? 0) < 0 ? "👍" : "👎" },
+        // "Age Category": { text: this.formData.AgeCategory, percentage: this.result.shap_impact?.Age ?? 0,icon: (this.result.shap_impact?.Age ?? 0) === 0 ? "⚖️" : this.result.shap_impact.Age < 0 ? "👍" : "👎" },
+       // "Smoking": { text: this.formData.Smoking, percentage: this.result.shap_impact?.Smoking?? 0,icon:  (this.result.shap_impact?.Smoking ?? 0) < 0 ? "👍" : "👎" ,forceRed: this.formData.Smoking === 'Everyday'},
+       // "Diabetes": { text: this.formData.Diabetes ? "Yes" : "No", percentage: this.result.shap_impact?.Diabetes ?? 0,icon:  (this.result.shap_impact?.Diabetes ?? 0) < 0 ? "👍" : "👎" ,forcedRed:true},
+       // "Kidney Disease": { text: this.formData.Kidney ? "Yes" : "No", percentage: this.result.shap_impact?.Kidney ?? 0 ,icon: (this.result.shap_impact?.Kidney ?? 0) < 0 ? "👍" : "👎",forcedRed:true},
+       // "Stroke": { text: this.formData.Stroke ? "Yes" : "No", percentage: this.result.shap_impact?.Stroke ?? 0 ,icon:  (this.result.shap_impact?.Stroke ?? 0) < 0 ? "👍" : "👎",forcedRed:true}
+        "Smoking": {   text: this.formData.Smoking ,   percentage: this.result.shap_impact?.Smoking ?? 0,  icon: this.formData.Smoking === 'Not at all' ? "👍" :  "👎" ,forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes'},
 
-  return {
-    "BMI (normal entre 18.5 - 24.9)": {
-      text: this.formData.BMI,
-      percentage: contrib?.BMI ?? 0,   // <- utilisé pour le graphe (signé, en points)
-      share: share?.BMI ?? 0,          // <- % pour le tableau
-      icon: this.formData.BMI < 18.5 ? "👎" : (this.formData.BMI <= 24.9 ? "👍" : "👎"),
-      forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5
-    },
-    "Alcohol (drinks/week)": {
-      text: this.formData.Alcohol,
-      percentage: contrib?.Alcohol ?? 0,
-      share: share?.Alcohol ?? 0,
-      icon: this.formData.Alcohol <= 3 ? "👍" : "👎",
-      forceRed: contrib?.Alcohol > 0
-    },
-    "Sleep (hours/day)": {
-      text: this.formData.Sleep,
-      percentage: contrib?.Sleep ?? 0,
-      share: share?.Sleep ?? 0,
-      icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
-      forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)
-    },
-    "Exercise (min/week)": {
-      text: this.formData.Exercise,
-      percentage: contrib?.Exercise ?? 0,
-      share: share?.Exercise ?? 0,
-      icon: this.formData.Exercise > 150 ? "👍" : "👎",
-      forceRed: this.formData.Exercise <= 150
-    },
-    "Fruit Intake (servings/day)": {
-      text: this.formData.Fruit,
-      percentage: contrib?.Fruit ?? 0,
-      share: share?.Fruit ?? 0,
-      icon: this.formData.Fruit >= 5 ? "👍" : "👎",
-      forceRed: this.formData.Fruit < 5
-    },
-    "Smoking": {
-      text: this.formData.Smoking,
-      percentage: contrib?.Smoking ?? 0,
-      share: share?.Smoking ?? 0,
-      icon: this.formData.Smoking === 'Not at all' ? "👍" : "👎",
-      forceRed: this.formData.Smoking !== 'Not at all'
-    },
-    "Diabetes": {
-      text: this.formData.Diabetes ? "Yes" : "No",
-      percentage: contrib?.Diabetes ?? 0,
-      share: share?.Diabetes ?? 0,
-      icon: this.formData.Diabetes ? "👎" : "👍",
-      forceRed: !!this.formData.Diabetes
-    },
-    "Kidney Disease": {
-      text: this.formData.Kidney ? "Yes" : "No",
-      percentage: contrib?.Kidney ?? 0,
-      share: share?.Kidney ?? 0,
-      icon: this.formData.Kidney ? "👎" : "👍",
-      forceRed: !!this.formData.Kidney
-    },
-    "Stroke": {
-      text: this.formData.Stroke ? "Yes" : "No",
-      percentage: contrib?.Stroke ?? 0,
-      share: share?.Stroke ?? 0,
-      icon: this.formData.Stroke ? "👎" : "👍",
-      forceRed: !!this.formData.Stroke
-    },
-    "Age": {
-      text: this.formData.Age,
-      percentage: contrib?.Age ?? 0,
-      share: share?.Age ?? 0,
-      icon: this.formData.Age ? "👎" : "👍",
-      forceRed: contrib?.Age > 0
-    },
-  };
-}
+        "Diabetes": {  text: this.formData.Diabetes ? "Yes" : "No",  percentage: this.result.shap_impact?.Diabetes ?? 0,  icon: this.formData.Diabetes ? "👎" : "👍",  forceRed: this.formData.Diabetes ? true : false },
+        "Kidney Disease": {  text: this.formData.Kidney ? "Yes" : "No",  percentage: this.result.shap_impact?.Kidney ?? 0,  icon: this.formData.Kidney ? "👎" : "👍",  forceRed: this.formData.Kidney ? true : false },
+        "Stroke": {   text: this.formData.Stroke ? "Yes" : "No",  percentage: this.result.shap_impact?.Stroke ?? 0,  icon: this.formData.Stroke ? "👎" : "👍",  forceRed: this.formData.Stroke ? true : false}
 
+      
+
+      };
+    } 
   },
   methods: {
     getGuideline(key) {
