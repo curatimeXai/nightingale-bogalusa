@@ -128,6 +128,7 @@ plt.xlabel("Importance")
 plt.ylabel("Features")
 plt.tight_layout()
 plt.savefig("models/feature_importance.png") # Save the plot
+plt.close() #free the figure if script is runned again
 
 # SHAP (SHapley Additive exPlanations) for Model Interpretability
 # SHAP Values Calculation (Using XGBoost model)

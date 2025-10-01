@@ -87,17 +87,19 @@ def predict():
         svm_pie_chart = create_pie_chart(svm_pred, "SVM Prediction")
         xgb_pie_chart = create_pie_chart(xgb_pred, "XGBoost Prediction")
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
-        # Get SHAP feature impact for the current prediction
+ 
         shap_explanation = get_shap_explanation(input_scaled)
 
-        # Return JSON response with predictions, labels, charts, and SHAP values
         return jsonify({
-           "shap_impact": shap_explanation["feature_impact"], 
-            "shap_plot": shap_explanation["shap_plot"],  
-            "shap_summary_text": shap_explanation["shap_summary_text"],          
-            "svm_prediction": float(svm_pred),  # Explicit conversion to float
-            "xgb_prediction": float(xgb_pred),  # Explicit conversion to float
-            "keras_prediction": float(keras_pred),  # Explicit conversion to float
+            # --- SHAP ---
+            "shap_contrib_pp": shap_explanation["feature_impact_pp"],        # signé, en points de probabilité
+            "shap_share_percent": shap_explanation["feature_share_percent"],  # somme ≈ 100%
+            "shap_plot": shap_explanation["shap_plot"],
+            "shap_summary_text": shap_explanation["shap_summary_text"],
+            # --- Prédictions ---
+            "svm_prediction": float(svm_pred),
+            "xgb_prediction": float(xgb_pred),
+            "keras_prediction": float(keras_pred),
             "svm_label": svm_label,
             "xgb_label": xgb_label,
             "keras_label": keras_label,
@@ -105,6 +107,7 @@ def predict():
             "xgb_pie_chart": xgb_pie_chart,
             "keras_pie_chart": keras_pie_chart
         })
+
 
     except Exception as e:
         print("Error:", str(e))
@@ -175,49 +178,62 @@ def summarize_shap_impact(feature_impact, top_n=3, exclude=["Age", "Gender"]):
            (f", and {readable_names[-1]}." if len(readable_names) > 1 else f"{readable_names[0]}.")
 
 def get_shap_explanation(input_scaled):
-    """Get SHAP explanation for the input data"""
-    # Use the TreeExplainer for XGBoost model
-    explainer = shap.TreeExplainer(xgb_model)
-    shap_values = explainer.shap_values(input_scaled)
-    
-    # Calculate feature impact for the first instance
-    individual_shap_values = shap_values[0]  # Getting SHAP values for the first data point
+    """
+    Renvoie:
+      - feature_impact_pp: contribution signée en points de probabilité (pt)
+      - feature_share_percent: part d'influence normalisée à 100% (valeurs absolues)
+      - shap_plot: barres signées en points de probabilité
+      - shap_summary_text: texte de synthèse
+    """
+    # SHAP en mode probabilité (pas log-odds)
+    explainer = shap.Explainer(xgb_model, feature_names=scaler.feature_names_in_)
+    shap_values_prob = explainer(input_scaled)  # shap.Explanation object
+
+    individual_prob = shap_values_prob.values[0] * 100.0
     feature_names = scaler.feature_names_in_
-    feature_impact = {feature_names[i]: float(individual_shap_values[i]) for i in range(len(feature_names))}
-    shap_summary_text = summarize_shap_impact(feature_impact)
-    # feature_impact = {scaler.feature_names_in_[i]: individual_shap_values[i] for i in range(len(scaler.feature_names_in_))}
-    # Convert feature_impact values to native Python float
-    #feature_impact = {k: float(v) for k, v in feature_impact.items()}
-    # Generate SHAP summary plot
-    #plt.figure()
-   # shap.summary_plot(shap_values, input_scaled, feature_names=scaler.feature_names_in_,show=False)
-    # --- Filter out "Age" and "Gender" ---
-    filtered_features = [f for f in feature_impact if f not in ['Age', 'Gender']]
-    filtered_values = [feature_impact[f] for f in filtered_features]
 
+    contrib_pp = {feature_names[i]: float(individual_prob[i]) for i in range(len(feature_names))}
+    abs_sum = sum(abs(v) for v in contrib_pp.values()) or 1.0
+    share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp.items()}
+
+    # 3) Graphique barres (sans Age/Gender), en points de probabilité signés
+    filtered_features = [f for f in contrib_pp if f not in ['Age', 'Gender']]
+    filtered_values = [contrib_pp[f] for f in filtered_features]
     colors = ['green' if val < 0 else 'red' for val in filtered_values]
-    # --- Create SHAP Bar Chart (Horizontal) ---
-    plt.figure(figsize=(10, 6))
-   # features = list(feature_impact.keys())
-   # values = list(feature_impact.values())
-   # colors = ['green' if val < 0 else 'red' for val in values]
-    
-    bars = plt.barh(filtered_features, filtered_values, color=colors)
-    plt.xlabel("SHAP Value (Impact on Model Output)")
-    plt.title("SHAP Impact for Individual Prediction")
-    plt.axvline(x=0, color='black', linestyle='--')
-    plt.gca().invert_yaxis()  # Highest impact on top
 
+    plt.figure(figsize=(10, 6))
+    bars = plt.barh(filtered_features, filtered_values, color=colors)
+    plt.xlabel("Contribution (points de probabilité)")
+    plt.title("Impact local par feature")
+    plt.axvline(x=0, color='black', linestyle='--')
+    plt.gca().invert_yaxis()
     for bar, val in zip(bars, filtered_values):
-        plt.text(val + 0.05 if val >= 0 else val - 0.4, bar.get_y() + bar.get_height() / 2,
-                 f"{val:.2f}", va='center', ha='left' if val >= 0 else 'right', color='black')
-    # Save to buffer and encode for frontend use
+        plt.text(val + (0.5 if val >= 0 else -1.5),
+                 bar.get_y() + bar.get_height()/2,
+                 f"{val:+.2f} pt",
+                 va='center', ha='left' if val >= 0 else 'right', color='black')
     buf = io.BytesIO()
+    plt.tight_layout()
     plt.savefig(buf, format="png")
+    plt.close()
     buf.seek(0)
     shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
-    print(f"SHAP plot base64 length: {len(shap_plot_base64)}") 
-    return {"feature_impact": feature_impact, "shap_plot": shap_plot_base64,"shap_summary_text": shap_summary_text}
+
+    # 4) Résumé texte basé sur |contrib_pp|
+    top = sorted(contrib_pp.items(), key=lambda kv: abs(kv[1]), reverse=True)[:3]
+    if top:
+        parts = [f"{k} ({v:+.1f} pt)" for k, v in top]
+        summary = "Principaux moteurs: " + ", ".join(parts)
+    else:
+        summary = "Aucun facteur dominant net."
+
+    return {
+        "feature_impact_pp": contrib_pp,
+        "feature_share_percent": share_percent,
+        "shap_plot": shap_plot_base64,
+        "shap_summary_text": summary
+    }
+
 
 if __name__ == '__main__':
     app.run(debug=True)
