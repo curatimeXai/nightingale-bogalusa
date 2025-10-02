@@ -106,7 +106,7 @@
               <option disabled value="">Select Smoking Status</option>
               <option>Not at all</option>
               <option>Sometimes</option>
-              <option>Everyday</option>
+              <option>Every day</option>
             </select>
 
             
@@ -487,7 +487,7 @@ export default {
       this.formData.Fruit = randomBetween(0, 5);// max to 5 times per days
       this.formData.Gender = randomChoice(["Male", "Female"]);
       this.formData.AgeCategory = randomChoice(["18-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79"]);
-      this.formData.Smoking = randomChoice(["Not at all", "Sometimes", "Everyday"]);
+      this.formData.Smoking = randomChoice(["Not at all", "Sometimes", "Every day"]);
       this.formData.Diabetes = Math.random() < 0.2;
       this.formData.Kidney = Math.random() < 0.1;
       this.formData.Stroke = Math.random() < 0.05;

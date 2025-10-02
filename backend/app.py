@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import re
 
 app = Flask(__name__,static_folder ="static")
 CORS(app, origins=["http://localhost:8080"])
@@ -44,7 +45,7 @@ def predict():
 
         # Define mappings for categorical variables (convert text to numerical values)
         gender_map = {'Male': 1, 'Female': 0}
-        smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Everyday': 2}
+        smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Every day': 2}
 
         # Convert user input into a DataFrame
         input_data = {
