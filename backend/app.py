@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+import re
 
 app = Flask(__name__,static_folder ="static")
 CORS(app, origins=["http://localhost:8080"])
@@ -20,6 +21,7 @@ svm_model = joblib.load('models/svm_model.pkl')
 xgb_model = joblib.load('models/xgb_model.pkl')
 keras_model = load_model('models/keras_model.h5')
 scaler = joblib.load('models/scaler.pkl')
+
 
 def calculate_risk_score(predictions):
     """Calculate weighted risk score from multiple models"""
@@ -105,6 +107,15 @@ def analyze_lifestyle_factors(data):
         })
     
     return analysis
+# Age 50 to 54 => 52
+def parse_age_range(value):
+    if isinstance(value, str):
+        # Find all numbers in the string
+        numbers = re.findall(r'\d+', value)
+        if len(numbers) == 2:
+            low, high = map(int, numbers)
+            return (low + high) / 2
+    return np.nan
 
 @app.route('/')
 def home():
@@ -119,7 +130,7 @@ def predict():
 
         # Define mappings for categorical variables (convert text to numerical values)
         gender_map = {'Male': 1, 'Female': 0}
-        smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Everyday': 2}
+        smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Every day': 2}
 
         # Convert user input into a DataFrame
         input_data = {
@@ -132,7 +143,9 @@ def predict():
             'Fruit': float(data['Fruit']),# Convert fruit intake to float
             'Diabetes': int(data['Diabetes']),# Convert diabetes (0/1)
             'Kidney': int(data['Kidney']),# Convert kidney disease (0/1)
-            'Stroke': int(data['Stroke'])# Convert stroke history (0/1)
+            'Stroke': int(data['Stroke']),# Convert stroke history (0/1)
+            'Age': int(data['Age'])
+            
         }
         print("Processed input data:", input_data)
         print("Diabetes:", data['Diabetes'])  # Check raw input
@@ -172,7 +185,7 @@ def predict():
         svm_pie_chart = create_pie_chart(svm_pred, "SVM Prediction")
         xgb_pie_chart = create_pie_chart(xgb_pred, "XGBoost Prediction")
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
-        # Get SHAP feature impact for the current prediction
+ 
         shap_explanation = get_shap_explanation(input_scaled)
         
         predictions_dict = {
@@ -184,28 +197,24 @@ def predict():
         risk_assessment = calculate_risk_score(predictions_dict)
         lifestyle_analysis = analyze_lifestyle_factors(data)
 
-        # Modifiez le retour JSON pour inclure les nouvelles informations
         return jsonify({
-            "risk_assessment": risk_assessment,
-            "lifestyle_analysis": lifestyle_analysis,
-            "model_predictions": {
-                "svm": {
-                    "probability": float(svm_pred),
-                    "label": svm_label
-                },
-                "xgb": {
-                    "probability": float(xgb_pred),
-                    "label": xgb_label
-                },
-                "keras": {
-                    "probability": float(keras_pred),
-                    "label": keras_label
-                }
-            },
-            "shap_impact": shap_explanation["feature_impact"],
+            # --- SHAP ---
+            "shap_contrib_pp": shap_explanation["feature_impact_pp"],        # signé, en points de probabilité
+            "shap_share_percent": shap_explanation["feature_share_percent"],  # somme ≈ 100%
             "shap_plot": shap_explanation["shap_plot"],
-            "shap_summary_text": shap_explanation["shap_summary_text"]
+            "shap_summary_text": shap_explanation["shap_summary_text"],
+            # --- Prédictions ---
+            "svm_prediction": float(svm_pred),
+            "xgb_prediction": float(xgb_pred),
+            "keras_prediction": float(keras_pred),
+            "svm_label": svm_label,
+            "xgb_label": xgb_label,
+            "keras_label": keras_label,
+            "svm_pie_chart": svm_pie_chart,
+            "xgb_pie_chart": xgb_pie_chart,
+            "keras_pie_chart": keras_pie_chart
         })
+
 
     except Exception as e:
         print("Error:", str(e))
@@ -344,6 +353,63 @@ def get_shap_explanation(input_scaled):
         "shap_plot": shap_plot_base64,
         "shap_summary_text": summarize_shap_impact(feature_impact)
     }
+
+    """
+    Renvoie:
+      - feature_impact_pp: contribution signée en points de probabilité (pt)
+      - feature_share_percent: part d'influence normalisée à 100% (valeurs absolues)
+      - shap_plot: barres signées en points de probabilité
+      - shap_summary_text: texte de synthèse
+    """
+    # SHAP en mode probabilité (pas log-odds)
+    explainer = shap.Explainer(xgb_model, feature_names=scaler.feature_names_in_)
+    shap_values_prob = explainer(input_scaled)  # shap.Explanation object
+
+    individual_prob = shap_values_prob.values[0] * 100.0
+    feature_names = scaler.feature_names_in_
+
+    contrib_pp = {feature_names[i]: float(individual_prob[i]) for i in range(len(feature_names))}
+    abs_sum = sum(abs(v) for v in contrib_pp.values()) or 1.0
+    share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp.items()}
+
+    # 3) Graphique barres (sans Age/Gender), en points de probabilité signés
+    filtered_features = [f for f in contrib_pp if f not in ['Age', 'Gender']]
+    filtered_values = [contrib_pp[f] for f in filtered_features]
+    colors = ['green' if val < 0 else 'red' for val in filtered_values]
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.barh(filtered_features, filtered_values, color=colors)
+    plt.xlabel("Contribution (points de probabilité)")
+    plt.title("Impact local par feature")
+    plt.axvline(x=0, color='black', linestyle='--')
+    plt.gca().invert_yaxis()
+    for bar, val in zip(bars, filtered_values):
+        plt.text(val + (0.5 if val >= 0 else -1.5),
+                 bar.get_y() + bar.get_height()/2,
+                 f"{val:+.2f} pt",
+                 va='center', ha='left' if val >= 0 else 'right', color='black')
+    buf = io.BytesIO()
+    plt.tight_layout()
+    plt.savefig(buf, format="png")
+    plt.close()
+    buf.seek(0)
+    shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
+
+    # 4) Résumé texte basé sur |contrib_pp|
+    top = sorted(contrib_pp.items(), key=lambda kv: abs(kv[1]), reverse=True)[:3]
+    if top:
+        parts = [f"{k} ({v:+.1f} pt)" for k, v in top]
+        summary = "Principaux moteurs: " + ", ".join(parts)
+    else:
+        summary = "Aucun facteur dominant net."
+
+    return {
+        "feature_impact_pp": contrib_pp,
+        "feature_share_percent": share_percent,
+        "shap_plot": shap_plot_base64,
+        "shap_summary_text": summary
+    }
+
 
 if __name__ == '__main__':
     app.run(debug=True)
