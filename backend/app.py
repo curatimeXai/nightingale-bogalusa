@@ -22,6 +22,91 @@ xgb_model = joblib.load('models/xgb_model.pkl')
 keras_model = load_model('models/keras_model.h5')
 scaler = joblib.load('models/scaler.pkl')
 
+
+def calculate_risk_score(predictions):
+    """Calculate weighted risk score from multiple models"""
+    weights = {
+        'svm': 0.3,
+        'xgb': 0.4,
+        'keras': 0.3
+    }
+    
+    weighted_score = (
+        predictions['svm'] * weights['svm'] +
+        predictions['xgb'] * weights['xgb'] +
+        predictions['keras'] * weights['keras']
+    )
+    
+    return {
+        'score': weighted_score,
+        'level': get_risk_level(weighted_score),
+        'description': get_risk_description(weighted_score)
+    }
+
+def get_risk_level(score):
+    if score >= 0.75:
+        return "high"
+    elif score >= 0.5:
+        return "mid"
+    else:
+        return "low"
+
+def get_risk_description(score):
+    if score >= 0.75:
+        return "High cardiovascular risk - Recommended medical consultation"
+    elif score >= 0.5:
+        return "Moderate cardiovascular risk - Recommended monitoring"
+    else:
+        return "Low cardiovascular risk - Maintaining good habits"
+
+def analyze_lifestyle_factors(data):
+    """Analyze individual lifestyle factors and provide recommendations"""
+    analysis = []
+    
+    # BMI Analysis
+    bmi = float(data['BMI'])
+    if bmi >= 30:
+        analysis.append({
+            'factor': 'BMI',
+            'status': 'Critique',
+            'value': bmi,
+            'recommendation': 'Recommended medical consultation for your management'
+        })
+    elif bmi >= 25:
+        analysis.append({
+            'factor': 'BMI',
+            'status': 'À surveiller',
+            'value': bmi,
+            'recommendation': 'balanced diet and more exercise'
+        })
+    
+    # Sleep Analysis
+    sleep = float(data['Sleep'])
+    if sleep < 6:
+        analysis.append({
+            'factor': 'Sommeil',
+            'status': 'Insuffisant',
+            'value': sleep,
+            'recommendation': 'Increase your sleep time to 7-9 hours per night'
+        })
+    elif sleep > 9:
+        analysis.append({
+            'factor': 'Sommeil',
+            'status': 'Excessif',
+            'value': sleep,
+            'recommendation': 'sleep can indicate other health problems'
+        })
+    # Exercise Analysis
+    exercise = float(data['Exercise'])
+    if exercise < 150:
+        analysis.append({
+            'factor': 'Activité physique',
+            'status': 'Insuffisant',
+            'value': exercise,
+            'recommendation': 'Aim for at least 150 minutes of moderate activity per week'
+        })
+    
+    return analysis
 # Age 50 to 54 => 52
 def parse_age_range(value):
     if isinstance(value, str):
@@ -102,6 +187,15 @@ def predict():
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
  
         shap_explanation = get_shap_explanation(input_scaled)
+        
+        predictions_dict = {
+            'svm': float(svm_pred),
+            'xgb': float(xgb_pred),
+            'keras': float(keras_pred)
+        }
+        
+        risk_assessment = calculate_risk_score(predictions_dict)
+        lifestyle_analysis = analyze_lifestyle_factors(data)
 
         return jsonify({
             # --- SHAP ---
@@ -127,6 +221,7 @@ def predict():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+        # Return JSON response with predictions, labels, charts, and SHAP values
 
 def get_thumb_value(probability):
     """
@@ -191,6 +286,74 @@ def summarize_shap_impact(feature_impact, top_n=3, exclude=["Age", "Gender"]):
            (f", and {readable_names[-1]}." if len(readable_names) > 1 else f"{readable_names[0]}.")
 
 def get_shap_explanation(input_scaled):
+    """Get SHAP explanation for the input data"""
+    # Use the TreeExplainer for XGBoost model
+    explainer = shap.TreeExplainer(xgb_model)
+    shap_values = explainer.shap_values(input_scaled)
+    
+    # Calculate feature impact for the first instance
+    individual_shap_values = shap_values[0]
+    feature_names = scaler.feature_names_in_
+    feature_impact = {feature_names[i]: float(individual_shap_values[i]) 
+                     for i in range(len(feature_names))}
+
+    # Définir l'ordre fixe des caractéristiques
+    fixed_order = [
+        'BMI',
+        'Smoking',
+        'Alcohol',
+        'Sleep',
+        'Exercise',
+        'Fruit',
+        'Diabetes',
+        'Kidney',
+        'Stroke'
+    ]
+    
+    # Filtrer et organiser les valeurs selon l'ordre fixe
+    filtered_features = []
+    filtered_values = []
+    for feature in fixed_order:
+        if feature in feature_impact:
+            filtered_features.append(feature)
+            filtered_values.append(feature_impact[feature])
+
+    # Créer le graphique avec Matplotlib
+    plt.figure(figsize=(10, 6))
+    colors = ['green' if val < 0 else 'red' for val in filtered_values]
+    
+    # Créer les barres horizontales avec l'ordre fixe
+    bars = plt.barh(filtered_features, filtered_values, color=colors)
+    
+    # Personnaliser le graphique
+    plt.xlabel("Impact sur le Risque Cardiovasculaire")
+    plt.title("Influence des Facteurs sur le Risque")
+    plt.axvline(x=0, color='black', linestyle='--', alpha=0.5)
+    
+    # Ajouter les valeurs sur les barres
+    for bar, val in zip(bars, filtered_values):
+        plt.text(val + 0.01 if val >= 0 else val - 0.01, 
+                bar.get_y() + bar.get_height()/2,
+                f'{val:.2f}', 
+                va='center',
+                ha='left' if val >= 0 else 'right')
+
+    # Ajuster la mise en page
+    plt.tight_layout()
+    
+    # Sauvegarder en format base64
+    buf = io.BytesIO()
+    plt.savefig(buf, format="png", dpi=300, bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    
+    return {
+        "feature_impact": feature_impact,
+        "shap_plot": shap_plot_base64,
+        "shap_summary_text": summarize_shap_impact(feature_impact)
+    }
+
     """
     Renvoie:
       - feature_impact_pp: contribution signée en points de probabilité (pt)
