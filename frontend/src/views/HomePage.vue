@@ -417,7 +417,6 @@ export default {
       }
     });
     return factors;
-  }
 },
   methods: {
     getGuideline(key) {
