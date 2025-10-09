@@ -133,26 +133,44 @@
         <p>Based on your health data, here's how your lifestyle factors contribute to your risk</p>
         <div class="scrollable-content">
           <div v-if="result">
-            <div class="results-container">
-            <div v-for="(value, key) in formattedResults" 
-                 :key="key" 
-                 class="result-card" 
-                 :class="{
-                   'card-negative': value.forceRed,
-                   'card-positive': !value.forceRed
-                 }">
-              <div class="icon-up">
-                <i v-if="value.forceRed" class="bi bi-hand-thumbs-down-fill negative-icon"></i>
-                <i v-else class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+            <!-- Nouvelle organisation : Facteurs négatifs à gauche, positifs à droite -->
+            <div class="results-layout">
+              <!-- Colonne des facteurs négatifs (rouges) -->
+              <div class="negative-factors">
+                <h3>🛑 Negative Factor</h3>
+                <div class="factors-column">
+                  <div v-for="(value, key) in negativeFactors" 
+                       :key="key" 
+                       class="result-card card-negative">
+                    <div class="icon-up">
+                      <i class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+                    </div>
+                    <div class="result-content">
+                      <strong>{{ key }}</strong>: {{ value.text }}
+                      <div class="negative">{{ value.percentage.toFixed(2) }}%</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="result-content">
-                <strong>{{ key }}</strong>: {{ value.text }}
-                <div :class="{'negative': value.forceRed, 'positive': !value.forceRed}">
-                  {{ value.percentage.toFixed(2) }}%
+
+              <!-- Colonne des facteurs positifs (verts) -->
+              <div class="positive-factors">
+                <h3>✅ Favorable Factor</h3>
+                <div class="factors-column">
+                  <div v-for="(value, key) in positiveFactors" 
+                       :key="key" 
+                       class="result-card card-positive">
+                    <div class="icon-up">
+                      <i class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+                    </div>
+                    <div class="result-content">
+                      <strong>{{ key }}</strong>: {{ value.text }}
+                      <div class="positive">{{ value.percentage.toFixed(2) }}%</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
          <div class="results-container">
             <h3>Explaining Heart Disease Predictions Through Feature Importance</h3>
@@ -206,12 +224,12 @@
               </p>
             </div>
 
-
             <div v-if="shap_summary_text">
               <h4>Main Risk Factors Identified</h4>
               <p>{{ shap_summary_text }}</p>
             </div>
           </div>
+
           <div class="risk-assessment" v-if="result && result.risk_assessment">
   <div class="risk-level" :class="result.risk_assessment.level.toLowerCase()">
     <h3>{{ result.risk_assessment.level }}</h3>
@@ -242,91 +260,12 @@
   </div>
 </div>
 
-
-          <!-- SHAP Feature Importance Plot 
-         
-          <div v-if="isValidBase64(result.shap_plot)">
-                <h3>SHAP Feature Importance</h3>
-                <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
-                
-          </div>
-          
-          <div v-if="shap_summary_text">
-            <h4>Summary of Risk Factors</h4>
-            <p>{{ shap_summary_text }}</p>
-          </div>-->
-              <!--
-              <div class="p-6">
-                <canvas ref="barChart" style="height: 400px;"></canvas>
-              </div>
-                
-              <div class="chart-container">
-                <div v-if="isValidBase64(result.svm_pie_chart)">
-                  <h3>SVM Prediction</h3>
-                  <img :src="'data:image/png;base64,' + result.svm_pie_chart" alt="SVM Pie Chart" />
-                </div>
-              --> 
-              <!-- XGBoost Pie Chart -->
-               <!--
-              <div v-if="isValidBase64(result.xgb_pie_chart)">
-                <h3>XGBoost Prediction</h3>
-                <img :src="'data:image/png;base64,' + result.xgb_pie_chart" alt="XGBoost Pie Chart" />
-              </div>-->
-           
-              <!-- Keras Pie Chart-->
-               <!--
-              <div v-if="isValidBase64(result.keras_pie_chart)">
-                <h3>Keras Prediction</h3>
-                <img :src="'data:image/png;base64,' + result.keras_pie_chart" alt="Keras Pie Chart" />
-              </div>
-            </div>-->
-         
-            
-            <!--
-            <div class="summary">
-              <h3>Risk Summary</h3>
-              <p>{{ riskSummary }}</p>
-            </div>
-          -->
-            <!-- Risk Prediction Summary Section
-            <div class="risk-summary">
-              <h3>🩺 Risk Prediction Summary</h3>
-              <h4>🔍 SHAP Feature Importance</h4>
-              <ul>
-                <li><strong>Major Contributors:</strong> Sleep duration, Kidney Disease, Fruit Intake</li>
-                <li><strong>Other Factors:</strong> Alcohol consumption, Smoking, Exercise, Gender, Diabetes, Stroke, BMI, Age</li>
-              </ul>
-
-              <h4>📊 Model Predictions Comparison</h4>
-              <div>
-                <strong>SVM Model:</strong>
-                <p>High Risk: {{ (result.svm_prediction * 100).toFixed(2) }}%</p>
-                <p>No Risk: {{ (1 - result.svm_prediction) * 100 }}%</p>
-                <p>🛑 Most conservative model, predicting the lowest risk percentage.</p>
-              </div>
-              <div>
-                <strong>XGBoost Model:</strong>
-                <p>High Risk: {{ (result.xgb_prediction * 100).toFixed(2) }}%</p>
-                <p>No Risk: {{ (1 - result.xgb_prediction) * 100 }}%</p>
-                <p>🚨 Most aggressive in identifying high-risk individuals.</p>
-              </div>
-              <div>
-                <strong>Keras Model:</strong>
-                <p>High Risk: {{ (result.keras_prediction * 100).toFixed(2) }}%</p>
-                <p>No Risk: {{ (1 - result.keras_prediction) * 100 }}%</p>
-                <p>⚖️ Balanced approach between sensitivity and specificity.</p>
-              </div>
-            </div>
-               -->
-
           </div>
         </div>
       </div>
     </div>
   </div>
 </template>
-
-
 
 <script>
 import axios from 'axios';
@@ -442,6 +381,32 @@ computed: {
         impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Stroke ?? 0))
       }
     };
+  },
+  
+  // Nouvelle computed property pour séparer les facteurs négatifs
+  negativeFactors() {
+    const factors = {};
+    if (!this.formattedResults) return factors;
+    
+    Object.keys(this.formattedResults).forEach(key => {
+      if (this.formattedResults[key].forceRed) {
+        factors[key] = this.formattedResults[key];
+      }
+    });
+    return factors;
+  },
+  
+  // Nouvelle computed property pour séparer les facteurs positifs
+  positiveFactors() {
+    const factors = {};
+    if (!this.formattedResults) return factors;
+    
+    Object.keys(this.formattedResults).forEach(key => {
+      if (!this.formattedResults[key].forceRed) {
+        factors[key] = this.formattedResults[key];
+      }
+    });
+    return factors;
   }
 },
   methods: {
@@ -700,15 +665,13 @@ h1,h2 {
 input, textarea, button, label {
   font-family: 'Roboto', sans-serif;
 }
-/* Container with Sidebar and Results */
+
 /* Layout Styles */
 .container {
   display: flex;
   height: 95vh;
   width: 100%;
-  /*max-width: 1400px;*/
   gap:20px;
-  
 }
 
 /* Sidebar (White Background) */
@@ -744,34 +707,7 @@ input, textarea, button, label {
   font-size: 12px;
   cursor: pointer;
 }
-.risk-level-high {
-  color: #dc3545;
-  background-color: #f8d7da;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-}
 
-.risk-level-medium {
-  color: #6f5401ff;
-  background-color: #fff3cd;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.risk-level-low {
-  color: #28a745;
-  background-color: #d4edda;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: bold;
-}
-
-.impact-table td {
-  vertical-align: middle;
-  padding: 12px 15px;
-}
 .tooltip-text {
   visibility: hidden;
   width: 200px;
@@ -797,7 +733,6 @@ input, textarea, button, label {
   opacity: 1;
 }
 
-
 /* Results Section (White Background) */
 .results {
   flex-grow: 1;
@@ -811,6 +746,46 @@ input, textarea, button, label {
   margin-top:20px;
 }
 
+/* Layout pour séparer les facteurs positifs et négatifs */
+.results-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.negative-factors, .positive-factors {
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.negative-factors {
+  background-color: #fff5f5;
+  border: 1px solid #fed7d7;
+}
+
+.positive-factors {
+  background-color: #f0fff4;
+  border: 1px solid #c6f6d5;
+}
+
+.negative-factors h3 {
+  color: #e53e3e;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.positive-factors h3 {
+  color: #38a169;
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.factors-column {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
 
 /* Form Styling */
 form input, form select, form button {
@@ -822,18 +797,11 @@ form input, form select, form button {
   border-radius: 16px;
   border-color: #a02121;
   justify-content: space-between;
-  
-  /*flex: 2; 
-  padding: 8px;
-  width: 40%;
-  border-radius: 16px;
-  border: 2px solid #a02121;*/
 }
 
 form label {
   display: block;
   margin: 5px 0;
-  
 }
 
 .input input:invalid {
@@ -913,7 +881,6 @@ img {
 }
 
 /* Checkboxes styling */
-
 .checkbox-group input[type="checkbox"] {
   appearance: none;
   width: 30px;
@@ -953,9 +920,10 @@ img {
   border-radius: 8px;
   padding: 10px;
   text-align: center;
-  width: 160px;
+  width: 100%;
   background: #fff;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
 }
 
 /* Results Cards borders*/
@@ -1014,11 +982,6 @@ img {
   max-width: 800px;
   height: 400px;
 }
-/* Layout Styles */
-.container {
-  display: flex;
-  height: 100vh;
-}
 
 /* Scrollable Content */
 .scrollable-content {
@@ -1044,8 +1007,6 @@ img {
   background: #a02121;
 }
 
-
-
 /* Button Styling */
 button {
   background-color: white;
@@ -1059,6 +1020,7 @@ button {
 button:hover {
   background-color: #f8d7da;
 }
+
 /*Table*/
 .impact-table {
   width: 100%;
@@ -1095,6 +1057,36 @@ button:hover {
 .impact-table td:nth-child(4) {
   font-weight: bold;
 }
+
+.risk-level-high {
+  color: #dc3545;
+  background-color: #f8d7da;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.risk-level-medium {
+  color: #6f5401ff;
+  background-color: #fff3cd;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.risk-level-low {
+  color: #28a745;
+  background-color: #d4edda;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.impact-table td {
+  vertical-align: middle;
+  padding: 12px 15px;
+}
+
 /* risk summary*/
 .risk-summary {
   background-color: #e7f3fe; 
@@ -1157,6 +1149,7 @@ button:hover {
   margin-bottom: 16px;
   border: 1px solid #e1e1e1;
 }
+
 .info-box {
   background-color: #ffffff; 
   border-radius: 10px;
@@ -1244,5 +1237,22 @@ button:hover {
 .factor-card.good {
   border-left: 4px solid #28a745;
 }
-</style>
 
+/* Responsive design */
+@media (max-width: 768px) {
+  .results-layout {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  
+  .container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .sidebar, .results {
+    width: 90%;
+    margin: 10px auto;
+  }
+}
+</style>
