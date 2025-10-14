@@ -1,87 +1,69 @@
 <template>
   <Disclaimer />
   <div id="app">
-  
     <div class="container">
-      <!-- Sidebar for Input Fields -->
+      <!-- Sidebar -->
       <div class="sidebar">
         <h2>Enter Your Health & Lifestyle Information</h2>
         <div class="scrollable-content">
           <form @submit.prevent="computeRisk">
-            <!-- Form questions with user inputs that includes limited value ranges -->
+            <!-- Weight -->
             <div class="input">
-             <p>Enter your weight
-               <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Your weight in kilograms (used to calculate BMI). Acceptable inputs limited between 30 - 400</span>
+              <p>Enter your weight
+                <span class="tooltip-wrapper">
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Your weight in kilograms (30–400)</span>
                 </span>
               </p>
-              <input v-model.number="formData.Weight" type="number" placeholder="Weight ( 30 - 400 kg max)*" @input="calculateBMI" min="30" max="400" required />
+              <input v-model.number="formData.Weight" type="number" placeholder="Weight (30 - 400kg)*" 
+                     @input="calculateBMI" min="30" max="400" required />
             </div>
+            <!-- Height -->
             <div class="input">
               <p>Enter your height
                 <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Your height in centimeters (used to calculate BMI). Acceptable inputs limited between 90 - 240</span>
+                  <span class="tooltip-icon">?</span>
+                  <span class="tooltip-text">Your height in centimeters (90–240)</span>
                 </span>
               </p>
-              <input v-model.number="formData.Height" type="number" placeholder="Height (90 - 240 cm max)*" @input="calculateBMI" min="90" max="240" required />
+              <input v-model.number="formData.Height" type="number" placeholder="Height (90 - 240cm)*" 
+                     @input="calculateBMI" min="90" max="240" required />
             </div>
+            <!-- BMI -->
             <div class="bmi">
-              <p>Calculated BMI
-                <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">This displays BMI based on what height and weight you entered. NOTE: BMI can not differentiate between bodyfat and muscle mass</span>
-                </span>
-              </p>
-              <input v-model="formData.BMI" type="number" placeholder="BMI* (auto-calculated)" readonly required />
+              <p>Calculated BMI</p>
+              <input v-model="formData.BMI" type="number" placeholder="BMI" readonly required />
             </div>
+            <!-- Alcohol -->
             <div class="input">
-              <p>How many drinks of alcohol do you consume per week?
-                <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Average amount of units of alcohol you consume in a week. Max limit set at 70</span>
-                </span>
-              </p>
-              <input v-model="formData.Alcohol" placeholder="Alcohol drinking per week (70 max)*" type="number" min="0" max="70" required />
+              <p>Alcohol per week</p>
+              <input v-model="formData.Alcohol" type="number" placeholder="Alcohol (0-70)*" min="0" max="70" required />
             </div>
+            <!-- Sleep -->
             <div class="input">
-              <p>How many hours of sleep do you get per 24 hours?
-                <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Average amount of hours you sleep in a day</span>
-                </span>
-              </p>
-              <input v-model="formData.Sleep" type="number" placeholder="Sleep (hours per day)*" min="0" max="24" required />
+              <p>Sleep (hours/day)</p>
+              <input v-model="formData.Sleep" type="number" placeholder="Sleep (0-24)*" min="0" max="24" required />
             </div>
+            <!-- Exercise -->
             <div class="input">
-              <p>How many minutes do you exercise per week?
-                <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Amount of minutes you exercise on an average week including activities like cycling, hiking, walking etc. Max limit set att 3000 (50 hours)</span>
-                </span>
-              </p>
-              <input v-model="formData.Exercise" type="number" placeholder="Exercise (minutes per week, 3000 max)*" min="0" max="3000" required />
+              <p>Exercise (minutes/week)</p>
+              <input v-model="formData.Exercise" type="number" placeholder="Exercise (0-3000)*" min="0" max="3000" required />
             </div>
+            <!-- Fruit -->
             <div class="input">
-              <p>How many fruits do you eat per day?
-                <span class="tooltip-wrapper">
-                 <span class="tooltip-icon">?</span>
-                 <span class="tooltip-text">Amount of fruits you eat on average everyday. Max limit set at 20</span>
-                </span>
-              </p>
-              <input v-model="formData.Fruit" placeholder="Fruit intake (servings per day, 20 max)*" min="0" max="20" required />
+              <p>Fruit per day</p>
+              <input v-model="formData.Fruit" type="number" placeholder="Fruit (0-20)*" min="0" max="20" required />
             </div>
 
-          <!-- Gender Dropdown -->
-          <label>Gender *</label>
-          <select v-model="formData.Gender" required>
-            <option disabled value="">Select Gender</option>
-            <option>Male</option>
-            <option>Female</option>
-          </select>
+            <!-- Gender -->
+            <label>Gender *</label>
+            <select v-model="formData.Gender" required>
+              <option disabled value="">Select Gender</option>
+              <option>Male</option>
+              <option>Female</option>
+            </select>
 
-           
+            <!-- Age -->
             <label>Age Category *</label>
             <select v-model="formData.AgeCategory" required>
               <option disabled value="">Select Age Range</option>
@@ -99,7 +81,7 @@
               <option>75-79</option>
             </select>
 
-           
+            <!-- Smoking -->
             <label>Smoking *</label>
             <select v-model="formData.Smoking" required>
               <option disabled value="">Select Smoking Status</option>
@@ -108,13 +90,8 @@
               <option>Every day</option>
             </select>
 
-            
-            <h3>Check any that apply:  
-              <span class="tooltip-wrapper">
-                <span class="tooltip-icon">?</span>
-                <span class="tooltip-text">Check one or multiple boxes if you have experienced any of these</span>
-              </span>
-            </h3>
+            <!-- Conditions -->
+            <h3>Check any that apply:</h3>
             <div class="checkbox-group">
               <label>Diabetes<input type="checkbox" v-model="formData.Diabetes" /></label>
               <label>Kidney Disease<input type="checkbox" v-model="formData.Kidney" /></label>
@@ -122,86 +99,79 @@
             </div>
 
             <button type="submit">Analyze</button>
-            <button type="submit" @click="randomizeData">🔀 Randomize</button>
+            <button type="button" @click="randomizeData">🔀 Randomize</button>
           </form>
         </div>
       </div>
 
-     
+      <!-- Results -->
       <div class="results">
         <h2>Heart Disease Risk Prediction Results</h2>
         <p>Based on your health data, here's how your lifestyle factors contribute to your risk</p>
-        <div class="scrollable-content">
-          <div v-if="result">
-            <!-- Nouvelle organisation : Facteurs négatifs à gauche, positifs à droite -->
-            <div class="results-layout">
-              <!-- Colonne des facteurs négatifs (rouges) -->
-              <div class="negative-factors">
-                <h3>🛑 Negative Factor</h3>
-                <div class="factors-column">
-                  <div v-for="(value, key) in negativeFactors" 
-                       :key="key" 
-                       class="result-card card-negative">
-                    <div class="icon-up">
-                      <i class="bi bi-hand-thumbs-down-fill negative-icon"></i>
-                    </div>
-                    <div class="result-content">
-                      <strong>{{ key }}</strong>: {{ value.text }}
-                      <div class="negative">{{ value.percentage.toFixed(2) }}%</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <!-- Colonne des facteurs positifs (verts) -->
-              <div class="positive-factors">
-                <h3>✅ Favorable Factor</h3>
-                <div class="factors-column">
-                  <div v-for="(value, key) in positiveFactors" 
-                       :key="key" 
-                       class="result-card card-positive">
-                    <div class="icon-up">
-                      <i class="bi bi-hand-thumbs-up-fill positive-icon"></i>
-                    </div>
-                    <div class="result-content">
-                      <strong>{{ key }}</strong>: {{ value.text }}
-                      <div class="positive">{{ value.percentage.toFixed(2) }}%</div>
-                    </div>
+        <div v-if="result">
+          <div class="results-layout">
+            <!-- Negative -->
+            <div class="negative-factors">
+              <h3>🛑 Negative Factor</h3>
+              <div class="factors-column">
+                <div v-for="(value, key) in negativeFactors" :key="key" class="result-card card-negative">
+                  <i class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+                  <div class="result-content">
+                    <strong>{{ key }}</strong>: {{ value.text }}
+                    <div class="negative">{{ Math.abs(value.percentage).toFixed(2) }}%</div>
                   </div>
                 </div>
               </div>
             </div>
 
-         <div class="results-container">
+            <!-- Positive -->
+            <div class="positive-factors">
+              <h3>✅ Favorable Factor</h3>
+              <div class="factors-column">
+                <div v-for="(value, key) in positiveFactors" :key="key" class="result-card card-positive">
+                  <i class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+                  <div class="result-content">
+                    <strong>{{ key }}</strong>: {{ value.text }}
+                    <div class="positive">{{ Math.abs(value.percentage).toFixed(2) }}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="results-container">
             <h3>Explaining Heart Disease Predictions Through Feature Importance</h3>
             <table class="impact-table">
               <thead>
-    <tr>
-      <th>Factor</th>
-      <th>Currently</th>
-      <th>Recommendation WHO</th>
-      <th>Risck level</th>
-      <th>State</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr v-for="(value, key) in formattedResults" :key="key">
-      <td><strong>{{ key }}</strong></td>
-      <td>{{ value.text }}</td>
-      <td>{{ getGuideline(key) }}</td>
-      <td :class="getRiskClass(value.impact)">{{ value.impact }}</td>
-      <td :style="{
-        color: value.forceRed ? '#dc3545' : '#28a745',
-        fontWeight: 'bold'
-      }">
-        {{ value.icon }} 
-        {{ value.forceRed ? 'unwell' : 'good health' }}
-      </td>
-    </tr>
-  </tbody>
+                <tr>
+                  <th>Factor</th>
+                  <th>Currently</th>
+                  <th>Recommendation WHO</th>
+                  <th>Risk level</th>
+                  <th>State</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(value, key) in formattedResults" :key="key">
+                  <td><strong>{{ key }}</strong></td>
+                  <td>{{ value.text }}</td>
+                  <td>{{ getGuideline(key) }}</td>
+                  <td :class="getRiskClass(value.impact)">{{ value.impact }}</td>
+                  <td :style="{
+                    color: value.forceRed ? '#dc3545' : '#28a745',
+                    fontWeight: 'bold'
+                  }">
+                    {{ value.icon }} 
+                    {{ value.forceRed ? 'unwell' : 'good health' }}
+                  </td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
+          <!-- SHAP -->
           <div v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
             <h3>What Affected Your Results Most</h3>
 
@@ -209,18 +179,18 @@
               <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
             </div>
 
+            <!-- KEEPING THE INFO BOX -->
             <div class="info-box">
               <h5>📊 How This Chart Works</h5>
-              <p>
-                This chart shows which health factors had the biggest effect on your heart disease risk. 
-              </p>
+              <p>This chart shows which health factors had the biggest effect on your heart disease risk.</p>
               <ul>
                 <li><strong>Green bars</strong> = lower your risk</li>
                 <li><strong style="color:#dc3545;">Red bars</strong> = increase your risk</li>
                 <li>The longer the bar, the more important the effect</li>
               </ul>
               <p>
-                Even if you don't have a condition like stroke or kidney disease, it may still appear. That's because your good health (not having it) helped lower your risk — and the model shows that.
+                Even if you don't have a condition like stroke or kidney disease, it may still appear. 
+                That's because your good health (not having it) helped lower your risk — and the model shows that.
               </p>
             </div>
 
@@ -230,37 +200,37 @@
             </div>
           </div>
 
+          <!-- Risk Assessment -->
           <div class="risk-assessment" v-if="result && result.risk_assessment">
-  <div class="risk-level" :class="result.risk_assessment.level.toLowerCase()">
-    <h3>{{ result.risk_assessment.level }}</h3>
-    <p>{{ result.risk_assessment.description }}</p>
-    <div class="risk-score">
-      Risck Score : {{ (result.risk_assessment.score * 100).toFixed(1) }}%
-    </div>
-  </div>
+            <div class="risk-level" :class="result.risk_assessment.level.toLowerCase()">
+              <h3>{{ result.risk_assessment.level }}</h3>
+              <p>{{ result.risk_assessment.description }}</p>
+              <div class="risk-score">
+                Risk Score : {{ (result.risk_assessment.score * 100).toFixed(1) }}%
+              </div>
+            </div>
 
-  <div class="lifestyle-factors">
-    <h3>Analyse des Facteurs de Style de Vie</h3>
-    <div class="factors-grid">
-      <div v-for="(value, key) in formattedResults" 
-           :key="key" 
-           class="factor-card"
-           :class="{ 'warning': value.forceRed, 'good': !value.forceRed }">
-        <div class="factor-header">
-          <span class="factor-icon">{{ value.icon }}</span>
-          <h4>{{ key }}</h4>
-        </div>
-        <div class="factor-content">
-          <p class="value">{{ value.text }}</p>
-          <p class="impact">Impact : {{ value.percentage.toFixed(1) }}%</p>
-          <p class="recommendation">{{ value.recommendation }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-          </div>
+            <!-- Lifestyle Factors Cards -->
+            <div class="lifestyle-factors">
+              <h3>Analyse des Facteurs de Style de Vie</h3>
+              <div class="factors-grid">
+                <div v-for="(value, key) in formattedResults" 
+                     :key="key" 
+                     class="factor-card"
+                     :class="{ 'warning': value.forceRed, 'good': !value.forceRed }">
+                  <div class="factor-header">
+                    <span class="factor-icon">{{ value.icon }}</span>
+                    <h4>{{ key }}</h4>
+                  </div>
+                  <div class="factor-content">
+                    <p class="value">{{ value.text }}</p>
+                    <p class="impact">Impact : {{ Math.abs(value.percentage).toFixed(1) }}%</p>
+                    <p class="recommendation">{{ getGuideline(key) }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div> <!-- /risk-assessment -->
         </div>
       </div>
     </div>
@@ -269,9 +239,6 @@
 
 <script>
 import axios from 'axios';
-import { Chart, registerables } from "chart.js";
-
-Chart.register(...registerables);
 export default {
   name: 'App',
   data() {
@@ -291,196 +258,185 @@ export default {
         Kidney: false,
         Stroke: false
       },
-      whoGuidelines: {
-      BMI: "18.5 – 24.9 kg/m² is considered healthy. Over 25 is overweight; over 30 is obese.",
-      Alcohol: "Limit to ≤2 standard drinks/day for men, ≤1 for women. Avoid binge drinking.",
-      Sleep: "7–9 hours of sleep per night for adults recommended .",
-      Exercise: " At least 150 min of moderate  activity/week.",
-      Fruit: "At least 400grams or 5 servings /day",
-      Smoking:"No level of smoking is safe",
-      Diabetes:" Maintain a healthy diet, regular physical activity, and a healthy weight to prevent type 2 diabetes",
-      Kidney:"Manage blood pressure and blood sugar to prevent kidney disease. Avoid smoking and excessive alcohol.",
-      Stroke:"Manage blood pressure, reduce cholesterol, and avoid smoking to lower stroke risk.",
-      
-    },
       result: null,
-      chart: null,
-      riskSummary: '',
-      shap_summary_text:'',
+      shap_summary_text: '',
+      whoGuidelines: {
+        BMI: "18.5 – 24.9 kg/m² is healthy.",
+        Alcohol: "≤2 drinks/day men, ≤1 women.",
+        Sleep: "7–9 hours per night.",
+        Exercise: "At least 150 min/week.",
+        Fruit: "≥5 servings per day.",
+        Smoking:"No safe level of smoking.",
+        Diabetes:"Healthy diet and activity prevent type 2 diabetes.",
+        Kidney:"Control blood pressure/sugar to protect kidneys.",
+        Stroke:"Control BP, cholesterol, avoid smoking."
+      }
     };
   },
   computed: {
 formattedResults() {
-    if (!this.result || !this.result.shap_impact) {
-      console.log("No results found in computed property");
-      return {};
-    }
-    
-    return {
-      "BMI (normal between 18.5 - 24.9)": {
-        text: this.formData.BMI,
-        percentage: this.result.shap_impact?.BMI ?? 0,
-        icon: this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
-        forceRed: this.formData.BMI >= 25 || this.formData.BMI < 18.5,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.BMI ?? 0))
-      },
-      "Alcohol (drinks/week)": {
-        text: this.formData.Alcohol,
-        percentage: this.result.shap_impact?.Alcohol ?? 0,
-        icon: this.formData.Alcohol <= 3 ? "👍" : "👎",
-        forceRed: this.formData.Alcohol > 4,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Alcohol ?? 0))
-      },
-      "Sleep (hours/day)": {
-        text: this.formData.Sleep,
-        percentage: this.result.shap_impact?.Sleep ?? 0,
-        icon: (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
-        forceRed: !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10),
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Sleep ?? 0))
-      },
-      "Exercise (min/week)": {
-        text: this.formData.Exercise,
-        percentage: this.result.shap_impact?.Exercise ?? 0,
-        icon: this.formData.Exercise > 150 ? "👍" : "👎",
-        forceRed: this.formData.Exercise <= 150,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Exercise ?? 0))
-      },
-      "Fruit Intake (servings/day)": {
-        text: this.formData.Fruit,
-        percentage: this.result.shap_impact?.Fruit ?? 0,
-        icon: this.formData.Fruit >= 5 ? "👍" : "👎",
-        forceRed: this.formData.Fruit < 5,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Fruit ?? 0))
-      },
-      "Smoking": {
-        text: this.formData.Smoking,
-        percentage: this.result.shap_impact?.Smoking ?? 0,
-        icon: this.formData.Smoking === 'Not at all' ? "👍" : "👎",
-        forceRed: this.formData.Smoking === 'Everyday' || this.formData.Smoking === 'Sometimes',
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Smoking ?? 0))
-      },
-      "Diabetes": {
-        text: this.formData.Diabetes ? "Yes" : "No",
-        percentage: this.result.shap_impact?.Diabetes ?? 0,
-        icon: this.formData.Diabetes ? "👎" : "👍",
-        forceRed: this.formData.Diabetes,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Diabetes ?? 0))
-      },
-      "Kidney Disease": {
-        text: this.formData.Kidney ? "Yes" : "No",
-        percentage: this.result.shap_impact?.Kidney ?? 0,
-        icon: this.formData.Kidney ? "👎" : "👍",
-        forceRed: this.formData.Kidney,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Kidney ?? 0))
-      },
-      "Stroke": {
-        text: this.formData.Stroke ? "Yes" : "No",
-        percentage: this.result.shap_impact?.Stroke ?? 0,
-        icon: this.formData.Stroke ? "👎" : "👍",
-        forceRed: this.formData.Stroke,
-        impact: this.getRiskLevel(Math.abs(this.result.shap_impact?.Stroke ?? 0))
-      }
-    };
-  },
+  if (!this.result || !this.result.shap_impact) return {};
+  const shap = this.result.shap_impact;
 
-  },
-  
-  // Nouvelle computed property pour séparer les facteurs négatifs
-  negativeFactors() {
-    const factors = {};
-    if (!this.formattedResults) return factors;
-    
-    Object.keys(this.formattedResults).forEach(key => {
-      if (this.formattedResults[key].forceRed) {
-        factors[key] = this.formattedResults[key];
-      }
-    });
-    return factors;
-  },
-  
-  // Nouvelle computed property pour séparer les facteurs positifs
-  positiveFactors() {
-    const factors = {};
-    if (!this.formattedResults) return factors;
-    
-    Object.keys(this.formattedResults).forEach(key => {
-      if (!this.formattedResults[key].forceRed) {
-        factors[key] = this.formattedResults[key];
-      }
-    });
-    return factors;
+  // helper → applique la logique signe + magnitude
+  const build = (label, value, shapVal, icon, forceRed) => {
+    return {
+      text: value,
+      percentage: shapVal ?? 0,
+      icon,
+      forceRed,
+      impact: this.getRiskLevel(Math.abs(shapVal ?? 0), shapVal ?? 0)
+    };
+  };
+
+  return {
+    "BMI (normal between 18.5 - 24.9)": build(
+      "BMI",
+      this.formData.BMI,
+      shap.BMI,
+      this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
+      this.formData.BMI >= 25 || this.formData.BMI < 18.5
+    ),
+
+    "Alcohol (drinks/week)": build(
+      "Alcohol",
+      this.formData.Alcohol,
+      shap.Alcohol,
+      this.formData.Alcohol <= 3 ? "👍" : "👎",
+      this.formData.Alcohol > 4
+    ),
+
+    "Sleep (hours/day)": build(
+      "Sleep",
+      this.formData.Sleep,
+      shap.Sleep,
+      (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
+      !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)
+    ),
+
+    "Exercise (min/week)": build(
+      "Exercise",
+      this.formData.Exercise,
+      shap.Exercise,
+      this.formData.Exercise > 150 ? "👍" : "👎",
+      this.formData.Exercise <= 150
+    ),
+
+    "Fruit Intake (servings/day)": build(
+      "Fruit",
+      this.formData.Fruit,
+      shap.Fruit,
+      this.formData.Fruit >= 5 ? "👍" : "👎",
+      this.formData.Fruit < 5
+    ),
+
+    "Smoking": build(
+      "Smoking",
+      this.formData.Smoking,
+      shap.Smoking,
+      this.formData.Smoking === 'Not at all' ? "👍" : "👎",
+      this.formData.Smoking === 'Every day' || this.formData.Smoking === 'Sometimes'
+    ),
+
+    "Diabetes": build(
+      "Diabetes",
+      this.formData.Diabetes ? "Yes" : "No",
+      shap.Diabetes,
+      this.formData.Diabetes ? "👎" : "👍",
+      this.formData.Diabetes
+    ),
+
+    "Kidney Disease": build(
+      "Kidney",
+      this.formData.Kidney ? "Yes" : "No",
+      shap.Kidney,
+      this.formData.Kidney ? "👎" : "👍",
+      this.formData.Kidney
+    ),
+
+    "Stroke": build(
+      "Stroke",
+      this.formData.Stroke ? "Yes" : "No",
+      shap.Stroke,
+      this.formData.Stroke ? "👎" : "👍",
+      this.formData.Stroke
+    )
+  };
 },
+
+    negativeFactors() {
+      const f = {};
+      Object.keys(this.formattedResults).forEach(k => {
+        if (this.formattedResults[k].forceRed) f[k] = this.formattedResults[k];
+      });
+      return f;
+    },
+    positiveFactors() {
+      const f = {};
+      Object.keys(this.formattedResults).forEach(k => {
+        if (!this.formattedResults[k].forceRed) f[k] = this.formattedResults[k];
+      });
+      return f;
+    }
+  },
   methods: {
     getGuideline(key) {
-    const map = {
-      "BMI (normal between 18.5 - 24.9)": "BMI",
-      "Alcohol (drinks/week)": "Alcohol",
-      "Sleep (hours/day)": "Sleep",
-      "Exercise (min/week)": "Exercise",
-      "Fruit Intake (servings/day)": "Fruit",
-      "Smoking": "Smoking",
-      "Diabetes": "Diabetes",
-      "Kidney Disease": "Kidney",
-      "Stroke": "Stroke"
-    };
-    return this.whoGuidelines[map[key]] || "—";
-  },
-  getRiskClass(impact) {
-    if (impact === "risk-level-high") {
-      return "risk-level-high";
-    } else if (impact === "risk-level-medium") {
-      return "risk-level-medium";
-    } else {
+      const map = {
+        "BMI (normal between 18.5 - 24.9)": "BMI",
+        "Alcohol (drinks/week)": "Alcohol",
+        "Sleep (hours/day)": "Sleep",
+        "Exercise (min/week)": "Exercise",
+        "Fruit Intake (servings/day)": "Fruit",
+        "Smoking": "Smoking",
+        "Diabetes": "Diabetes",
+        "Kidney Disease": "Kidney",
+        "Stroke": "Stroke"
+      };
+      return this.whoGuidelines[map[key]] || "—";
+    },
+    getRiskLevel(value, shapVal) {
+      // shapVal < 0 → facteur protecteur → pas de risk level
+      if (shapVal <= 0) return "risk-level-low";
+
+      if (value >= 5) return "risk-level-high";
+      if (value >= 2) return "risk-level-medium";
       return "risk-level-low";
-    }
-  },
-  getRiskLevel(value) {
-    const absValue = Math.abs(value);
-    if (absValue >= 0.5) {
-      return "risk-level-high";
-    } else if (absValue >= 0.2) {
-      return "risk-level-medium";
-    } else {
-      return "risk-level-low";
-    }
-  },
-    calculateBMI() {
-      if (this.formData.Weight && this.formData.Height) {
-        const heightInMeters = this.formData.Height / 100;
-        this.formData.BMI = (this.formData.Weight / (heightInMeters ** 2)).toFixed(2);
-      }
     },
 
-    /* Function for randomlize button*/
+    getRiskClass(impact) {
+      return impact;
+    },
+    calculateBMI() {
+      if (this.formData.Weight && this.formData.Height) {
+        const h = this.formData.Height / 100;
+        this.formData.BMI = (this.formData.Weight / (h * h)).toFixed(2);
+      }
+    },
     randomizeData() {
-      const randomBetween = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
-      const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-      this.formData.Weight = randomBetween(30, 220);// Between 30kg-220kg
-      this.formData.Height = randomBetween(90, 240);// between 90cm -240cm
+      const r = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const c = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      this.formData.Weight = r(30, 220);
+      this.formData.Height = r(90, 240);
       this.calculateBMI();
-      this.formData.Alcohol = randomBetween(0, 35);// max to 35 times per week
-      this.formData.Sleep = randomBetween(0, 24); // between 0 -24h per day
-      this.formData.Exercise = randomBetween(0, 300); // between 0-300 minutes/weekly
-      this.formData.Fruit = randomBetween(0, 5);// max to 5 times per days
-      this.formData.Gender = randomChoice(["Male", "Female"]);
-      this.formData.AgeCategory = randomChoice(["18-24", "25-29", "30-34", "35-39", "40-44", "45-49", "50-54", "55-59", "60-64", "65-69", "70-74", "75-79"]);
-      this.formData.Smoking = randomChoice(["Not at all", "Sometimes", "Every day"]);
+      this.formData.Alcohol = r(0, 35);
+      this.formData.Sleep = r(0, 24);
+      this.formData.Exercise = r(0, 300);
+      this.formData.Fruit = r(0, 5);
+      this.formData.Gender = c(["Male", "Female"]);
+      this.formData.AgeCategory = c(["18-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79"]);
+            this.formData.Smoking = c(["Not at all", "Sometimes", "Every day"]);
       this.formData.Diabetes = Math.random() < 0.2;
       this.formData.Kidney = Math.random() < 0.1;
       this.formData.Stroke = Math.random() < 0.05;
     },
-  
-
     async computeRisk() {
       const ageMapping = {
         '18-24': 21, '25-29': 27, '30-34': 32, '35-39': 37,
         '40-44': 42, '45-49': 47, '50-54': 52, '55-59': 57,
         '60-64': 62, '65-69': 67, '70-74': 72, '75-79': 77
       };
-
       this.formData.Age = ageMapping[this.formData.AgeCategory];
-      // Prepare the data object to be sent to the backend
+
       const apiData = {
         Weight: this.formData.Weight,
         Height: this.formData.Height,
@@ -498,143 +454,23 @@ formattedResults() {
       };
 
       try {
-        const response = await axios.post('http://localhost:5000/predict', apiData);
+        const response = await axios.post("http://localhost:5000/predict", apiData);
         this.result = response.data;
-        this.riskSummary = this.generateRiskSummary(response.data);
-        this.shap_summary_text =response.data.shap_summary_text;
-        console.log("SHAP Summary:",response.data.shap_summary_text);
-        console.log(this.formattedResults);
-        // Debugging - Check if SHAP data is coming correctly
+        this.shap_summary_text = response.data.shap_summary_text;
         console.log("SHAP Impact:", response.data.shap_impact);
-        console.log("API Response:", response.data); // Debugging
-    
+        console.log("API Response:", response.data);
       } catch (error) {
-        console.error("There was an error making the API request:", error);
+        console.error("Error during API request:", error);
       }
-    },
-    generateRiskSummary(data) {
-      return `
-        SVM model: ${ (data.svm_prediction * 100).toFixed(2) }% risk.
-        XGBoost model: ${ (data.xgb_prediction * 100).toFixed(2) }% risk.
-        Keras model: ${ (data.keras_prediction * 100).toFixed(2) }% risk.
-      `;
     },
     isValidBase64(base64) {
-      // Ensure the base64 string starts with 'data:image/png;base64,'
-      return typeof base64 === 'string' && base64.startsWith('iVBORw0KGgo') || base64.length > 0;
-    },
-    // Helper function to determine if the result is positive
-    isPositiveResult(key, value) {
-      switch(key) {
-        case 'BMI':
-          return value >= 18.5 && value <= 24.9;
-        case 'Alcohol (drinks/week)':
-          return value <= 3;
-        case 'Sleep (hours/day)':
-          return value >= 6 && value <= 10;
-        case 'Smoking':
-          return value === 'Not at all';
-        case 'Diabetes':
-          return value === 'No';
-        case 'Kidney Disease':
-          return value === 'No';
-        case 'Stroke':
-          return value === 'No';
-        case 'Exercise (min/week)':
-          return value >150;
-        case 'Fruit Intake (servings/day)':
-          return value >= 5  ;
-        default:
-          return false;
-      }
-    },
-
-    // Modify renderChart function to use positive result logic
-    renderChart() {
-      if (this.chart) {
-        this.chart.destroy(); // Destroy previous instance before re-rendering
-      }
-
-      const chartElement = this.$refs.barChart;
-      if (chartElement) {
-        const ctx = chartElement.getContext("2d");
-
-        const labels = Object.keys(this.formattedResults);
-        const values = Object.values(this.formattedResults).map(item => item.percentage);
-        // Check values before rendering
-    console.log("Labels:", labels);
-    console.log("Values:", values);
-
-    if (labels.length === 0 || values.length === 0) {
-      console.error("No data to render on the chart");
-      return;
+      return typeof base64 === 'string' && 
+             (base64.startsWith('iVBORw0KGgo') || base64.length > 0);
     }
-
-        const colors = values.map((val, index) => {
-          // Check if the result is positive based on the key and value
-          const label = labels[index];
-          const value = this.formattedResults[label].text;
-          return this.isPositiveResult(label, value) ? "rgba(75, 192, 75, 0.7)" : "rgba(255, 99, 132, 0.7)"; // Green for positive, Red for negative
-        });
-
-        this.chart = new Chart(ctx, {
-          type: "bar",
-          data: {
-            labels: labels,
-            datasets: [
-              {
-                label: "Impact Percentage",
-                data: values,
-                backgroundColor: values.map((val) => (val >= 0 ? "rgba(255, 99, 132, 0.7)" : "rgba(75, 192, 75, 0.7)")),
-                borderColor: colors.map(c => c.replace("0.7", "1")),
-                borderWidth: 1
-              }
-            ]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function (value) {
-                    return value + "%";
-                  }
-                }
-              }
-            }
-          }
-        });
-      } else {
-        console.error("Canvas element is not available.");
-      }
-    }
-  },
-  watch: {
-    formattedResults: {
-      handler() {
-        this.$nextTick(() => {
-         this.renderChart();
-        
-        });
-      },
-      deep: true
-    }
-  },
-  mounted() {
-    this.$nextTick(() => {
-      console.log('Mounted hook called');
-    if (this.$refs.barChart) {
-      console.log('Canvas element found:', this.$refs.barChart);
-      this.renderChart();
-    } else {
-      console.error('Canvas element is not available');
-    }
-    });
   }
 };
 </script>
+
 
 <style scoped>
 /* Full Page Background */
