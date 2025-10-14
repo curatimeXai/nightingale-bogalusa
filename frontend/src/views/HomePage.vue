@@ -140,8 +140,33 @@
             </div>
           </div>
 
+          <!-- Risk Score Section -->
+          <div class="risk-score-section" v-if="result && result.risk_assessment">
+            <div class="risk-level-badge" :class="result.risk_assessment.level.toLowerCase()">
+              <h3>{{ result.risk_assessment.level }}</h3>
+              <div class="risk-score-value">
+                Risk Score: {{ (result.risk_assessment.score * 100).toFixed(1) }}%
+              </div>
+              <p>{{ result.risk_assessment.description }}</p>
+            </div>
+          </div>
+
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button 
+              :class="{ active: activeTab === 'table' }" 
+              @click="activeTab = 'table'">
+              📊 Table View
+            </button>
+            <button 
+              :class="{ active: activeTab === 'chart' }" 
+              @click="activeTab = 'chart'">
+              📈 Impact Chart
+            </button>
+          </div>
+
           <!-- Table -->
-          <div class="results-container">
+          <div v-show="activeTab === 'table'" class="results-container">
             <h3>Explaining Heart Disease Predictions Through Feature Importance</h3>
             <table class="impact-table">
               <thead>
@@ -171,15 +196,15 @@
             </table>
           </div>
 
-          <!-- SHAP -->
-          <div v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
+          <!-- SHAP Chart -->
+          <div v-show="activeTab === 'chart'" v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
             <h3>What Affected Your Results Most</h3>
 
             <div v-if="isValidBase64(result.shap_plot)">
               <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
             </div>
 
-            <!-- KEEPING THE INFO BOX -->
+            <!-- Info Box -->
             <div class="info-box">
               <h5>📊 How This Chart Works</h5>
               <p>This chart shows which health factors had the biggest effect on your heart disease risk.</p>
@@ -200,37 +225,6 @@
             </div>
           </div>
 
-          <!-- Risk Assessment -->
-          <div class="risk-assessment" v-if="result && result.risk_assessment">
-            <div class="risk-level" :class="result.risk_assessment.level.toLowerCase()">
-              <h3>{{ result.risk_assessment.level }}</h3>
-              <p>{{ result.risk_assessment.description }}</p>
-              <div class="risk-score">
-                Risk Score : {{ (result.risk_assessment.score * 100).toFixed(1) }}%
-              </div>
-            </div>
-
-            <!-- Lifestyle Factors Cards -->
-            <div class="lifestyle-factors">
-              <h3>Analyse des Facteurs de Style de Vie</h3>
-              <div class="factors-grid">
-                <div v-for="(value, key) in formattedResults" 
-                     :key="key" 
-                     class="factor-card"
-                     :class="{ 'warning': value.forceRed, 'good': !value.forceRed }">
-                  <div class="factor-header">
-                    <span class="factor-icon">{{ value.icon }}</span>
-                    <h4>{{ key }}</h4>
-                  </div>
-                  <div class="factor-content">
-                    <p class="value">{{ value.text }}</p>
-                    <p class="impact">Impact : {{ Math.abs(value.percentage).toFixed(1) }}%</p>
-                    <p class="recommendation">{{ getGuideline(key) }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div> <!-- /risk-assessment -->
         </div>
       </div>
     </div>
@@ -243,6 +237,7 @@ export default {
   name: 'App',
   data() {
     return {
+      activeTab: 'table',
       formData: {
         Gender: '',
         AgeCategory: '',
@@ -274,95 +269,94 @@ export default {
     };
   },
   computed: {
-formattedResults() {
-  if (!this.result || !this.result.shap_impact) return {};
-  const shap = this.result.shap_impact;
+    formattedResults() {
+      if (!this.result || !this.result.shap_impact) return {};
+      const shap = this.result.shap_impact;
 
-  // helper → applique la logique signe + magnitude
-  const build = (label, value, shapVal, icon, forceRed) => {
-    return {
-      text: value,
-      percentage: shapVal ?? 0,
-      icon,
-      forceRed,
-      impact: this.getRiskLevel(Math.abs(shapVal ?? 0), shapVal ?? 0)
-    };
-  };
+      const build = (label, value, shapVal, icon, forceRed) => {
+        return {
+          text: value,
+          percentage: shapVal ?? 0,
+          icon,
+          forceRed,
+          impact: this.getRiskLevel(Math.abs(shapVal ?? 0), shapVal ?? 0)
+        };
+      };
 
-  return {
-    "BMI (normal between 18.5 - 24.9)": build(
-      "BMI",
-      this.formData.BMI,
-      shap.BMI,
-      this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
-      this.formData.BMI >= 25 || this.formData.BMI < 18.5
-    ),
+      return {
+        "BMI (normal between 18.5 - 24.9)": build(
+          "BMI",
+          this.formData.BMI,
+          shap.BMI,
+          this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
+          this.formData.BMI >= 25 || this.formData.BMI < 18.5
+        ),
 
-    "Alcohol (drinks/week)": build(
-      "Alcohol",
-      this.formData.Alcohol,
-      shap.Alcohol,
-      this.formData.Alcohol <= 3 ? "👍" : "👎",
-      this.formData.Alcohol > 4
-    ),
+        "Alcohol (drinks/week)": build(
+          "Alcohol",
+          this.formData.Alcohol,
+          shap.Alcohol,
+          this.formData.Alcohol <= 3 ? "👍" : "👎",
+          this.formData.Alcohol > 4
+        ),
 
-    "Sleep (hours/day)": build(
-      "Sleep",
-      this.formData.Sleep,
-      shap.Sleep,
-      (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
-      !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)
-    ),
+        "Sleep (hours/day)": build(
+          "Sleep",
+          this.formData.Sleep,
+          shap.Sleep,
+          (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
+          !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)
+        ),
 
-    "Exercise (min/week)": build(
-      "Exercise",
-      this.formData.Exercise,
-      shap.Exercise,
-      this.formData.Exercise > 150 ? "👍" : "👎",
-      this.formData.Exercise <= 150
-    ),
+        "Exercise (min/week)": build(
+          "Exercise",
+          this.formData.Exercise,
+          shap.Exercise,
+          this.formData.Exercise > 150 ? "👍" : "👎",
+          this.formData.Exercise <= 150
+        ),
 
-    "Fruit Intake (servings/day)": build(
-      "Fruit",
-      this.formData.Fruit,
-      shap.Fruit,
-      this.formData.Fruit >= 5 ? "👍" : "👎",
-      this.formData.Fruit < 5
-    ),
+        "Fruit Intake (servings/day)": build(
+          "Fruit",
+          this.formData.Fruit,
+          shap.Fruit,
+          this.formData.Fruit >= 5 ? "👍" : "👎",
+          this.formData.Fruit < 5
+        ),
 
-    "Smoking": build(
-      "Smoking",
-      this.formData.Smoking,
-      shap.Smoking,
-      this.formData.Smoking === 'Not at all' ? "👍" : "👎",
-      this.formData.Smoking === 'Every day' || this.formData.Smoking === 'Sometimes'
-    ),
+        "Smoking": build(
+          "Smoking",
+          this.formData.Smoking,
+          shap.Smoking,
+          this.formData.Smoking === 'Not at all' ? "👍" : "👎",
+          this.formData.Smoking === 'Every day' || this.formData.Smoking === 'Sometimes'
+        ),
 
-    "Diabetes": build(
-      "Diabetes",
-      this.formData.Diabetes ? "Yes" : "No",
-      shap.Diabetes,
-      this.formData.Diabetes ? "👎" : "👍",
-      this.formData.Diabetes
-    ),
+        "Diabetes": build(
+          "Diabetes",
+          this.formData.Diabetes ? "Yes" : "No",
+          shap.Diabetes,
+          this.formData.Diabetes ? "👎" : "👍",
+          this.formData.Diabetes
+        ),
 
-    "Kidney Disease": build(
-      "Kidney",
-      this.formData.Kidney ? "Yes" : "No",
-      shap.Kidney,
-      this.formData.Kidney ? "👎" : "👍",
-      this.formData.Kidney
-    ),
+        "Kidney Disease": build(
+          "Kidney",
+          this.formData.Kidney ? "Yes" : "No",
+          shap.Kidney,
+          this.formData.Kidney ? "👎" : "👍",
+          this.formData.Kidney
+        ),
 
-    "Stroke": build(
-      "Stroke",
-      this.formData.Stroke ? "Yes" : "No",
-      shap.Stroke,
-      this.formData.Stroke ? "👎" : "👍",
-      this.formData.Stroke
-    )
-  };
-},
+        "Stroke": build(
+          "Stroke",
+          this.formData.Stroke ? "Yes" : "No",
+          shap.Stroke,
+          this.formData.Stroke ? "👎" : "👍",
+          this.formData.Stroke
+        )
+      };
+    },
 
     negativeFactors() {
       const f = {};
@@ -395,9 +389,7 @@ formattedResults() {
       return this.whoGuidelines[map[key]] || "—";
     },
     getRiskLevel(value, shapVal) {
-      // shapVal < 0 → facteur protecteur → pas de risk level
       if (shapVal <= 0) return "risk-level-low";
-
       if (value >= 5) return "risk-level-high";
       if (value >= 2) return "risk-level-medium";
       return "risk-level-low";
@@ -424,7 +416,7 @@ formattedResults() {
       this.formData.Fruit = r(0, 5);
       this.formData.Gender = c(["Male", "Female"]);
       this.formData.AgeCategory = c(["18-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79"]);
-            this.formData.Smoking = c(["Not at all", "Sometimes", "Every day"]);
+      this.formData.Smoking = c(["Not at all", "Sometimes", "Every day"]);
       this.formData.Diabetes = Math.random() < 0.2;
       this.formData.Kidney = Math.random() < 0.1;
       this.formData.Stroke = Math.random() < 0.05;
@@ -471,7 +463,6 @@ formattedResults() {
 };
 </script>
 
-
 <style scoped>
 /* Full Page Background */
 body, #app {
@@ -491,13 +482,12 @@ body, #app {
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Montserrat';
   font-weight: 600;
-  color :	#c53030;
- 
+  color: #c53030;
 }
-h1,h2 {
+h1, h2 {
   font-family: 'Montserrat';
   font-size: larger;
-  color :	#c53030;
+  color: #c53030;
 }
 input, textarea, button, label {
   font-family: 'Roboto', sans-serif;
@@ -508,7 +498,7 @@ input, textarea, button, label {
   display: flex;
   height: 95vh;
   width: 100%;
-  gap:20px;
+  gap: 20px;
 }
 
 /* Sidebar (White Background) */
@@ -522,10 +512,10 @@ input, textarea, button, label {
   border-radius: 16px;
   border-color: red;
   margin-left: 20px;
-  margin-top:20px;
+  margin-top: 20px;
 }
 
-/* Tooltip CSS in sidebar*/
+/* Tooltip CSS in sidebar */
 .tooltip-wrapper {
   position: relative;
   display: inline-block;
@@ -580,7 +570,7 @@ input, textarea, button, label {
   overflow-y: auto;
   height: 92vh;
   margin-right: 20px;
-  margin-top:20px;
+  margin-top: 20px;
 }
 
 /* Layout pour séparer les facteurs positifs et négatifs */
@@ -624,6 +614,91 @@ input, textarea, button, label {
   gap: 15px;
 }
 
+/* Risk Score Section */
+.risk-score-section {
+  margin: 30px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.risk-level-badge {
+  padding: 20px 40px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  width: 100%;
+}
+
+.risk-level-badge.low {
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  border: 2px solid #28a745;
+}
+
+.risk-level-badge.medium {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px solid #e3ac05ff;
+}
+
+.risk-level-badge.high {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+  border: 2px solid #dc3545;
+}
+
+.risk-level-badge h3 {
+  font-size: 24px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.risk-score-value {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 15px 0;
+  color: #c53030;
+}
+
+.risk-level-badge p {
+  font-size: 16px;
+  color: #555;
+  margin-top: 10px;
+}
+
+/* Tab Navigation Styling */
+.tab-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px 0 20px 0;
+  border-bottom: 2px solid #e1e1e1;
+  padding-bottom: 10px;
+}
+
+.tab-navigation button {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 2px solid #dee2e6;
+  padding: 12px 24px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  width: auto;
+}
+
+.tab-navigation button:hover {
+  background-color: #e9ecef;
+  transform: translateY(-2px);
+}
+
+.tab-navigation button.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+  font-weight: 600;
+}
+
 /* Form Styling */
 form input, form select, form button {
   display: flex;
@@ -654,7 +729,7 @@ form label {
   font-weight: bold;
   margin: 20px auto;
 }
-.bmi input{
+.bmi input {
   width: 60%;
 }
 
@@ -763,7 +838,7 @@ img {
   margin-bottom: 10px;
 }
 
-/* Results Cards borders*/
+/* Results Cards borders */
 .card-positive {
   border-color: green;
   background-color: #d4f8d4;
@@ -779,7 +854,7 @@ img {
   background-color: #f0f0f0;
 }
 
-/* Results Cards text*/
+/* Results Cards text */
 .result-card .positive {
   color: green;
   font-weight: bold;
@@ -834,7 +909,7 @@ img {
   width: 10px;
 }
 .scrollable-content::-webkit-scrollbar-track {
-  background:whitesmoke;
+  background: whitesmoke;
 }
 .scrollable-content::-webkit-scrollbar-thumb {
   background: #c53030;
@@ -858,7 +933,7 @@ button:hover {
   background-color: #f8d7da;
 }
 
-/*Table*/
+/* Table */
 .impact-table {
   width: 100%;
   border-collapse: collapse;
@@ -914,7 +989,7 @@ button:hover {
 .risk-level-low {
   color: #28a745;
   background-color: #d4edda;
-  padding: 4px 8px;
+  padding: 0px 8px;
   border-radius: 4px;
   font-weight: bold;
 }
@@ -924,7 +999,7 @@ button:hover {
   padding: 12px 15px;
 }
 
-/* risk summary*/
+/* Risk summary */
 .risk-summary {
   background-color: #e7f3fe; 
   border: 1px solid #bcdff1;
@@ -950,6 +1025,7 @@ button:hover {
   color: #dc3545;
 }
 
+/* SHAP Section */
 .shap-section {
   background-color: #f9f9fc;
   border: 1px solid #dcdde1;
@@ -962,7 +1038,7 @@ button:hover {
 
 .shap-section h3 {
   color: green;
-  font: size 30px;;
+  font-size: 30px;
   margin-bottom: 16px;
 }
 
@@ -987,6 +1063,7 @@ button:hover {
   border: 1px solid #e1e1e1;
 }
 
+/* Info Box */
 .info-box {
   background-color: #ffffff; 
   border-radius: 10px;
@@ -1028,6 +1105,7 @@ button:hover {
   color: #28a745;
 }
 
+/* Risk Assessment */
 .risk-assessment {
   margin: 20px 0;
 }
@@ -1038,19 +1116,24 @@ button:hover {
   margin-bottom: 20px;
 }
 
-.risk-level-low {
+.risk-level.low {
   background-color: #d4edda;
   border-left: 4px solid #28a745;
 }
 
-.risk-level-medium {
+.risk-level.medium {
   background-color: #fff3cd;
   border-left: 4px solid #e3ac05ff;
 }
 
-.risk-level-high {
+.risk-level.high {
   background-color: #f8d7da;
   border-left: 4px solid #dc3545;
+}
+
+/* Lifestyle Factors */
+.lifestyle-factors {
+  margin-top: 30px;
 }
 
 .factors-grid {
@@ -1075,6 +1158,36 @@ button:hover {
   border-left: 4px solid #28a745;
 }
 
+.factor-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.factor-icon {
+  font-size: 24px;
+}
+
+.factor-content .value {
+  font-weight: 600;
+  color: #333;
+  margin: 5px 0;
+}
+
+.factor-content .impact {
+  color: #666;
+  font-size: 14px;
+  margin: 5px 0;
+}
+
+.factor-content .recommendation {
+  color: #007bff;
+  font-size: 13px;
+  font-style: italic;
+  margin: 5px 0;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .results-layout {
@@ -1090,6 +1203,20 @@ button:hover {
   .sidebar, .results {
     width: 90%;
     margin: 10px auto;
+  }
+
+  .tab-navigation {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .tab-navigation button {
+    width: 100%;
+    border-radius: 8px;
+  }
+
+  .factors-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style>
