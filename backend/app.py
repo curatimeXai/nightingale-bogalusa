@@ -220,67 +220,62 @@ def create_pie_chart(probability, title):
     return img_base64
 
 
-def get_shap_explanation(input_scaled):
-    # Mapping scaler names → frontend names
-    feature_map = {
-        "BMI": "BMI", "bmi": "BMI",
-        "Alcohol": "Alcohol", "alcohol": "Alcohol",
-        "Sleep": "Sleep", "sleep": "Sleep",
-        "Exercise": "Exercise", "exercise": "Exercise",
-        "Fruit": "Fruit", "fruit": "Fruit",
-        "Smoking": "Smoking", "smoking": "Smoking",
-        "Diabetes": "Diabetes", "diabetes": "Diabetes",
-        "Kidney": "Kidney", "kidney": "Kidney",
-        "Stroke": "Stroke", "stroke": "Stroke"
-    }
+def get_shap_explanation(model, input_scaled, scaler):
+    """
+    Generate SHAP explanations for a given model and input sample.
+    Returns normalized SHAP values, percentage share, SHAP summary, and plot (base64).
+    """
 
-    explainer = shap.Explainer(xgb_model, feature_names=scaler.feature_names_in_)
+    # Initialize SHAP explainer
+    explainer = shap.Explainer(model, feature_names=scaler.feature_names_in_)
     shap_values_prob = explainer(input_scaled)
 
+    # Convert SHAP output to numeric array
     individual_prob = shap_values_prob.values[0] * 100.0
     feature_names = scaler.feature_names_in_
 
-    contrib_pp_mapped = {
-        feature_map.get(feature_names[i], feature_names[i]): float(individual_prob[i])
-        for i in range(len(feature_names))
-    }
+    # --- Raw SHAP contributions (before normalization) ---
+    contrib_pp = {feature_names[i]: float(individual_prob[i]) for i in range(len(feature_names))}
 
-    abs_sum = sum(abs(v) for v in contrib_pp_mapped.values()) or 1.0
-    share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp_mapped.items()}
+    # --- ✅ Option 1: Normalize SHAP values to 0–10 range for better interpretability ---
+    max_abs = max(abs(v) for v in contrib_pp.values()) or 1.0
+    contrib_pp_scaled = {k: (v / max_abs) * 10.0 for k, v in contrib_pp.items()}
 
-    # Plot
-    filtered_features = [f for f in contrib_pp_mapped if f not in ['Age', 'Gender']]
-    filtered_values = [contrib_pp_mapped[f] for f in filtered_features]
-    colors = ['green' if val < 0 else 'red' for val in filtered_values]
+    # --- Calculate proportional contribution (share %) for visual bar widths ---
+    abs_sum = sum(abs(v) for v in contrib_pp_scaled.values()) or 1.0
+    share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp_scaled.items()}
 
-    plt.figure(figsize=(10, 6))
-    bars = plt.barh(filtered_features, filtered_values, color=colors)
-    plt.xlabel("Contribution (points de probabilité)")
-    plt.title("Impact local par feature")
-    plt.axvline(x=0, color='black', linestyle='--')
-    plt.gca().invert_yaxis()
-    for bar, val in zip(bars, filtered_values):
-        plt.text(val + (0.5 if val >= 0 else -1.5),
-                 bar.get_y() + bar.get_height()/2,
-                 f"{val:+.2f} pt",
-                 va='center', ha='left' if val >= 0 else 'right', color='black')
-    buf = io.BytesIO()
+    # --- Generate SHAP summary plot as base64 image ---
+    filtered_features = [f for f in contrib_pp_scaled if f not in ['Age', 'Gender']]
+    filtered_values = [contrib_pp_scaled[f] for f in filtered_features]
+
+    plt.figure(figsize=(8, 4))
+    colors = ['#28a745' if val < 0 else '#dc3545' for val in filtered_values]
+    plt.barh(filtered_features, filtered_values, color=colors)
+    plt.xlabel("Impact on Risk (Normalized Scale)")
+    plt.title("Feature Impact on Heart Disease Risk")
     plt.tight_layout()
-    plt.savefig(buf, format="png")
+
+    buffer = io.BytesIO()
+    plt.savefig(buffer, format='png')
+    buffer.seek(0)
+    shap_plot_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
     plt.close()
-    buf.seek(0)
-    shap_plot_base64 = base64.b64encode(buf.read()).decode('utf-8')
 
-    # Summary
-    top = sorted(contrib_pp_mapped.items(), key=lambda kv: abs(kv[1]), reverse=True)[:3]
-    summary = "Principaux moteurs: " + ", ".join([f"{k} ({v:+.1f} pt)" for k, v in top]) if top else "Aucun facteur dominant net."
+    # --- SHAP summary text generation ---
+    top_features = sorted(contrib_pp_scaled.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+    summary = ", ".join([
+        f"{feat} {'increases' if val > 0 else 'reduces'} risk" for feat, val in top_features
+    ])
 
+    # --- Return structured data for frontend consumption ---
     return {
-        "feature_impact_pp": contrib_pp_mapped,
+        "feature_impact_pp": contrib_pp_scaled,
         "feature_share_percent": share_percent,
         "shap_plot": shap_plot_base64,
         "shap_summary_text": summary
     }
+
 
 
 if __name__ == '__main__':
