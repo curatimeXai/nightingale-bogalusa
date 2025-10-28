@@ -67,7 +67,8 @@ xgb_model = xgb.XGBClassifier(
     random_state=42,
 )
 xgb_model.fit(X_train_scaled, y_train)
-joblib.dump(xgb_model, "models/xgb_model.pkl")
+xgb_model.save_model("models/xgb_model.json")
+
 
 # --- Keras
 keras_model = Sequential([
@@ -89,23 +90,24 @@ plt.tight_layout()
 plt.savefig("models/feature_importance.png")
 plt.close()
 
-# ---- SHAP (interventional + probability) ----
+# ---- SHAP (interventional + raw output) ----
 # 1) Background sample for interventional explainer
 rng = np.random.RandomState(42)
 bg_idx = rng.choice(len(X_train_scaled), size=min(2000, len(X_train_scaled)), replace=False)
 background = X_train_scaled[bg_idx]
 
-explainer = shap.TreeExplainer(
-    xgb_model,
-    data=background,
-    feature_perturbation="interventional",
-    model_output="probability",
-)
-
 # 2) Use a sample for speed and wrap as DataFrame so SHAP knows column names
 sample_idx = rng.choice(len(X_train_scaled), size=min(5000, len(X_train_scaled)), replace=False)
 X_shap = X_train_scaled[sample_idx]
 X_shap_df = pd.DataFrame(X_shap, columns=FEATURES)   # <-- real feature names
+
+# Create explainer - use 'raw' output with interventional
+explainer = shap.TreeExplainer(
+    xgb_model,
+    data=background,
+    feature_perturbation="interventional",
+    model_output="raw",  # Changed from "probability" to "raw"
+)
 
 plot_path = os.path.abspath("models/shap_summary.png")  # absolute path
 
@@ -119,14 +121,14 @@ try:
     print(f"Saved SHAP summary (beeswarm) to {plot_path}")
 except Exception as e:
     print(f"Beeswarm failed ({e}), falling back to summary_plot()")
-    shap_values = explainer.shap_values(X_shap_df)   # ndarray in probability units
+    shap_values = explainer.shap_values(X_shap_df)   # ndarray in raw units
     shap.summary_plot(shap_values, X_shap_df, feature_names=FEATURES, show=False, max_display=min(20, len(FEATURES)))
     fig = plt.gcf()
     fig.savefig(plot_path, bbox_inches="tight", dpi=200)
     plt.close(fig)
     print(f"Saved SHAP summary (summary_plot) to {plot_path}")
 
-# 4) Save single-row impact (probability points) using the same path used above
+# 4) Save single-row impact (raw units converted to percentage points for display)
 #    (If modern API worked, reuse 'explanation'; else recompute shap_values)
 try:
     # modern API path
@@ -140,18 +142,21 @@ with open("models/shap_results.json", "w") as f:
     json.dump(feature_impact, f, indent=2)
 
 joblib.dump(feature_impact, "models/feature_impact.pkl")
-# Persist a small sample of SHAP values for later (don’t dump the whole training if large)
+# Persist a small sample of SHAP values for later (don't dump the whole training if large)
 try:
     joblib.dump(explanation.values, "models/shap_values_sample.pkl")
 except NameError:
     joblib.dump(shap_values, "models/shap_values_sample.pkl")
 
-# 5) Auto-open the PNG with the system viewer
-if sys.platform.startswith("win"):
-    os.startfile(plot_path)
-elif sys.platform == "darwin":
-    subprocess.run(["open", plot_path])
-else:
-    subprocess.run(["xdg-open", plot_path])
+# 5) Auto-open the PNG with the system viewer (only if NOT in Docker/headless environment)
+try:
+    if sys.platform.startswith("win"):
+        os.startfile(plot_path)
+    elif sys.platform == "darwin":
+        subprocess.run(["open", plot_path], check=False)
+    else:
+        subprocess.run(["xdg-open", plot_path], check=False)
+except Exception as e:
+    print(f"Could not auto-open plot (likely running in Docker): {e}")
 
 print("✅ Training completed. Models and SHAP plot saved.")

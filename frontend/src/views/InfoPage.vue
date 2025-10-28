@@ -14,8 +14,9 @@
       </p>
       <h1>Use of AI and personal information</h1>
       <p>
-        The AI model is trained based on a dataset from the website Kaggle called "Indicators of Heart Disease".
-        The participants were all US residents,and uses your personal input only for making predictions — not for training.
+        The AI model is trained based on a dataset from the Center of Disease Control Behavioural Risk Factors 
+        Surveillance System (CDC BRFSS) called "Indicators of Heart Disease". The risk is calculated by an average of three models: SVM and XGBoost, the percentage for each risk factor came from shapley-scores.
+        the participants were all US residents,and uses your personal input only for making predictions — not for training.
         
         <br><br>
         No personal information is stored nor saved from your inputs or results. 

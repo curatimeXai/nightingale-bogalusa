@@ -1,11 +1,11 @@
 pandas
 scikit-learn
-shap
+shap>=0.41.0
 joblib
 numpy
 Flask-CORS
 scikit-learn
-xgboost
+xgboost==1.7.0,<2.0.0
 keras
 joblib
 numpy

@@ -12,13 +12,18 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import re
+import xgboost as xgb
+
+# Import the shared preprocessor and feature list
+from common_preprocess import preprocess_df, FEATURES
 
 app = Flask(__name__, static_folder="static")
 CORS(app, origins=["http://localhost:8080"])
 
 # Load trained models
 svm_model = joblib.load('models/svm_model.pkl')
-xgb_model = joblib.load('models/xgb_model.pkl')
+xgb_model = xgb.XGBClassifier()
+xgb_model.load_model('models/xgb_model.json')
 keras_model = load_model('models/keras_model.h5')
 scaler = joblib.load('models/scaler.pkl')
 
@@ -118,34 +123,30 @@ def predict():
         data = request.get_json()
         print("Received data:", data)
 
-        gender_map = {'Male': 1, 'Female': 0}
-        smoking_map = {'Not at all': 0, 'Sometimes': 1, 'Every day': 2}
-
-        # Convert user input into DataFrame
-        input_data = {
-            'Gender': gender_map.get(data['Gender'], 0),
-            'BMI': float(data['BMI']),
-            'Smoking': smoking_map.get(data['Smoking'], 0),
-            'Alcohol': float(data['Alcohol']),
-            'Sleep': float(data['Sleep']),
-            'Exercise': float(data['Exercise']),
-            'Fruit': float(data['Fruit']),
-            'Diabetes': int(data['Diabetes']),
-            'Kidney': int(data['Kidney']),
-            'Stroke': int(data['Stroke']),
-            'Age': int(data['Age'])
-        }
-
-        df_input = pd.DataFrame([input_data])
-        df_input = pd.get_dummies(df_input)
-
-        # Ensure all features present
-        for col in scaler.feature_names_in_:
-            if col not in df_input.columns:
-                df_input[col] = 0
-        df_input = df_input[scaler.feature_names_in_]
-
-        input_scaled = scaler.transform(df_input)
+        # Use the shared preprocessor for consistency
+        df_raw = pd.DataFrame([{
+            'Gender': data['Gender'],
+            'Age': data['Age'],
+            'BMI': data['BMI'],
+            'Smoking': data['Smoking'],
+            'Alcohol': data['Alcohol'],
+            'Sleep': data['Sleep'],
+            'Exercise': data['Exercise'],
+            'Fruit': data['Fruit'],
+            'Diabetes': 'Yes' if data['Diabetes'] else 'No',
+            'Kidney': 'Yes' if data['Kidney'] else 'No',
+            'Stroke': 'Yes' if data['Stroke'] else 'No',
+        }])
+        
+        # Preprocess using shared function
+        X_input = preprocess_df(df_raw)
+        
+        # Fill NaNs with training medians
+        feature_medians = joblib.load('models/feature_medians.pkl')
+        X_input = X_input.fillna(feature_medians)
+        
+        # Scale
+        input_scaled = scaler.transform(X_input)
 
         # Predictions
         svm_pred = float(svm_model.predict_proba(input_scaled)[0][1])
@@ -160,14 +161,15 @@ def predict():
         xgb_pie_chart = create_pie_chart(xgb_pred, "XGBoost Prediction")
         keras_pie_chart = create_pie_chart(keras_pred, "Keras Prediction")
 
-        shap_explanation = get_shap_explanation(input_scaled)
+        # Get SHAP explanation with all required arguments
+        shap_explanation = get_shap_explanation(xgb_model, input_scaled, X_input.columns.tolist())
 
         predictions_dict = {'svm': svm_pred, 'xgb': xgb_pred, 'keras': keras_pred}
         risk_assessment = calculate_risk_score(predictions_dict)
         lifestyle_analysis = analyze_lifestyle_factors(data)
 
         return jsonify({
-            "shap_impact": shap_explanation["feature_impact_pp"],  # frontend expects this
+            "shap_impact": shap_explanation["feature_impact_pp"],
             "shap_contrib_pp": shap_explanation["feature_impact_pp"],
             "shap_share_percent": shap_explanation["feature_share_percent"],
             "shap_plot": shap_explanation["shap_plot"],
@@ -217,65 +219,79 @@ def create_pie_chart(probability, title):
     canvas.print_png(buf)
     buf.seek(0)
     img_base64 = base64.b64encode(buf.read()).decode('utf-8')
+    plt.close(fig)
     return img_base64
 
 
-def get_shap_explanation(model, input_scaled, scaler):
+def get_shap_explanation(model, input_scaled, feature_names):
     """
     Generate SHAP explanations for a given model and input sample.
     Returns normalized SHAP values, percentage share, SHAP summary, and plot (base64).
     """
+    try:
+        # Initialize SHAP explainer for XGBoost
+        explainer = shap.TreeExplainer(model)
+        shap_values = explainer.shap_values(input_scaled)
+        
+        # Handle different SHAP value formats
+        if isinstance(shap_values, list):
+            shap_values = shap_values[1]  # For binary classification, take positive class
+        
+        # Convert SHAP output to numeric array (in percentage points)
+        individual_prob = shap_values[0] * 100.0
 
-    # Initialize SHAP explainer
-    explainer = shap.Explainer(model, feature_names=scaler.feature_names_in_)
-    shap_values_prob = explainer(input_scaled)
+        # --- Raw SHAP contributions (before normalization) ---
+        contrib_pp = {feature_names[i]: float(individual_prob[i]) for i in range(len(feature_names))}
 
-    # Convert SHAP output to numeric array
-    individual_prob = shap_values_prob.values[0] * 100.0
-    feature_names = scaler.feature_names_in_
+        # --- Normalize SHAP values to 0–10 range for better interpretability ---
+        max_abs = max(abs(v) for v in contrib_pp.values()) or 1.0
+        contrib_pp_scaled = {k: (v / max_abs) * 10.0 for k, v in contrib_pp.items()}
 
-    # --- Raw SHAP contributions (before normalization) ---
-    contrib_pp = {feature_names[i]: float(individual_prob[i]) for i in range(len(feature_names))}
+        # --- Calculate proportional contribution (share %) for visual bar widths ---
+        abs_sum = sum(abs(v) for v in contrib_pp_scaled.values()) or 1.0
+        share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp_scaled.items()}
 
-    # --- ✅ Option 1: Normalize SHAP values to 0–10 range for better interpretability ---
-    max_abs = max(abs(v) for v in contrib_pp.values()) or 1.0
-    contrib_pp_scaled = {k: (v / max_abs) * 10.0 for k, v in contrib_pp.items()}
+        # --- Generate SHAP summary plot as base64 image ---
+        filtered_features = [f for f in contrib_pp_scaled if f not in ['Age', 'Gender']]
+        filtered_values = [contrib_pp_scaled[f] for f in filtered_features]
 
-    # --- Calculate proportional contribution (share %) for visual bar widths ---
-    abs_sum = sum(abs(v) for v in contrib_pp_scaled.values()) or 1.0
-    share_percent = {k: abs(v) * 100.0 / abs_sum for k, v in contrib_pp_scaled.items()}
+        plt.figure(figsize=(8, 4))
+        colors = ['#28a745' if val < 0 else '#dc3545' for val in filtered_values]
+        plt.barh(filtered_features, filtered_values, color=colors)
+        plt.xlabel("Impact on Risk (Normalized Scale)")
+        plt.title("Feature Impact on Heart Disease Risk")
+        plt.tight_layout()
 
-    # --- Generate SHAP summary plot as base64 image ---
-    filtered_features = [f for f in contrib_pp_scaled if f not in ['Age', 'Gender']]
-    filtered_values = [contrib_pp_scaled[f] for f in filtered_features]
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format='png')
+        buffer.seek(0)
+        shap_plot_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        plt.close()
 
-    plt.figure(figsize=(8, 4))
-    colors = ['#28a745' if val < 0 else '#dc3545' for val in filtered_values]
-    plt.barh(filtered_features, filtered_values, color=colors)
-    plt.xlabel("Impact on Risk (Normalized Scale)")
-    plt.title("Feature Impact on Heart Disease Risk")
-    plt.tight_layout()
+        # --- SHAP summary text generation ---
+        top_features = sorted(contrib_pp_scaled.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
+        summary = ", ".join([
+            f"{feat} {'increases' if val > 0 else 'reduces'} risk" for feat, val in top_features
+        ])
 
-    buffer = io.BytesIO()
-    plt.savefig(buffer, format='png')
-    buffer.seek(0)
-    shap_plot_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
-    plt.close()
-
-    # --- SHAP summary text generation ---
-    top_features = sorted(contrib_pp_scaled.items(), key=lambda x: abs(x[1]), reverse=True)[:3]
-    summary = ", ".join([
-        f"{feat} {'increases' if val > 0 else 'reduces'} risk" for feat, val in top_features
-    ])
-
-    # --- Return structured data for frontend consumption ---
-    return {
-        "feature_impact_pp": contrib_pp_scaled,
-        "feature_share_percent": share_percent,
-        "shap_plot": shap_plot_base64,
-        "shap_summary_text": summary
-    }
-
+        # --- Return structured data for frontend consumption ---
+        return {
+            "feature_impact_pp": contrib_pp_scaled,
+            "feature_share_percent": share_percent,
+            "shap_plot": shap_plot_base64,
+            "shap_summary_text": summary
+        }
+    except Exception as e:
+        print(f"SHAP explanation error: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return empty/default values if SHAP fails
+        return {
+            "feature_impact_pp": {},
+            "feature_share_percent": {},
+            "shap_plot": "",
+            "shap_summary_text": "SHAP explanation unavailable"
+        }
 
 
 if __name__ == '__main__':

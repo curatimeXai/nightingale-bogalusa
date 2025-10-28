@@ -31,7 +31,7 @@
       <button
         :disabled="!checked"
         class="confirm-button"
-        @click="$emit('accepted')"
+        @click="handleAccept"
       >
         I Understand
       </button>
@@ -46,6 +46,13 @@ export default {
     return {
       checked: false
     };
+  },
+  methods: {
+    handleAccept() {
+      if (this.checked) {
+        this.$emit('accepted');
+      }
+    }
   }
 };
 </script>
@@ -124,10 +131,18 @@ export default {
   font-weight: bold;
   font-size: 0.95rem;
   cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-button:hover:not(:disabled) {
+  background-color: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(211, 47, 47, 0.3);
 }
 
 .confirm-button:disabled {
   background-color: #aaa;
   cursor: not-allowed;
+  transform: none;
 }
 </style>
