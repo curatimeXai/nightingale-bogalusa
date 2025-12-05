@@ -75,14 +75,19 @@ explainer = shap.Explainer(
 def group_shap_values(shap_row):
     grouped = {feat: 0.0 for feat in ALL_FEATURES}
 
+    # 1. Accumulate SHAP values WITH sign (no abs)
     for tname, shap_value in zip(transform_names, shap_row):
         raw = RAW_MAP[tname]
-        grouped[raw] += abs(shap_value)
+        grouped[raw] += shap_value  # keep sign
 
-    total = sum(grouped.values())
+    # 2. Normalization uses ABSOLUTE contribution
+    total = sum(abs(v) for v in grouped.values())
+
     if total > 0:
         return {k: float(v * 100 / total) for k, v in grouped.items()}
+
     return {k: 0.0 for k in grouped}
+
 
 # ============================================================
 #                  START FASTAPI APP
