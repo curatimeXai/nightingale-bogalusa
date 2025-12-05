@@ -6,100 +6,214 @@
       <div class="sidebar">
         <h2>Enter Your Health & Lifestyle Information</h2>
         <form @submit.prevent="computeRisk" class="scrollable-form">
-            <!-- Weight -->
-            <div class="input">
-              <p>Enter your weight
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">Your weight in kilograms (30–400)</span>
-                </span>
-              </p>
-              <input v-model.number="formData.Weight" type="number" :placeholder="formData.Weight ? '' : 'Weight (30 - 400kg)*'" 
-                     @input="calculateBMI" min="30" max="400" required />
-            </div>
-            <!-- Height -->
-            <div class="input">
-              <p>Enter your height
-                <span class="tooltip-wrapper">
-                  <span class="tooltip-icon">?</span>
-                  <span class="tooltip-text">Your height in centimeters (90–240)</span>
-                </span>
-              </p>
-              <input v-model.number="formData.Height" type="number" :placeholder="formData.Height ? '' : 'Height (90 - 240cm)*'" 
-                     @input="calculateBMI" min="90" max="240" required />
-            </div>
-            <!-- BMI -->
-            <div class="bmi">
-              <p>Calculated BMI</p>
-              <input v-model="formData.BMI" type="text" :placeholder="formData.BMI ? '' : 'BMI'" readonly required />
-            </div>
-            <!-- Alcohol -->
-            <div class="input">
-              <p>Alcohol per week</p>
-              <input v-model.number="formData.Alcohol" type="number" :placeholder="formData.Alcohol || formData.Alcohol === 0 ? '' : 'Alcohol (0-70)*'" min="0" max="70" required />
-            </div>
-            <!-- Sleep -->
-            <div class="input">
-              <p>Sleep (hours/day)</p>
-              <input v-model.number="formData.Sleep" type="number" :placeholder="formData.Sleep || formData.Sleep === 0 ? '' : 'Sleep (0-24)*'" min="0" max="24" required />
-            </div>
-            <!-- Exercise -->
-            <div class="input">
-              <p>Exercise (minutes/week)</p>
-              <input v-model.number="formData.Exercise" type="number" :placeholder="formData.Exercise || formData.Exercise === 0 ? '' : 'Exercise (0-3000)*'" min="0" max="3000" required />
-            </div>
-            <!-- Fruit -->
-            <div class="input">
-              <p>Fruit per day</p>
-              <input v-model.number="formData.Fruit" type="number" :placeholder="formData.Fruit || formData.Fruit === 0 ? '' : 'Fruit (0-20)*'" min="0" max="20" required />
-            </div>
-
+          
+          <!-- CONTEXT CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">👤 Context</h3>
+            
             <!-- Gender -->
-            <label>Gender *</label>
-            <select v-model="formData.Gender" required>
-              <option disabled value="">Select Gender</option>
-              <option>Male</option>
-              <option>Female</option>
-            </select>
+            <div class="feature-item">
+              <label>Gender *</label>
+              <div class="button-group">
+                <button type="button" 
+                        :class="{ active: formData.Gender === 'Male' }"
+                        @click="formData.Gender = 'Male'">
+                  Male
+                </button>
+                <button type="button"
+                        :class="{ active: formData.Gender === 'Female' }"
+                        @click="formData.Gender = 'Female'">
+                  Female
+                </button>
+              </div>
+            </div>
 
             <!-- Age -->
-            <label>Age Category *</label>
-            <select v-model="formData.AgeCategory" required>
-              <option disabled value="">Select Age Range</option>
-              <option>18-24</option>
-              <option>25-29</option>
-              <option>30-34</option>
-              <option>35-39</option>
-              <option>40-44</option>
-              <option>45-49</option>
-              <option>50-54</option>
-              <option>55-59</option>
-              <option>60-64</option>
-              <option>65-69</option>
-              <option>70-74</option>
-              <option>75-79</option>
-            </select>
+            <div class="feature-item">
+              <label>Age of respondent *</label>
+              <select v-model="formData.AgeCategory" required>
+                <option disabled value="">Select Age Range</option>
+                <option>18-24</option>
+                <option>25-29</option>
+                <option>30-34</option>
+                <option>35-39</option>
+                <option>40-44</option>
+                <option>45-49</option>
+                <option>50-54</option>
+                <option>55-59</option>
+                <option>60-64</option>
+                <option>65-69</option>
+                <option>70-74</option>
+                <option>75-79</option>
+              </select>
+            </div>
+          </div>
 
-            <!-- Smoking -->
-            <label>Smoking *</label>
-            <select v-model="formData.Smoking" required>
-              <option disabled value="">Select Smoking Status</option>
-              <option>Not at all</option>
-              <option>Sometimes</option>
-              <option>Every day</option>
-            </select>
-
-            <!-- Conditions -->
-            <h3 class="conditions-label">Check any that apply:</h3>
-            <div class="checkbox-group">
-              <label>Diabetes<input type="checkbox" v-model="formData.Diabetes" /></label>
-              <label>Kidney Disease<input type="checkbox" v-model="formData.Kidney" /></label>
-              <label>Stroke<input type="checkbox" v-model="formData.Stroke" /></label>
+          <!-- LIFESTYLE CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🏃 Lifestyle</h3>
+            
+            <!-- Physical Activity -->
+            <div class="feature-item">
+              <label>Sports or physical activity (days per week) *</label>
+              <div class="button-group multi-row">
+                <button type="button" 
+                        v-for="day in [0, 1, 2, 3, 4, 5, 6, 7]" 
+                        :key="day"
+                        :class="{ active: formData.PhysicalActivityDays === day }"
+                        @click="formData.PhysicalActivityDays = day">
+                  {{ day }}
+                </button>
+              </div>
             </div>
 
-            <button type="submit">Analyze</button>
-            <button type="button" @click="randomizeData">🔀 Randomize</button>
-          </form>
+            <!-- Fruit -->
+            <div class="feature-item">
+              <label>How often eat fruit (excluding juice) *</label>
+              <select v-model="formData.FruitFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Three times or more a day</option>
+                <option>Twice a day</option>
+                <option>Once a day</option>
+                <option>Less than once a day but at least 4 times a week</option>
+                <option>Less than 4 times a week but at least once a week</option>
+                <option>Less than once a week</option>
+                <option>Never</option>
+              </select>
+            </div>
+
+            <!-- Vegetables -->
+            <div class="feature-item">
+              <label>How often eat vegetables or salad (excluding potatoes) *</label>
+              <select v-model="formData.VegetableFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Three times or more a day</option>
+                <option>Twice a day</option>
+                <option>Once a day</option>
+                <option>Less than once a day but at least 4 times a week</option>
+                <option>Less than 4 times a week but at least once a week</option>
+                <option>Less than once a week</option>
+                <option>Never</option>
+              </select>
+            </div>
+
+            <!-- Smoking -->
+            <div class="feature-item">
+              <label>Cigarette smoking behaviour *</label>
+              <select v-model="formData.Smoking" required>
+                <option disabled value="">Select smoking status</option>
+                <option>I smoke daily, 10 or more cigarettes</option>
+                <option>I smoke daily, 9 or fewer cigarettes</option>
+                <option>I smoke but not every day</option>
+                <option>I don't smoke now but I used to</option>
+                <option>I have only smoked a few times</option>
+                <option>I have never smoked</option>
+              </select>
+            </div>
+
+            <!-- Alcohol -->
+            <div class="feature-item">
+              <label>How often drink alcohol *</label>
+              <select v-model="formData.AlcoholFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Every day</option>
+                <option>5-6 days a week</option>
+                <option>3-4 days a week</option>
+                <option>Once or twice a week</option>
+                <option>2-3 times a month</option>
+                <option>Once a month</option>
+                <option>Less than once a month</option>
+                <option>Never</option>
+              </select>
+            </div>
+
+            <!-- Height -->
+            <div class="feature-item">
+              <label>Height (cm) *</label>
+              <input v-model.number="formData.Height" 
+                     type="number" 
+                     placeholder="Height (90-240cm)" 
+                     min="90" 
+                     max="240" 
+                     required />
+            </div>
+
+            <!-- Weight -->
+            <div class="feature-item">
+              <label>Weight (kg) *</label>
+              <input v-model.number="formData.Weight" 
+                     type="number" 
+                     placeholder="Weight (30-400kg)" 
+                     min="30" 
+                     max="400" 
+                     required />
+            </div>
+          </div>
+
+          <!-- MEDICAL RISK FACTORS CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🏥 Medical Risk Factors</h3>
+            
+            <!-- High Blood Pressure -->
+            <div class="feature-item">
+              <label>High blood pressure (last 12 months) *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.HighBloodPressure === false }"
+                        @click="formData.HighBloodPressure = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.HighBloodPressure === true }"
+                        @click="formData.HighBloodPressure = true">
+                  Yes
+                </button>
+              </div>
+            </div>
+
+            <!-- Diabetes -->
+            <div class="feature-item">
+              <label>Diabetes (last 12 months) *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.Diabetes === false }"
+                        @click="formData.Diabetes = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.Diabetes === true }"
+                        @click="formData.Diabetes = true">
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ENVIRONMENTAL CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🏘️ Environmental</h3>
+            
+            <!-- Noise Problems -->
+            <div class="feature-item">
+              <label>Problems with accommodation: noise *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.NoiseProblems === false }"
+                        @click="formData.NoiseProblems = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.NoiseProblems === true }"
+                        @click="formData.NoiseProblems = true">
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit">Analyze</button>
+          <button type="button" @click="randomizeData">🔀 Randomize</button>
+        </form>
       </div>
 
       <!-- Results -->
@@ -109,7 +223,7 @@
 
         <div v-if="result">
           <div class="results-layout">
-            <!-- Negative -->
+            <!-- Negative Factors -->
             <div class="negative-factors">
               <h3>🛑 Negative Factor</h3>
               <div class="factors-column">
@@ -123,7 +237,7 @@
               </div>
             </div>
 
-            <!-- Positive -->
+            <!-- Positive Factors -->
             <div class="positive-factors">
               <h3>✅ Favorable Factor</h3>
               <div class="factors-column">
@@ -163,7 +277,7 @@
             </button>
           </div>
 
-          <!-- Table - SORTED BY IMPACT -->
+          <!-- Table View -->
           <div v-show="activeTab === 'table'" class="results-container">
             <h3>Risk Factors Analysis (Sorted by Impact)</h3>
             <table class="impact-table">
@@ -199,7 +313,7 @@
             </table>
           </div>
 
-          <!-- SHAP Chart -->
+          <!-- Chart View -->
           <div v-show="activeTab === 'chart'" v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
             <h3>What Affected Your Results Most</h3>
 
@@ -227,7 +341,13 @@
               <p>{{ shap_summary_text }}</p>
             </div>
           </div>
+        </div>
 
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>No Analysis Yet</h3>
+          <p>Fill out the form on the left and click "Analyze" to see your heart disease risk assessment.</p>
         </div>
       </div>
     </div>
@@ -235,6 +355,7 @@
 </template>
 
 <script>
+/* eslint-disable no-unused-vars */
 import axios from 'axios';
 import Disclaimer from '../components/DisclaimerPopup.vue';
 
@@ -254,32 +375,41 @@ export default {
       showDisclaimer: false,
       activeTab: 'table',
       formData: {
+        // Context
         Gender: '',
         AgeCategory: '',
-        Weight: '',
-        Height: '',
-        BMI: '',
+        
+        // Lifestyle
+        PhysicalActivityDays: null,
+        FruitFrequency: '',
+        VegetableFrequency: '',
         Smoking: '',
-        Alcohol: '',
-        Sleep: '',
-        Exercise: '',
-        Fruit: '',
-        Diabetes: false,
-        Kidney: false,
-        Stroke: false
+        AlcoholFrequency: '',
+        Height: '',
+        Weight: '',
+        
+        // Medical
+        HighBloodPressure: null,
+        Diabetes: null,
+        
+        // Environmental
+        NoiseProblems: null
       },
       result: null,
       shap_summary_text: '',
       whoGuidelines: {
-        BMI: "18.5 – 24.9 kg/m² is healthy.",
+        Gender: "Both genders should maintain healthy lifestyles.",
+        Age: "Age-appropriate health monitoring is essential.",
+        PhysicalActivity: "At least 150 minutes of moderate activity per week.",
+        Fruit: "≥5 servings per day recommended.",
+        Vegetables: "≥5 servings per day recommended.",
+        Smoking: "No safe level of smoking.",
         Alcohol: "≤2 drinks/day men, ≤1 women.",
-        Sleep: "7–9 hours per night.",
-        Exercise: "At least 150 min/week.",
-        Fruit: "≥5 servings per day.",
-        Smoking:"No safe level of smoking.",
-        Diabetes:"Healthy diet and activity prevent type 2 diabetes.",
-        Kidney:"Control blood pressure/sugar to protect kidneys.",
-        Stroke:"Control BP, cholesterol, avoid smoking."
+        Height: "—",
+        Weight: "Maintain healthy BMI (18.5-24.9).",
+        HighBloodPressure: "Control blood pressure to protect heart.",
+        Diabetes: "Healthy diet and activity prevent type 2 diabetes.",
+        Noise: "Chronic noise exposure may affect cardiovascular health."
       }
     };
   },
@@ -299,54 +429,76 @@ export default {
       };
 
       return {
-        "BMI (normal between 18.5 - 24.9)": build(
-          "BMI",
-          this.formData.BMI,
-          shap.BMI,
-          this.formData.BMI >= 18.5 && this.formData.BMI <= 24.9 ? "👍" : "👎",
-          this.formData.BMI >= 25 || this.formData.BMI < 18.5
+        "Gender": build(
+          "Gender",
+          this.formData.Gender,
+          shap.Gender,
+          "👤",
+          false
         ),
-
-        "Alcohol (drinks/week)": build(
-          "Alcohol",
-          this.formData.Alcohol,
-          shap.Alcohol,
-          this.formData.Alcohol <= 3 ? "👍" : "👎",
-          this.formData.Alcohol > 4
+        "Age": build(
+          "Age",
+          this.formData.AgeCategory,
+          shap.Age,
+          "📅",
+          false
         ),
-
-        "Sleep (hours/day)": build(
-          "Sleep",
-          this.formData.Sleep,
-          shap.Sleep,
-          (this.formData.Sleep >= 6 && this.formData.Sleep <= 10) ? "👍" : "👎",
-          !(this.formData.Sleep >= 6 && this.formData.Sleep <= 10)
+        "Physical Activity": build(
+          "PhysicalActivity",
+          `${this.formData.PhysicalActivityDays} days/week`,
+          shap.PhysicalActivityDays,
+          this.formData.PhysicalActivityDays >= 3 ? "👍" : "👎",
+          this.formData.PhysicalActivityDays < 3
         ),
-
-        "Exercise (min/week)": build(
-          "Exercise",
-          this.formData.Exercise,
-          shap.Exercise,
-          this.formData.Exercise > 150 ? "👍" : "👎",
-          this.formData.Exercise <= 150
-        ),
-
-        "Fruit Intake (servings/day)": build(
+        "Fruit Intake": build(
           "Fruit",
-          this.formData.Fruit,
-          shap.Fruit,
-          this.formData.Fruit >= 5 ? "👍" : "👎",
-          this.formData.Fruit < 5
+          this.formData.FruitFrequency,
+          shap.FruitFrequency,
+          this.formData.FruitFrequency.includes("Once a day") || this.formData.FruitFrequency.includes("Twice") || this.formData.FruitFrequency.includes("Three") ? "👍" : "👎",
+          !this.formData.FruitFrequency.includes("day")
         ),
-
+        "Vegetable Intake": build(
+          "Vegetables",
+          this.formData.VegetableFrequency,
+          shap.VegetableFrequency,
+          this.formData.VegetableFrequency.includes("Once a day") || this.formData.VegetableFrequency.includes("Twice") || this.formData.VegetableFrequency.includes("Three") ? "👍" : "👎",
+          !this.formData.VegetableFrequency.includes("day")
+        ),
         "Smoking": build(
           "Smoking",
           this.formData.Smoking,
           shap.Smoking,
-          this.formData.Smoking === 'Not at all' ? "👍" : "👎",
-          this.formData.Smoking === 'Every day' || this.formData.Smoking === 'Sometimes'
+          this.formData.Smoking === 'I have never smoked' ? "👍" : "👎",
+          this.formData.Smoking.includes('smoke daily') || this.formData.Smoking.includes('smoke but not every day')
         ),
-
+        "Alcohol": build(
+          "Alcohol",
+          this.formData.AlcoholFrequency,
+          shap.AlcoholFrequency,
+          this.formData.AlcoholFrequency === 'Never' || this.formData.AlcoholFrequency.includes('month') ? "👍" : "👎",
+          this.formData.AlcoholFrequency === 'Every day' || this.formData.AlcoholFrequency.includes('5-6 days')
+        ),
+        "Height": build(
+          "Height",
+          `${this.formData.Height} cm`,
+          shap.Height,
+          "📏",
+          false
+        ),
+        "Weight": build(
+          "Weight",
+          `${this.formData.Weight} kg`,
+          shap.Weight,
+          "⚖️",
+          false
+        ),
+        "High Blood Pressure": build(
+          "HighBloodPressure",
+          this.formData.HighBloodPressure ? "Yes" : "No",
+          shap.HighBloodPressure,
+          this.formData.HighBloodPressure ? "👎" : "👍",
+          this.formData.HighBloodPressure
+        ),
         "Diabetes": build(
           "Diabetes",
           this.formData.Diabetes ? "Yes" : "No",
@@ -354,21 +506,12 @@ export default {
           this.formData.Diabetes ? "👎" : "👍",
           this.formData.Diabetes
         ),
-
-        "Kidney Disease": build(
-          "Kidney",
-          this.formData.Kidney ? "Yes" : "No",
-          shap.Kidney,
-          this.formData.Kidney ? "👎" : "👍",
-          this.formData.Kidney
-        ),
-
-        "Stroke": build(
-          "Stroke",
-          this.formData.Stroke ? "Yes" : "No",
-          shap.Stroke,
-          this.formData.Stroke ? "👎" : "👍",
-          this.formData.Stroke
+        "Noise Problems": build(
+          "Noise",
+          this.formData.NoiseProblems ? "Yes" : "No",
+          shap.NoiseProblems,
+          this.formData.NoiseProblems ? "👎" : "👍",
+          this.formData.NoiseProblems
         )
       };
     },
@@ -406,18 +549,22 @@ export default {
   methods: {
     getGuideline(key) {
       const map = {
-        "BMI (normal between 18.5 - 24.9)": "BMI",
-        "Alcohol (drinks/week)": "Alcohol",
-        "Sleep (hours/day)": "Sleep",
-        "Exercise (min/week)": "Exercise",
-        "Fruit Intake (servings/day)": "Fruit",
+        "Gender": "Gender",
+        "Age": "Age",
+        "Physical Activity": "PhysicalActivity",
+        "Fruit Intake": "Fruit",
+        "Vegetable Intake": "Vegetables",
         "Smoking": "Smoking",
+        "Alcohol": "Alcohol",
+        "Height": "Height",
+        "Weight": "Weight",
+        "High Blood Pressure": "HighBloodPressure",
         "Diabetes": "Diabetes",
-        "Kidney Disease": "Kidney",
-        "Stroke": "Stroke"
+        "Noise Problems": "Noise"
       };
       return this.whoGuidelines[map[key]] || "—";
     },
+
     getRiskLevel(value, shapVal) {
       if (shapVal <= 0) return "risk-level-low";
       if (value >= 5) return "risk-level-high";
@@ -428,63 +575,90 @@ export default {
     getRiskClass(impact) {
       return impact;
     },
-    calculateBMI() {
-      if (this.formData.Weight && this.formData.Height) {
-        const h = this.formData.Height / 100;
-        this.formData.BMI = (this.formData.Weight / (h * h)).toFixed(2);
-      }
-    },
+
     randomizeData() {
       const r = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
       const c = (arr) => arr[Math.floor(Math.random() * arr.length)];
-      this.formData.Weight = r(30, 220);
-      this.formData.Height = r(90, 240);
-      this.calculateBMI();
-      this.formData.Alcohol = r(0, 35);
-      this.formData.Sleep = r(0, 24);
-      this.formData.Exercise = r(0, 300);
-      this.formData.Fruit = r(0, 5);
+      
+      // Context
       this.formData.Gender = c(["Male", "Female"]);
       this.formData.AgeCategory = c(["18-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79"]);
-      this.formData.Smoking = c(["Not at all", "Sometimes", "Every day"]);
-      this.formData.Diabetes = Math.random() < 0.2;
-      this.formData.Kidney = Math.random() < 0.1;
-      this.formData.Stroke = Math.random() < 0.05;
+      
+      // Lifestyle
+      this.formData.PhysicalActivityDays = r(0, 7);
+      this.formData.FruitFrequency = c([
+        "Three times or more a day", "Twice a day", "Once a day",
+        "Less than once a day but at least 4 times a week",
+        "Less than 4 times a week but at least once a week",
+        "Less than once a week", "Never"
+      ]);
+      this.formData.VegetableFrequency = c([
+        "Three times or more a day", "Twice a day", "Once a day",
+        "Less than once a day but at least 4 times a week",
+        "Less than 4 times a week but at least once a week",
+        "Less than once a week", "Never"
+      ]);
+      this.formData.Smoking = c([
+        "I smoke daily, 10 or more cigarettes",
+        "I smoke daily, 9 or fewer cigarettes",
+        "I smoke but not every day",
+        "I don't smoke now but I used to",
+        "I have only smoked a few times",
+        "I have never smoked"
+      ]);
+      this.formData.AlcoholFrequency = c([
+        "Every day", "5-6 days a week", "3-4 days a week",
+        "Once or twice a week", "2-3 times a month",
+        "Once a month", "Less than once a month", "Never"
+      ]);
+      this.formData.Height = r(90, 240);
+      this.formData.Weight = r(30, 220);
+      
+      // Medical
+      this.formData.HighBloodPressure = Math.random() < 0.2;
+      this.formData.Diabetes = Math.random() < 0.1;
+      
+      // Environmental
+      this.formData.NoiseProblems = Math.random() < 0.3;
     },
+
     async computeRisk() {
       const ageMapping = {
         '18-24': 21, '25-29': 27, '30-34': 32, '35-39': 37,
         '40-44': 42, '45-49': 47, '50-54': 52, '55-59': 57,
         '60-64': 62, '65-69': 67, '70-74': 72, '75-79': 77
       };
-      this.formData.Age = ageMapping[this.formData.AgeCategory];
 
       const apiData = {
-        Weight: this.formData.Weight,
-        Height: this.formData.Height,
-        BMI: this.formData.BMI,
-        Alcohol: this.formData.Alcohol,
-        Sleep: this.formData.Sleep,
-        Exercise: this.formData.Exercise,
-        Fruit: this.formData.Fruit,
         Gender: this.formData.Gender,
-        Age: this.formData.Age,
+        Age: ageMapping[this.formData.AgeCategory],
+        PhysicalActivityDays: this.formData.PhysicalActivityDays,
+        FruitFrequency: this.formData.FruitFrequency,
+        VegetableFrequency: this.formData.VegetableFrequency,
         Smoking: this.formData.Smoking,
+        AlcoholFrequency: this.formData.AlcoholFrequency,
+        Height: this.formData.Height,
+        Weight: this.formData.Weight,
+        HighBloodPressure: this.formData.HighBloodPressure,
         Diabetes: this.formData.Diabetes,
-        Kidney: this.formData.Kidney,
-        Stroke: this.formData.Stroke
+        NoiseProblems: this.formData.NoiseProblems
       };
 
       try {
-        const response = await axios.post("http://localhost:5000/predict", apiData);
-        this.result = response.data;
-        this.shap_summary_text = response.data.shap_summary_text;
-        console.log("SHAP Impact:", response.data.shap_impact);
-        console.log("API Response:", response.data);
+        console.log("📊 Data prepared for backend:", apiData);
+        
+        // Uncomment when backend is ready:
+        // const response = await axios.post("http://localhost:5000/predict", apiData);
+        // this.result = response.data;
+        // this.shap_summary_text = response.data.shap_summary_text;
+        
+        alert("✅ Data prepared successfully!\n\nCheck the console (F12) to see the formatted data.\n\nUncomment the axios.post() line when your backend is ready.");
       } catch (error) {
-        console.error("Error during API request:", error);
+        console.error("❌ Error during API request:", error);
+        alert("Error: " + error.message);
       }
     },
+
     isValidBase64(base64) {
       return typeof base64 === 'string' && 
              (base64.startsWith('iVBORw0KGgo') || base64.length > 0);
@@ -494,9 +668,7 @@ export default {
 </script>
 
 <style scoped>
-/* Note: All styles from the document remain the same, just changed #app to #home-app */
-/* and removed the dark-mode-toggle button styles since it's now in App.vue */
-
+/* Base Styles */
 #home-app {
   background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fef2f2 100%);
   min-height: 100vh;
@@ -513,9 +685,6 @@ export default {
   color: #f1f5f9;
 }
 
-/* All other styles remain exactly the same as in the original document... */
-/* (Copy all the remaining CSS from the document here) */
-
 h1, h2, h3, h4, h5, h6 {
   font-family: 'Inter', sans-serif;
   font-weight: 700;
@@ -530,19 +699,17 @@ h2 {
   gap: 10px;
 }
 
-h2::before {
-  font-size: 1.25rem;
-}
-
+/* Container */
 .container {
   display: grid;
-  grid-template-columns: 380px 1fr;
+  grid-template-columns: 400px 1fr;
   gap: 24px;
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
+/* Sidebar */
 .sidebar {
   background: white;
   padding: 28px;
@@ -570,15 +737,13 @@ h2::before {
   padding-bottom: 12px;
   margin-bottom: 24px;
   flex-shrink: 0;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
 }
 
+/* Scrollable Form */
 .scrollable-form {
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 15px;
+  padding-right: 12px;
   flex: 1;
 }
 
@@ -604,135 +769,149 @@ h2::before {
   background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
 }
 
-form input, form select {
-  width: 95%;
-  padding: 12px 4px;
+/* Feature Categories */
+.feature-category {
+  margin-bottom: 28px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.dark-mode .feature-category {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.category-title {
+  color: #14b8a6;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #14b8a6;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.feature-item {
+  margin-bottom: 18px;
+}
+
+.feature-item:last-child {
+  margin-bottom: 0;
+}
+
+.feature-item label {
+  display: block;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.dark-mode .feature-item label {
+  color: #cbd5e1;
+}
+
+/* Input Fields */
+.feature-item input,
+.feature-item select {
+  width: 100%;
+  padding: 12px 16px;
   border: 2px solid #e2e8f0;
   border-radius: 10px;
-  font-size: 16px;
+  font-size: 15px;
   transition: all 0.3s ease;
   background: white;
-  margin-bottom: 16px;
   color: #1e293b;
-  text-align: center;
   font-weight: 500;
 }
 
-form input::placeholder {
-  color: #94a3b8;
-  font-weight: 400;
-  opacity: 0.7;
-}
-
-.dark-mode form input,
-.dark-mode form select {
-  background: #0f172a;
+.dark-mode .feature-item input,
+.dark-mode .feature-item select {
+  background: #1e293b;
   color: #f1f5f9;
   border-color: #334155;
 }
 
-.dark-mode form input::placeholder {
-  color: #64748b;
-}
-
-form input:focus, form select:focus {
+.feature-item input:focus,
+.feature-item select:focus {
   outline: none;
   border-color: #14b8a6;
   box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
 }
 
-form input:invalid {
-  border-color: #fca5a5;
-  background-color: #fef2f2;
+.feature-item input::placeholder {
+  color: #94a3b8;
+  font-weight: 400;
 }
 
-.dark-mode form input:invalid {
-  background-color: #7f1d1d;
+.dark-mode .feature-item input::placeholder {
+  color: #64748b;
 }
 
-form label {
-  display: block;
-  font-weight: 600;
+/* Button Groups */
+.button-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.button-group.multi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.button-group button {
+  flex: 1;
+  padding: 12px 16px;
+  background: white;
   color: #475569;
-  margin-bottom: 8px;
-  margin-top: 8px;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-}
-
-.dark-mode form label {
-  color: #cbd5e1;
-}
-
-.input p {
-  color: #475569;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
   font-weight: 600;
-  margin-bottom: 8px;
-  text-align: center;
-  font-size: 15px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  padding: 0 5px;
-}
-
-.dark-mode .input p {
-  color: #cbd5e1;
-}
-
-.bmi {
-  background: linear-gradient(135deg, #ccfbf1 0%, #99f6e4 100%);
-  border: 2px solid #14b8a6;
-  border-radius: 12px;
-  padding: 20px;
-  text-align: center;
-  margin: 20px 0;
-  transition: all 0.3s ease;
-}
-
-.dark-mode .bmi {
-  background: linear-gradient(135deg, #134e4a 0%, #115e59 100%);
-}
-
-.bmi p {
-  font-weight: 600;
-  color: #14b8a6;
-  margin-bottom: 8px;
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.dark-mode .bmi p {
-  color: #5eead4;
-}
-
-.bmi input {
-  font-size: 32px;
-  font-weight: 700;
-  text-align: center;
-  border: none;
-  background: transparent;
-  color: #0f766e;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  text-transform: none;
+  letter-spacing: normal;
   margin: 0;
-  padding: 8px;
+  min-width: 60px;
 }
 
-.bmi input::placeholder {
-  color: #5eead4;
-  opacity: 0.5;
-  font-size: 24px;
+.dark-mode .button-group button {
+  background: #1e293b;
+  color: #cbd5e1;
+  border-color: #334155;
 }
 
-.dark-mode .bmi input {
-  color: #5eead4;
+.button-group button:hover {
+  border-color: #14b8a6;
+  background: #f0fdfa;
+  transform: translateY(-2px);
 }
 
-.dark-mode .bmi input::placeholder {
-  color: #14b8a6;
-  opacity: 0.5;
+.dark-mode .button-group button:hover {
+  background: #134e4a;
 }
 
+.button-group button.active {
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  color: white;
+  border-color: #14b8a6;
+  box-shadow: 0 4px 6px -1px rgba(20, 184, 166, 0.3);
+  transform: scale(1.05);
+}
+
+.button-group button.active:hover {
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* Submit & Action Buttons */
 button[type="submit"] {
   background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
   color: white;
@@ -741,12 +920,13 @@ button[type="submit"] {
   width: 100%;
   border-radius: 12px;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 16px;
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px -1px rgba(20, 184, 166, 0.3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-top: 8px;
 }
 
 button[type="submit"]:hover {
@@ -759,7 +939,7 @@ button[type="button"] {
   background: #f1f5f9;
   color: #475569;
   border: 2px solid #cbd5e1;
-  padding: 16px 24px;
+  padding: 14px 20px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 600;
@@ -777,6 +957,7 @@ button[type="button"] {
 button[type="button"]:hover {
   background: #e2e8f0;
   border-color: #94a3b8;
+  transform: translateY(-1px);
 }
 
 .dark-mode button[type="button"]:hover {
@@ -784,81 +965,7 @@ button[type="button"]:hover {
   border-color: #475569;
 }
 
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 0 0 5% 0;
-  padding: 16px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 2px dashed #cbd5e1;
-}
-
-.dark-mode .checkbox-group {
-  background: #0f172a;
-  border-color: #334155;
-}
-
-.conditions-label {
-  text-align: center;
-  font-size: 15px;
-  font-weight: 600;
-  color: #475569;
-  margin-top: 8px;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  padding: 0 5px;
-}
-
-.dark-mode .conditions-label {
-  color: #cbd5e1;
-}
-
-.checkbox-group label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: white;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-transform: none;
-  font-size: 15px;
-  font-weight: 500;
-  color: #1e293b;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.dark-mode .checkbox-group label {
-  background: #1e293b;
-  border-color: #334155;
-  color: #f1f5f9;
-}
-
-.checkbox-group label:hover {
-  border-color: #14b8a6;
-  background: #f0fdfa;
-}
-
-.dark-mode .checkbox-group label:hover {
-  background: #134e4a;
-}
-
-.checkbox-group input[type="checkbox"] {
-  width: 24px;
-  height: 24px;
-  cursor: pointer;
-  accent-color: #14b8a6;
-  margin: 0;
-}
-
+/* Results Section */
 .results {
   background: white;
   padding: 32px;
@@ -894,262 +1001,40 @@ button[type="button"]:hover {
   color: #94a3b8;
 }
 
-.risk-score-section {
-  margin: 32px 0;
-  display: flex;
-  justify-content: center;
-}
-
-.risk-level-badge {
-  padding: 32px 48px;
-  border-radius: 16px;
+/* Empty State */
+.empty-state {
   text-align: center;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  max-width: 500px;
-  width: 100%;
-  border: 3px solid;
-  position: relative;
-  overflow: hidden;
+  padding: 80px 20px;
 }
 
-.risk-level-badge::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: currentColor;
-}
-
-.risk-level-badge.low {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-color: #10b981;
-  color: #065f46;
-}
-
-.risk-level-badge.mid {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #d97706;
-  color: #92400e;
-}
-
-.risk-level-badge.high {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  border-color: #ef4444;
-  color: #991b1b;
-}
-
-.risk-level-badge h3 {
-  font-size: 24px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 16px;
-}
-
-.risk-score-value {
-  font-size: 48px;
-  font-weight: 900;
-  margin: 20px 0;
-  font-family: 'Inter', monospace;
-}
-
-.tab-navigation {
-  display: flex;
-  gap: 0;
-  margin: 32px 0 0 0;
-  border-bottom: 3px solid #e2e8f0;
-}
-
-.dark-mode .tab-navigation {
-  border-bottom-color: #334155;
-}
-
-.tab-navigation button {
-  background: transparent;
-  color: #64748b;
-  border: none;
-  border-bottom: 3px solid transparent;
-  padding: 16px 32px;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  margin-bottom: -3px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dark-mode .tab-navigation button {
-  color: #94a3b8;
-}
-
-.tab-navigation button:hover {
-  color: #14b8a6;
-  background: rgba(20, 184, 166, 0.05);
-}
-
-.tab-navigation button.active {
-  color: #14b8a6;
-  border-bottom-color: #14b8a6;
-  background: rgba(20, 184, 166, 0.1);
-  font-weight: 700;
-}
-
-.results-container {
-  margin-top: 32px;
-}
-
-.results-container h3 {
-  font-size: 22px;
-  color: #1e293b;
+.empty-icon {
+  font-size: 80px;
   margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #e2e8f0;
+  opacity: 0.5;
 }
 
-.dark-mode .results-container h3 {
-  color: #f1f5f9;
-  border-bottom-color: #334155;
-}
-
-.impact-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 20px;
-  background: white;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid #e2e8f0;
-}
-
-.dark-mode .impact-table {
-  background: #0f172a;
-  border-color: #334155;
-}
-
-.impact-table thead {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  color: white;
-}
-
-.impact-table th {
-  padding: 18px 10px;
-  text-align: left;
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  border-bottom: 3px solid #134e4a;
-}
-
-.impact-table td {
-  padding: 18px 20px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 15px;
-  vertical-align: middle;
+.empty-state h3 {
   color: #1e293b;
+  font-size: 24px;
+  margin-bottom: 12px;
 }
 
-.dark-mode .impact-table td {
-  border-bottom-color: #334155;
+.dark-mode .empty-state h3 {
   color: #f1f5f9;
 }
 
-.impact-table tbody tr {
-  transition: all 0.2s ease;
-}
-
-.impact-table tbody tr:hover {
-  background: rgba(20, 184, 166, 0.05);
-  transform: scale(1.01);
-}
-
-.dark-mode .impact-table tbody tr:hover {
-  background: rgba(20, 184, 166, 0.15);
-}
-
-.impact-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.rank-cell {
-  font-weight: 800;
-  font-size: 18px;
-  color: #14b8a6;
-  text-align: center;
-  width: 60px;
-}
-
-.guideline-text {
+.empty-state p {
   color: #64748b;
-  font-size: 13px;
-  font-style: italic;
+  font-size: 16px;
+  max-width: 500px;
+  margin: 0 auto;
 }
 
-.dark-mode .guideline-text {
+.dark-mode .empty-state p {
   color: #94a3b8;
 }
 
-.impact-percentage {
-  display: inline-block;
-  margin-left: 8px;
-  font-size: 12px;
-  font-weight: 700;
-  opacity: 0.8;
-}
-
-.risk-level-high {
-  background: linear-gradient(135deg, #cf8787 0%, #bb4949 100%);
-  color: #991b1b;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 2px solid #f87171;
-}
-
-.risk-level-high::before {
-  content: '⚠️';
-}
-
-.risk-level-medium {
-  background: linear-gradient(135deg, #d7c88a 0%, #bca443 100%);
-  color: #92400e;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 2px solid #fbbf24;
-}
-
-.risk-level-medium::before {
-  content: '⚡';
-}
-
-.risk-level-low {
-  background: linear-gradient(135deg, #7cc59f 0%, #3ecb89 100%);
-  color: #065f46;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 2px solid #34d399;
-}
-
-.risk-level-low::before {
-  content: '✓';
-}
-
+/* Results Layout */
 .results-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1213,6 +1098,7 @@ button[type="button"]:hover {
   color: #86efac;
 }
 
+/* Result Cards */
 .result-card {
   display: flex;
   align-items: center;
@@ -1295,6 +1181,268 @@ button[type="button"]:hover {
   margin-top: 8px;
 }
 
+/* Risk Score Section */
+.risk-score-section {
+  margin: 32px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.risk-level-badge {
+  padding: 32px 48px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  width: 100%;
+  border: 3px solid;
+  position: relative;
+  overflow: hidden;
+}
+
+.risk-level-badge::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: currentColor;
+}
+
+.risk-level-badge.low {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border-color: #10b981;
+  color: #065f46;
+}
+
+.risk-level-badge.mid {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-color: #d97706;
+  color: #92400e;
+}
+
+.risk-level-badge.high {
+  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.risk-level-badge h3 {
+  font-size: 24px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 16px;
+}
+
+.risk-score-value {
+  font-size: 48px;
+  font-weight: 900;
+  margin: 20px 0;
+  font-family: 'Inter', monospace;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 0;
+  margin: 32px 0 0 0;
+  border-bottom: 3px solid #e2e8f0;
+}
+
+.dark-mode .tab-navigation {
+  border-bottom-color: #334155;
+}
+
+.tab-navigation button {
+  background: transparent;
+  color: #64748b;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 16px 32px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  margin-bottom: -3px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dark-mode .tab-navigation button {
+  color: #94a3b8;
+}
+
+.tab-navigation button:hover {
+  color: #14b8a6;
+  background: rgba(20, 184, 166, 0.05);
+}
+
+.tab-navigation button.active {
+  color: #14b8a6;
+  border-bottom-color: #14b8a6;
+  background: rgba(20, 184, 166, 0.1);
+  font-weight: 700;
+}
+
+/* Results Container */
+.results-container {
+  margin-top: 32px;
+}
+
+.results-container h3 {
+  font-size: 22px;
+  color: #1e293b;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dark-mode .results-container h3 {
+  color: #f1f5f9;
+  border-bottom-color: #334155;
+}
+
+/* Impact Table */
+.impact-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 20px;
+  background: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.dark-mode .impact-table {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+.impact-table thead {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  color: white;
+}
+
+.impact-table th {
+  padding: 18px 20px;
+  text-align: left;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  border-bottom: 3px solid #134e4a;
+}
+
+.impact-table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 15px;
+  vertical-align: middle;
+  color: #1e293b;
+}
+
+.dark-mode .impact-table td {
+  border-bottom-color: #334155;
+  color: #f1f5f9;
+}
+
+.impact-table tbody tr {
+  transition: all 0.2s ease;
+}
+
+.impact-table tbody tr:hover {
+  background: rgba(20, 184, 166, 0.05);
+  transform: scale(1.01);
+}
+
+.dark-mode .impact-table tbody tr:hover {
+  background: rgba(20, 184, 166, 0.15);
+}
+
+.impact-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.rank-cell {
+  font-weight: 800;
+  font-size: 18px;
+  color: #14b8a6;
+  text-align: center;
+  width: 60px;
+}
+
+.guideline-text {
+  color: #64748b;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.dark-mode .guideline-text {
+  color: #94a3b8;
+}
+
+.impact-percentage {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+/* Risk Level Classes */
+.risk-level-high {
+  background: linear-gradient(135deg, #cf8787 0%, #bb4949 100%);
+  color: #991b1b;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #f87171;
+}
+
+.risk-level-high::before {
+  content: '⚠️';
+}
+
+.risk-level-medium {
+  background: linear-gradient(135deg, #d7c88a 0%, #bca443 100%);
+  color: #92400e;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #fbbf24;
+}
+
+.risk-level-medium::before {
+  content: '⚡';
+}
+
+.risk-level-low {
+  background: linear-gradient(135deg, #7cc59f 0%, #3ecb89 100%);
+  color: #065f46;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 2px solid #34d399;
+}
+
+.risk-level-low::before {
+  content: '✓';
+}
+
+/* SHAP Section */
 .shap-section {
   background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
   border: 2px solid #e2e8f0;
@@ -1355,6 +1503,7 @@ button[type="button"]:hover {
   border-color: #334155;
 }
 
+/* Info Box */
 .info-box {
   background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
   border: 2px solid #93c5fd;
@@ -1414,67 +1563,7 @@ button[type="button"]:hover {
   font-weight: 700;
 }
 
-.tooltip-wrapper {
-  position: relative;
-  display: inline-block;
-  margin-left: 6px;
-}
-
-.tooltip-icon {
-  background: #14b8a6;
-  color: white;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: help;
-  transition: all 0.2s ease;
-}
-
-.tooltip-icon:hover {
-  transform: scale(1.1);
-  background: #0f766e;
-}
-
-.tooltip-text {
-  visibility: hidden;
-  width: 220px;
-  background: #1e293b;
-  color: white;
-  text-align: left;
-  border-radius: 8px;
-  padding: 12px 14px;
-  position: absolute;
-  z-index: 100;
-  top: 125%;
-  left: 50%;
-  transform: translateX(-50%);
-  opacity: 0;
-  transition: opacity 0.3s, visibility 0.3s;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.tooltip-text::before {
-  content: '';
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 6px solid transparent;
-  border-bottom-color: #1e293b;
-}
-
-.tooltip-wrapper:hover .tooltip-text {
-  visibility: visible;
-  opacity: 1;
-}
-
+/* Scrollbar Styles */
 ::-webkit-scrollbar {
   width: 12px;
   height: 12px;
@@ -1503,6 +1592,7 @@ button[type="button"]:hover {
   background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
 }
 
+/* Responsive Design */
 @media (max-width: 1024px) {
   .container {
     grid-template-columns: 1fr;
@@ -1536,6 +1626,24 @@ button[type="button"]:hover {
   
   .risk-score-value {
     font-size: 36px;
+  }
+  
+  .button-group.multi-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .button-group.multi-row {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .container {
+    padding: 0 12px;
+  }
+  
+  .sidebar, .results {
+    padding: 20px;
   }
 }
 </style>
