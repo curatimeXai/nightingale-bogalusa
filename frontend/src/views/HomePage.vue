@@ -358,6 +358,7 @@
 /* eslint-disable no-unused-vars */
 import axios from 'axios';
 import Disclaimer from '../components/DisclaimerPopup.vue';
+//import { map } from 'core-js/core/array';
 
 export default {
   name: 'HomePage',
@@ -629,7 +630,7 @@ export default {
         '60-64': 62, '65-69': 67, '70-74': 72, '75-79': 77
       };
 
-      const apiData = {
+      /*const apiData = {
         Gender: this.formData.Gender,
         Age: ageMapping[this.formData.AgeCategory],
         PhysicalActivityDays: this.formData.PhysicalActivityDays,
@@ -642,17 +643,34 @@ export default {
         HighBloodPressure: this.formData.HighBloodPressure,
         Diabetes: this.formData.Diabetes,
         NoiseProblems: this.formData.NoiseProblems
-      };
+      };*/
+      const apiData =  {
+    "Gender": this.formData.Gender,
+    "Age of respondent, calculated": ageMapping[this.formData.AgeCategory],
+    "Do sports or other physical activity, how many of last 7 days": this.formData.PhysicalActivityDays,
+    "How often eat fruit, excluding drinking juice": this.formData.FruitFrequency,
+    "How often eat vegetables or salad, excluding potatoes": this.formData.VegetableFrequency,
+    "Cigarette smoking behaviour": this.formData.Smoking,
+    "How often drink alcohol": this.formData.AlcoholFrequency,
+    "Height of respondent (cm)": this.formData.Height,
+    "Weight of respondent (kg)": this.formData.Weight,
+    "Health problems, last 12 months: high blood pressure": this.formData.HighBloodPressure ? "Marked" : "Not marked",
+    "Health problems, last 12 months: diabetes": this.formData.Diabetes ? "Marked" : "Not marked",
+    "Problems with accomodation: noise": this.formData.NoiseProblems ? "Marked" : "Not marked"
+  }
 
       try {
         console.log("📊 Data prepared for backend:", apiData);
         
         // Uncomment when backend is ready:
-        // const response = await axios.post("http://localhost:5000/predict", apiData);
-        // this.result = response.data;
-        // this.shap_summary_text = response.data.shap_summary_text;
+        const response = await axios.post("http://localhost:8000/predict", apiData);
         
-        alert("✅ Data prepared successfully!\n\nCheck the console (F12) to see the formatted data.\n\nUncomment the axios.post() line when your backend is ready.");
+        const data = response.data;
+        data.shap_impact = mapBackendToFrontend(data.feature_impacts_percent);   // <-- FIX ICI
+
+        this.result = data;
+        
+        //alert("✅ Data prepared successfully!\n\nCheck the console (F12) to see the formatted data.\n\nUncomment the axios.post() line when your backend is ready.");
       } catch (error) {
         console.error("❌ Error during API request:", error);
         alert("Error: " + error.message);
@@ -665,6 +683,24 @@ export default {
     }
   }
 };
+
+function mapBackendToFrontend(raw) {
+  return {
+    Gender: raw["Gender"],
+    Age: raw["Age of respondent, calculated"],
+    PhysicalActivityDays: raw["Do sports or other physical activity, how many of last 7 days"],
+    FruitFrequency: raw["How often eat fruit, excluding drinking juice"],
+    VegetableFrequency: raw["How often eat vegetables or salad, excluding potatoes"],
+    Smoking: raw["Cigarette smoking behaviour"],
+    AlcoholFrequency: raw["How often drink alcohol"],
+    Height: raw["Height of respondent (cm)"],
+    Weight: raw["Weight of respondent (kg)"],
+    HighBloodPressure: raw["Health problems, last 12 months: high blood pressure"],
+    Diabetes: raw["Health problems, last 12 months: diabetes"],
+    NoiseProblems: raw["Problems with accomodation: noise"]
+  };
+}
+
 </script>
 
 <style scoped>
