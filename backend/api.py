@@ -12,7 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 model = joblib.load("heart_model.pkl")
 RAW_MAP = joblib.load("raw_feature_map.pkl")
 transform_names = joblib.load("transformed_feature_names.pkl")
-
 background_raw = joblib.load("shap_background.pkl")
 
 binary_map = {
@@ -27,6 +26,7 @@ BINARY_FEATURES = [
     "Problems with accomodation: noise",
 ]
 
+# NEW : include BMI in the API feature list
 ALL_FEATURES = [
     "Gender",
     "Age of respondent, calculated",
@@ -37,29 +37,31 @@ ALL_FEATURES = [
     "How often drink alcohol",
     "Height of respondent (cm)",
     "Weight of respondent (kg)",
+    "BMI",   # 🔥 NEW
     "Health problems, last 12 months: high blood pressure",
     "Health problems, last 12 months: diabetes",
     "Problems with accomodation: noise",
 ]
 
 # ============================================================
-#     PREPROCESS BACKGROUND → NUMERIC (for SHAP masker)
+#  PREPROCESS BACKGROUND → NUMERIC (SHAP masker requires BMI)
 # ============================================================
 
 background_fixed = background_raw.copy()
+background_fixed["BMI"] = background_fixed["Weight of respondent (kg)"] / (background_fixed["Height of respondent (cm)"] / 100)**2
+
 for col in BINARY_FEATURES:
     background_fixed[col] = background_fixed[col].map(binary_map)
 
 background_numeric = model.named_steps["preprocess"].transform(background_fixed)
 
 # ============================================================
-#         SHAP EXPLAINER (PERMUTATION — ALWAYS WORKS)
+#         SHAP EXPLAINER
 # ============================================================
 
 print("Loading SHAP PermutationExplainer...")
 
 masker = shap.maskers.Independent(background_numeric)
-
 xgb_model = model.named_steps["xgb"]
 
 explainer = shap.Explainer(
@@ -69,23 +71,20 @@ explainer = shap.Explainer(
 )
 
 # ============================================================
-#     GROUP SHAP BACK TO YOUR 12 ORIGINAL FEATURES
+#     GROUP SHAP BACK TO ORIGINAL FEATURES
 # ============================================================
 
 def group_shap_values(shap_row):
     grouped = {feat: 0.0 for feat in ALL_FEATURES}
 
-    # 1. Accumulate SHAP values WITH sign (no abs)
     for tname, shap_value in zip(transform_names, shap_row):
         raw = RAW_MAP[tname]
         grouped[raw] += shap_value  # keep sign
 
-    # 2. Normalization uses ABSOLUTE contribution
     total = sum(abs(v) for v in grouped.values())
 
     if total > 0:
         return {k: float(v * 100 / total) for k, v in grouped.items()}
-
     return {k: 0.0 for k in grouped}
 
 
@@ -97,33 +96,36 @@ app = FastAPI(title="Heart Disease Risk API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],  # évite "*" pour les préflights
+    allow_origins=["http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 # ============================================================
-#                      /predict ENDPOINT
+#                     /predict ENDPOINT
 # ============================================================
 
 @app.post("/predict")
 def predict(payload: dict):
-    
+
     df = pd.DataFrame([payload])
 
-    # Apply binary mapping
+    # Compute BMI (API MUST do this)
+    df["BMI"] = df["Weight of respondent (kg)"] / (df["Height of respondent (cm)"] / 100)**2
+
+    # Map binary values
     for col in BINARY_FEATURES:
         df[col] = df[col].map(binary_map)
 
-    # Preprocess raw → numeric
+    # Preprocess inputs
     df_num = model.named_steps["preprocess"].transform(df)
 
-    # Predict final risk
+    # Predict risk
     risk = xgb_model.predict_proba(df_num)[0, 1]
 
-    # Compute SHAP explanation
+    # SHAP explanation
     shap_row = explainer(df_num).values[0]
-
     grouped = group_shap_values(shap_row)
 
     return {
@@ -131,7 +133,8 @@ def predict(payload: dict):
         "risk_percent": f"{risk*100:.2f}%",
         "feature_impacts_percent": grouped
     }
-    
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=True)
