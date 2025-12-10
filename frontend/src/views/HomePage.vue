@@ -666,6 +666,8 @@ export default {
         const response = await axios.post("http://localhost:8000/predict", apiData);
         
         const data = response.data;
+        
+        console.log("📊 Data received from backend:", data);
         data.shap_impact = mapBackendToFrontend(data.feature_impacts_percent);   // <-- FIX ICI
 
         this.result = data;
