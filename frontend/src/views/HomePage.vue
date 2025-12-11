@@ -476,7 +476,7 @@ export default {
       };
 
       try {
-        const response = await axios.post("http://localhost:5000/predict", apiData);
+        const response = await axios.post(`${process.env.VUE_APP_API_URL}/predict`, apiData);
         this.result = response.data;
         this.shap_summary_text = response.data.shap_summary_text;
         console.log("SHAP Impact:", response.data.shap_impact);
