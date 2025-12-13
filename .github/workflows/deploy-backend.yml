@@ -30,7 +30,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Generate deployment package
-        run: zip -r deploy.zip . -x "*.git*" "frontend/*" "*.md"
+        run: cd backend && zip -r ../deploy.zip . -x "*.git*" "__pycache__/*" "*.pyc" ".ipynb_checkpoints/*"
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v22
