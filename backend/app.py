@@ -18,7 +18,11 @@ import xgboost as xgb
 from common_preprocess import preprocess_df, FEATURES
 
 app = Flask(__name__, static_folder="static")
-CORS(app, origins=["http://localhost:8080"])
+CORS(app, origins=[
+    "http://localhost:8080",
+    "https://bogalusa.nightingaleheart.com",
+    "https://master.d3oamy7whkzfxr.amplifyapp.com"
+])
 
 # Load trained models
 svm_model = joblib.load('models/svm_model.pkl')
