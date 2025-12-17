@@ -37,8 +37,8 @@ jobs:
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          application_name: nightingalebogalusa-master-backend
-          environment_name: nightingalebogalusa-backend-env
+          application_name: nightingalebogalusa-backend
+          environment_name: Nightingalebogalusa-backend-env
           region: ${{ env.AWS_REGION }}
           version_label: ${{ github.sha }}
           deployment_package: deploy.zip
