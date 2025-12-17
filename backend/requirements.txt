@@ -4,7 +4,7 @@ gunicorn
 pandas
 numpy
 scikit-learn
-xgboost>=1.7.0,<2.0.0
+xgboost==1.6.2
 tensorflow
 keras
 shap>=0.41.0
