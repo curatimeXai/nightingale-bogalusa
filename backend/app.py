@@ -13,9 +13,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import re
-import xgboost as xgb
 import tensorflow as tf
-from backend.common_preprocess import preprocess_df, FEATURES
+from common_preprocess import preprocess_df, FEATURES
 
 app = Flask(__name__, static_folder="static")
 CORS(app,
@@ -32,14 +31,13 @@ CORS(app,
      }})
 # Load trained models
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODELS_DIR = os.path.join(BASE_DIR, "backend", "models")
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
 svm_model = joblib.load(os.path.join(MODELS_DIR, "svm_model.pkl"))
-xgb_model = xgb.XGBClassifier()
-xgb_model.load_model(os.path.join(MODELS_DIR, "xgb_model.json"))
+xgb_model = joblib.load(os.path.join(MODELS_DIR, "xgb_model.pkl"))
 
 keras_model = tf.keras.models.load_model(
-    os.path.join(MODELS_DIR, "keras_savedmodel")
+    os.path.join(MODELS_DIR, "keras_model.h5")
 )
 
 scaler = joblib.load(os.path.join(MODELS_DIR, "scaler.pkl"))
@@ -130,7 +128,7 @@ def analyze_lifestyle_factors(data):
 
 @app.route('/')
 def home():
-    return {'message': 'Backend is running successfully!'}
+    return {"status": "ok", "message": "Backend is running successfully!"}
 
 
 @app.route('/predict', methods=['POST'])
@@ -318,10 +316,6 @@ def add_cors_headers(response):
     return response
 
 # ---- HEALTH CHECK ENDPOINT ----
-@app.route("/", methods=["GET"])
-def root_health():
-    return {"status": "ok"}, 200
-
 @app.route("/health", methods=["GET"])
 def health_check():
     return {"status": "ok"}, 200
