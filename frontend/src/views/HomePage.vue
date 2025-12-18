@@ -1,3 +1,4 @@
+
 <template>
   <Disclaimer v-if="showDisclaimer" @accepted="showDisclaimer = false" />
   <div id="home-app" :class="{ 'dark-mode': darkMode }">
@@ -9,7 +10,7 @@
           
           <!-- CONTEXT CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">👤 Context</h3>
+            <h3 class="category-title"> Context</h3>
             
             <!-- Gender -->
             <div class="feature-item">
@@ -51,7 +52,7 @@
 
           <!-- LIFESTYLE CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🏃 Lifestyle</h3>
+            <h3 class="category-title"> Lifestyle</h3>
             
             <!-- Physical Activity -->
             <div class="feature-item">
@@ -149,10 +150,18 @@
                      required />
             </div>
           </div>
+          <!-- BMI Display -->
+          <div v-if="calculatedBMI" class="bmi-display">
+            <h4> Your BMI</h4>
+            <div class="bmi-value" :class="bmiCategory.class">
+              {{ calculatedBMI }}
+            </div>
+            <div class="bmi-category">{{ bmiCategory.label }}</div>
+          </div>
 
           <!-- MEDICAL RISK FACTORS CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🏥 Medical Risk Factors</h3>
+            <h3 class="category-title"> Medical Risk Factors</h3>
             
             <!-- High Blood Pressure -->
             <div class="feature-item">
@@ -191,7 +200,7 @@
 
           <!-- ENVIRONMENTAL CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🏘️ Environmental</h3>
+            <h3 class="category-title"> Environmental</h3>
             
             <!-- Noise Problems -->
             <div class="feature-item">
@@ -224,10 +233,13 @@
         <div v-if="result">
           <div class="results-layout">
             <!-- Negative Factors -->
-            <div class="negative-factors">
-              <h3>🛑 Negative Factor</h3>
-              <div class="factors-column">
-                <div v-for="(value, key) in negativeFactors" :key="key" class="result-card card-negative">
+<div class="negative-factors">
+  <h3>🛑 Negative Factor</h3>
+  <div class="factors-column">
+    <div v-for="(value, key, index) in negativeFactors" 
+         :key="key" 
+         class="result-card card-negative"
+         :style="{ animationDelay: `${index * 0.15}s` }">
                   <i class="bi bi-hand-thumbs-down-fill negative-icon"></i>
                   <div class="result-content">
                     <strong>{{ key }}</strong>: {{ value.text }}
@@ -253,22 +265,23 @@
           </div>
 
           <!-- Risk Score Section -->
-          <div class="risk-score-section" v-if="result && result.risk_assessment">
-            <div class="risk-level-badge" :class="result.risk_assessment.level.toLowerCase()">
-              <h3>{{ result.risk_assessment.level }}</h3>
-              <div class="risk-score-value">
-                Risk Score: {{ (result.risk_assessment.score * 100).toFixed(1) }}%
-              </div>
-              <p>{{ result.risk_assessment.description }}</p>
-            </div>
-          </div>
+          <div class="risk-score-section" v-if="result && result.risk !== undefined">
+  <div class="risk-level-badge" :class="getRiskLevelClass(result.risk)">
+    <div class="risk-badge-icon">{{ getRiskIcon(result.risk) }}</div>
+    <h3>{{ getRiskLevelLabel(result.risk) }}</h3>
+    <div class="risk-score-value">
+      {{ (result.risk * 100).toFixed(1) }}%
+    </div>
+    <p>{{ getRiskDescription(result.risk) }}</p>
+  </div>
+</div>
 
           <!-- Tab Navigation -->
           <div class="tab-navigation">
             <button 
               :class="{ active: activeTab === 'table' }" 
               @click="activeTab = 'table'">
-              📊 Table View
+               Table View
             </button>
             <button 
               :class="{ active: activeTab === 'chart' }" 
@@ -314,16 +327,22 @@
           </div>
 
           <!-- Chart View -->
-          <div v-show="activeTab === 'chart'" v-if="isValidBase64(result.shap_plot) || shap_summary_text" class="shap-section">
-            <h3>What Affected Your Results Most</h3>
+          <div v-show="activeTab === 'chart'" class="shap-section">
+  <h3>Interactive Risk Analysis</h3>
 
-            <div v-if="isValidBase64(result.shap_plot)">
-              <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
-            </div>
+  <!-- Interactive Chart -->
+  <div class="interactive-chart-container">
+    <canvas ref="riskChart"></canvas>
+  </div>
+
+  <div v-if="isValidBase64(result.shap_plot)">
+    <h4>Detailed SHAP Analysis</h4>
+    <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
+  </div>
 
             <!-- Info Box -->
             <div class="info-box">
-              <h5>📊 How This Chart Works</h5>
+              <h5> How This Chart Works</h5>
               <p>This chart shows which health factors had the biggest effect on your heart disease risk.</p>
               <ul>
                 <li><strong>Green bars</strong> = lower your risk</li>
@@ -358,6 +377,7 @@
 /* eslint-disable no-unused-vars */
 import axios from 'axios';
 import Disclaimer from '../components/DisclaimerPopup.vue';
+import Chart from 'chart.js/auto';
 //import { map } from 'core-js/core/array';
 
 export default {
@@ -375,6 +395,7 @@ export default {
     return {
       showDisclaimer: false,
       activeTab: 'table',
+      riskChartInstance: null,
       formData: {
         // Context
         Gender: '',
@@ -415,6 +436,25 @@ export default {
     };
   },
   computed: {
+    calculatedBMI() {
+      if (this.formData.Height && this.formData.Weight) {
+        const heightInMeters = this.formData.Height / 100;
+        const bmi = this.formData.Weight / (heightInMeters * heightInMeters);
+        return bmi.toFixed(1);
+      }
+      return null;
+    },
+
+    bmiCategory() {
+      const bmi = parseFloat(this.calculatedBMI);
+      if (!bmi) return { label: '', class: '' };
+      if (bmi < 18.5) return { label: 'Underweight', class: 'bmi-underweight' };
+      if (bmi < 25) return { label: 'Normal weight', class: 'bmi-normal' };
+      if (bmi < 30) return { label: 'Overweight', class: 'bmi-overweight' };
+      return { label: 'Obese', class: 'bmi-obese' };
+    },
+
+
     formattedResults() {
       if (!this.result || !this.result.shap_impact) return {};
       const shap = this.result.shap_impact;
@@ -434,7 +474,7 @@ export default {
           "Gender",
           this.formData.Gender,
           shap.Gender,
-          "👤",
+          "",
           false
         ),
         "Age": build(
@@ -458,6 +498,20 @@ export default {
           this.formData.FruitFrequency.includes("Once a day") || this.formData.FruitFrequency.includes("Twice") || this.formData.FruitFrequency.includes("Three") ? "👍" : "👎",
           !this.formData.FruitFrequency.includes("day")
         ),
+        "BMI" : build("BMI",
+  this.calculatedBMI ? `${this.calculatedBMI}` : "—",
+  shap.BMI,
+  (() => {
+    const bmi = parseFloat(this.calculatedBMI);
+    if (!bmi) return "";
+    if (bmi >= 18.5 && bmi < 25) return "👍";
+    return "👎";
+  })(),
+  (() => {
+    const bmi = parseFloat(this.calculatedBMI);
+    if (!bmi) return false;
+    return bmi < 18.5 || bmi >= 25;
+  })()),
         "Vegetable Intake": build(
           "Vegetables",
           this.formData.VegetableFrequency,
@@ -547,11 +601,163 @@ export default {
       return Object.fromEntries(entries);
     }
   },
+  watch: {
+  result() {
+    if (this.result && this.activeTab === 'chart') {
+      this.$nextTick(() => {
+        this.renderRiskChart();
+      });
+    }
+  },
+  activeTab(newTab) {
+    if (newTab === 'chart' && this.result) {
+      this.$nextTick(() => {
+        this.renderRiskChart();
+      });
+    }
+  }
+},
+beforeUnmount() {
+  if (this.riskChartInstance) {
+    this.riskChartInstance.destroy();
+  }
+},
+
   methods: {
+    renderRiskChart() {
+    if (!this.$refs.riskChart) return;
+    
+    if (this.riskChartInstance) {
+      this.riskChartInstance.destroy();
+    }
+
+    const ctx = this.$refs.riskChart.getContext('2d');
+    const sortedData = this.sortedResults.slice(0, 10); // Limit to top 10 for clarity
+    const labels = sortedData.map(item => item.key);
+    
+    const negativeValues = sortedData.map(item => 
+      item.value.forceRed ? Math.abs(item.value.percentage) : 0
+    );
+    
+    const positiveValues = sortedData.map(item => 
+      !item.value.forceRed ? Math.abs(item.value.percentage) : 0
+    );
+
+    this.riskChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Risk Increasing',
+            data: negativeValues,
+            backgroundColor: 'rgba(239, 68, 68, 0.85)',
+            borderColor: '#dc2626',
+            borderWidth: 2,
+            borderRadius: 8,
+            barThickness: 25,
+            categoryPercentage: 0.9,
+            barPercentage: 0.85
+          },
+          {
+            label: 'Risk Reducing',
+            data: positiveValues.map(v => -v),
+            backgroundColor: 'rgba(34, 197, 94, 0.85)',
+            borderColor: '#16a34a',
+            borderWidth: 2,
+            borderRadius: 8,
+            barThickness: 25,
+            categoryPercentage: 0.9,
+            barPercentage: 0.85
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'nearest',
+          intersect: true,
+        },
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              font: { size: 14, weight: '600' },
+              padding: 20,
+              usePointStyle: true,
+              pointStyle: 'rectRounded',
+              boxWidth: 15,
+              boxHeight: 15
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            padding: 14,
+            cornerRadius: 10,
+            titleFont: { size: 14, weight: 'bold' },
+            bodyFont: { size: 13 },
+            callbacks: {
+              label: function(context) {
+                let label = context.dataset.label || '';
+                let value = Math.abs(context.parsed.x);
+                return label + ': ' + value.toFixed(2) + '%';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: false,
+            grid: { 
+              display: true,
+              color: 'rgba(0, 0, 0, 0.05)',
+              lineWidth: 1
+            },
+            ticks: {
+              callback: function(value) {
+                return Math.abs(value) + '%';
+              },
+              font: { size: 12, weight: '600' }
+            },
+            title: {
+              display: true,
+              text: 'Impact on Risk (%)',
+              font: { size: 14, weight: 'bold' },
+              padding: 10
+            }
+          },
+          y: {
+            stacked: false,
+            grid: { display: false },
+            ticks: {
+              font: { size: 13, weight: '600' },
+              padding: 15,
+              autoSkip: false
+            },
+            afterFit: function(scale) {
+              scale.width = 180;
+            }
+          }
+        },
+        layout: {
+          padding: {
+            left: 10,
+            right: 30,
+            top: 10,
+            bottom: 10
+          }
+        }
+      }
+    });
+  },
     getGuideline(key) {
       const map = {
         "Gender": "Gender",
         "Age": "Age",
+        "BMI": "BMI",
         "Physical Activity": "PhysicalActivity",
         "Fruit Intake": "Fruit",
         "Vegetable Intake": "Vegetables",
@@ -572,6 +778,33 @@ export default {
       if (value >= 2) return "risk-level-medium";
       return "risk-level-low";
     },
+    getRiskLevelClass(risk) {
+  const riskPercent = risk * 100;
+  if (riskPercent < 10) return 'low';
+  if (riskPercent < 30) return 'mid';
+  return 'high';
+},
+
+getRiskIcon(risk) {
+  const riskPercent = risk * 100;
+  if (riskPercent < 10) return '✅';
+  if (riskPercent < 30) return '⚠️';
+  return '🚨';
+},
+
+getRiskLevelLabel(risk) {
+  const riskPercent = risk * 100;
+  if (riskPercent < 10) return 'Low Risk';
+  if (riskPercent < 30) return 'Medium Risk';
+  return 'High Risk';
+},
+
+getRiskDescription(risk) {
+  const riskPercent = risk * 100;
+  if (riskPercent < 10) return 'Your heart disease risk is low. Keep maintaining healthy habits!';
+  if (riskPercent < 30) return 'Your risk is moderate. Consider improving key lifestyle factors.';
+  return 'Your risk is elevated. Consult a healthcare professional for personalized advice.';
+},
 
     getRiskClass(impact) {
       return impact;
@@ -660,14 +893,14 @@ export default {
   }
 
       try {
-        console.log("📊 Data prepared for backend:", apiData);
+        console.log(" Data prepared for backend:", apiData);
         
         // Uncomment when backend is ready:
         const response = await axios.post("http://localhost:8000/predict", apiData);
         
         const data = response.data;
         
-        console.log("📊 Data received from backend:", data);
+        console.log(" Data received from backend:", data);
         data.shap_impact = mapBackendToFrontend(data.feature_impacts_percent);   // <-- FIX ICI
 
         this.result = data;
@@ -686,6 +919,7 @@ export default {
   }
 };
 
+
 function mapBackendToFrontend(raw) {
   return {
     Gender: raw["Gender"],
@@ -697,6 +931,7 @@ function mapBackendToFrontend(raw) {
     AlcoholFrequency: raw["How often drink alcohol"],
     Height: raw["Height of respondent (cm)"],
     Weight: raw["Weight of respondent (kg)"],
+    BMI: raw["BMI"],
     HighBloodPressure: raw["Health problems, last 12 months: high blood pressure"],
     Diabetes: raw["Health problems, last 12 months: diabetes"],
     NoiseProblems: raw["Problems with accomodation: noise"]
@@ -707,24 +942,24 @@ function mapBackendToFrontend(raw) {
 
 <style scoped>
 /* Base Styles */
+/* ===== BASE STYLES ===== */
+/* ===== BASE STYLES ===== */
 #home-app {
-  background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #fef2f2 100%);
+  background: #e0e5ec;
   min-height: 100vh;
   margin: 0;
   padding: 20px 0;
   font-family: 'Inter', 'Segoe UI', sans-serif;
-  font-weight: 400;
-  color: #1e293b;
+  color: #5a6f88;
   transition: all 0.3s ease;
 }
 
 #home-app.dark-mode {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-  color: #f1f5f9;
+  background: #2c3e50;
+  color: #ecf0f1;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Inter', sans-serif;
+h2, h3, h4 {
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -737,7 +972,7 @@ h2 {
   gap: 10px;
 }
 
-/* Container */
+/* ===== CONTAINER ===== */
 .container {
   display: grid;
   grid-template-columns: 400px 1fr;
@@ -747,40 +982,45 @@ h2 {
   padding: 0 20px;
 }
 
-/* Sidebar */
+/* ===== SIDEBAR - NEUMORPHIC ===== */
 .sidebar {
-  background: white;
+  background: #e0e5ec;
   padding: 28px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
+  border-radius: 40px;
+  box-shadow: 
+    10px 10px 20px rgba(184, 197, 214, 0.8),
+    -10px -10px 20px rgba(255, 255, 255, 0.9);
   height: fit-content;
   max-height: calc(100vh - 140px);
   position: sticky;
   top: 110px;
-  transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
 }
 
 .dark-mode .sidebar {
-  background: #1e293b;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  border-color: #334155;
+  background: #2c3e50;
+  box-shadow: 
+    10px 10px 20px rgba(0, 0, 0, 0.3),
+    -10px -10px 20px rgba(255, 255, 255, 0.05);
 }
 
 .sidebar h2 {
-  color: #14b8a6;
-  border-bottom: 3px solid #14b8a6;
+  color: #5a6f88;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
   padding-bottom: 12px;
   margin-bottom: 24px;
-  flex-shrink: 0;
+  border-bottom: 2px solid #667eea;
 }
 
-/* Scrollable Form */
+.dark-mode .sidebar h2 {
+  color: #ecf0f1;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ===== SCROLLABLE FORM ===== */
 .scrollable-form {
   overflow-y: auto;
-  overflow-x: hidden;
   padding-right: 12px;
   flex: 1;
 }
@@ -790,108 +1030,96 @@ h2 {
 }
 
 .scrollable-form::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #e0e5ec;
   border-radius: 10px;
-}
-
-.dark-mode .scrollable-form::-webkit-scrollbar-track {
-  background: #0f172a;
 }
 
 .scrollable-form::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 10px;
 }
 
-.scrollable-form::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
-}
-
-/* Feature Categories */
+/* ===== FEATURE CATEGORIES - INSET ===== */
 .feature-category {
   margin-bottom: 28px;
   padding: 20px;
-  background: #f8fafc;
-  border-radius: 12px;
-  border: 2px solid #e2e8f0;
-  transition: all 0.3s ease;
+  background: #e0e5ec;
+  border-radius: 25px;
+  box-shadow: 
+    inset 5px 5px 10px rgba(184, 197, 214, 0.5),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.3);
 }
 
 .dark-mode .feature-category {
-  background: #0f172a;
-  border-color: #334155;
+  background: #2c3e50;
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.3),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .category-title {
-  color: #14b8a6;
+  color: #667eea;
   font-size: 16px;
-  font-weight: 700;
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #14b8a6;
+  border-bottom: 2px solid #667eea;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
+/* ===== FEATURE ITEMS ===== */
 .feature-item {
   margin-bottom: 18px;
-}
-
-.feature-item:last-child {
-  margin-bottom: 0;
 }
 
 .feature-item label {
   display: block;
   font-weight: 600;
-  color: #475569;
+  color: #5a6f88;
   margin-bottom: 10px;
   font-size: 14px;
-  text-align: left;
 }
 
 .dark-mode .feature-item label {
   color: #cbd5e1;
 }
 
-/* Input Fields */
+/* ===== INPUTS - INSET NEUMORPHIC ===== */
 .feature-item input,
 .feature-item select {
   width: 100%;
   padding: 12px 16px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  border: none;
+  border-radius: 15px;
   font-size: 15px;
-  transition: all 0.3s ease;
-  background: white;
-  color: #1e293b;
+  background: #e0e5ec;
+  color: #5a6f88;
   font-weight: 500;
+  box-shadow: 
+    inset 3px 3px 6px rgba(184, 197, 214, 0.5),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
 }
 
 .dark-mode .feature-item input,
 .dark-mode .feature-item select {
-  background: #1e293b;
-  color: #f1f5f9;
-  border-color: #334155;
+  background: #2c3e50;
+  color: #ecf0f1;
+  box-shadow: 
+    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.05);
 }
 
 .feature-item input:focus,
 .feature-item select:focus {
   outline: none;
-  border-color: #14b8a6;
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.1);
+  box-shadow: 
+    inset 5px 5px 10px rgba(184, 197, 214, 0.6),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.6),
+    0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
-.feature-item input::placeholder {
-  color: #94a3b8;
-  font-weight: 400;
-}
-
-.dark-mode .feature-item input::placeholder {
-  color: #64748b;
-}
-
-/* Button Groups */
+/* ===== BUTTON GROUPS ===== */
 .button-group {
   display: flex;
   gap: 8px;
@@ -907,126 +1135,182 @@ h2 {
 .button-group button {
   flex: 1;
   padding: 12px 16px;
-  background: white;
-  color: #475569;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  background: #e0e5ec;
+  color: #5a6f88;
+  border: none;
+  border-radius: 15px;
   cursor: pointer;
   font-weight: 600;
   font-size: 14px;
+  box-shadow: 
+    5px 5px 10px rgba(184, 197, 214, 0.8),
+    -5px -5px 10px rgba(255, 255, 255, 0.9);
   transition: all 0.2s ease;
-  text-transform: none;
-  letter-spacing: normal;
-  margin: 0;
-  min-width: 60px;
 }
 
 .dark-mode .button-group button {
-  background: #1e293b;
+  background: #2c3e50;
   color: #cbd5e1;
-  border-color: #334155;
+  box-shadow: 
+    5px 5px 10px rgba(0, 0, 0, 0.3),
+    -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .button-group button:hover {
-  border-color: #14b8a6;
-  background: #f0fdfa;
   transform: translateY(-2px);
 }
 
-.dark-mode .button-group button:hover {
-  background: #134e4a;
-}
-
 .button-group button.active {
-  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-color: #14b8a6;
-  box-shadow: 0 4px 6px -1px rgba(20, 184, 166, 0.3);
-  transform: scale(1.05);
+  box-shadow: 
+    inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.2),
+    0 0 0 2px rgba(102, 126, 234, 0.5);
+  transform: scale(0.98);
 }
 
-.button-group button.active:hover {
-  transform: scale(1.05) translateY(-2px);
+.dark-mode .button-group button.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.5),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.1),
+    0 0 0 3px rgba(102, 126, 234, 0.6),
+    0 0 20px rgba(102, 126, 234, 0.4);
+  transform: scale(0.98);
 }
 
-/* Submit & Action Buttons */
+/* ===== BMI DISPLAY ===== */
+.bmi-display {
+  background: #e0e5ec;
+  border-radius: 25px;
+  padding: 20px;
+  margin: 20px 0;
+  text-align: center;
+  box-shadow: 
+    8px 8px 16px rgba(184, 197, 214, 0.8),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
+}
+
+.dark-mode .bmi-display {
+  background: #2c3e50;
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.3),
+    -8px -8px 16px rgba(255, 255, 255, 0.05);
+}
+
+.bmi-display h4 {
+  color: #667eea;
+  font-size: 16px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.bmi-value {
+  font-size: 42px;
+  font-weight: 900;
+  margin: 12px 0;
+}
+
+.bmi-category {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 8px;
+  text-transform: uppercase;
+}
+
+.bmi-underweight { color: #f59e0b; }
+.bmi-normal { color: #10b981; }
+.bmi-overweight { color: #f59e0b; }
+.bmi-obese { color: #ef4444; }
+
+/* ===== SUBMIT BUTTONS ===== */
 button[type="submit"] {
-  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
   padding: 16px 24px;
   width: 100%;
-  border-radius: 12px;
+  border-radius: 25px;
   cursor: pointer;
   font-weight: 700;
   font-size: 16px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 6px -1px rgba(20, 184, 166, 0.3);
+  box-shadow: 
+    8px 8px 16px rgba(184, 197, 214, 0.8),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin-top: 8px;
+  transition: all 0.3s ease;
 }
 
 button[type="submit"]:hover {
-  background: linear-gradient(135deg, #0f766e 0%, #0c4a6e 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px -2px rgba(20, 184, 166, 0.4);
+  transform: translateY(-3px);
+  box-shadow: 
+    10px 10px 20px rgba(184, 197, 214, 0.9),
+    -10px -10px 20px rgba(255, 255, 255, 1);
+}
+
+button[type="submit"]:active {
+  transform: scale(0.98);
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.2),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.1);
 }
 
 button[type="button"] {
-  background: #f1f5f9;
-  color: #475569;
-  border: 2px solid #cbd5e1;
+  background: #e0e5ec;
+  color: #5a6f88;
+  border: none;
   padding: 14px 20px;
-  border-radius: 12px;
+  border-radius: 25px;
   cursor: pointer;
   font-weight: 600;
-  transition: all 0.3s ease;
+  box-shadow: 
+    6px 6px 12px rgba(184, 197, 214, 0.8),
+    -6px -6px 12px rgba(255, 255, 255, 0.9);
   margin-top: 12px;
   width: 100%;
+  transition: all 0.3s ease;
 }
 
 .dark-mode button[type="button"] {
-  background: #0f172a;
+  background: #2c3e50;
   color: #cbd5e1;
-  border-color: #334155;
+  box-shadow: 
+    6px 6px 12px rgba(0, 0, 0, 0.3),
+    -6px -6px 12px rgba(255, 255, 255, 0.05);
 }
 
 button[type="button"]:hover {
-  background: #e2e8f0;
-  border-color: #94a3b8;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
-.dark-mode button[type="button"]:hover {
-  background: #1e293b;
-  border-color: #475569;
-}
-
-/* Results Section */
+/* ===== RESULTS SECTION ===== */
 .results {
-  background: white;
+  background: #e0e5ec;
   padding: 32px;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
+  border-radius: 40px;
+  box-shadow: 
+    10px 10px 20px rgba(184, 197, 214, 0.8),
+    -10px -10px 20px rgba(255, 255, 255, 0.9);
 }
 
 .dark-mode .results {
-  background: #1e293b;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-  border-color: #334155;
+  background: #2c3e50;
+  box-shadow: 
+    10px 10px 20px rgba(0, 0, 0, 0.3),
+    -10px -10px 20px rgba(255, 255, 255, 0.05);
 }
 
 .results h2 {
-  color: #1e293b;
+  color: #5a6f88;
   font-size: 28px;
   margin-bottom: 8px;
 }
 
 .dark-mode .results h2 {
-  color: #f1f5f9;
+  color: #ecf0f1;
 }
 
 .results > p {
@@ -1035,11 +1319,7 @@ button[type="button"]:hover {
   margin-bottom: 32px;
 }
 
-.dark-mode .results > p {
-  color: #94a3b8;
-}
-
-/* Empty State */
+/* ===== EMPTY STATE ===== */
 .empty-state {
   text-align: center;
   padding: 80px 20px;
@@ -1052,13 +1332,13 @@ button[type="button"]:hover {
 }
 
 .empty-state h3 {
-  color: #1e293b;
+  color: #5a6f88;
   font-size: 24px;
   margin-bottom: 12px;
 }
 
 .dark-mode .empty-state h3 {
-  color: #f1f5f9;
+  color: #ecf0f1;
 }
 
 .empty-state p {
@@ -1068,11 +1348,7 @@ button[type="button"]:hover {
   margin: 0 auto;
 }
 
-.dark-mode .empty-state p {
-  color: #94a3b8;
-}
-
-/* Results Layout */
+/* ===== RESULTS LAYOUT ===== */
 .results-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1082,134 +1358,142 @@ button[type="button"]:hover {
 
 .negative-factors, .positive-factors {
   padding: 24px;
-  border-radius: 12px;
-  border: 2px solid;
+  border-radius: 25px;
+  box-shadow: 
+    inset 5px 5px 10px rgba(184, 197, 214, 0.5),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.3);
 }
 
 .negative-factors {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-color: #fca5a5;
+  background: #e0e5ec;
 }
 
 .dark-mode .negative-factors {
-  background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%);
-  border-color: #dc2626;
+  background: #2c3e50;
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.3),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .negative-factors h3 {
-  color: #dc2626;
+  color: #ef4444;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 18px;
   margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.dark-mode .negative-factors h3 {
-  color: #fca5a5;
 }
 
 .positive-factors {
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-  border-color: #86efac;
+  background: #e0e5ec;
 }
 
 .dark-mode .positive-factors {
-  background: linear-gradient(135deg, #14532d 0%, #166534 100%);
-  border-color: #22c55e;
+  background: #2c3e50;
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.3),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .positive-factors h3 {
-  color: #16a34a;
+  color: #10b981;
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 18px;
   margin-bottom: 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
-.dark-mode .positive-factors h3 {
-  color: #86efac;
-}
-
-/* Result Cards */
+/* ===== RESULT CARDS ===== */
 .result-card {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
   align-items: center;
   gap: 16px;
-  padding: 16px;
-  border-radius: 10px;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  border: 2px solid;
+  padding: 16px 20px;
+  border-radius: 20px;
+  background: #e0e5ec;
+  box-shadow: 
+    5px 5px 10px rgba(184, 197, 214, 0.8),
+    -5px -5px 10px rgba(255, 255, 255, 0.9);
   margin-bottom: 12px;
   transition: all 0.2s ease;
-}
-
-.dark-mode .result-card {
-  background: #1e293b;
-}
-
-.result-card:hover {
-  transform: translateX(4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transform: translateX(-30px);
+  animation: slideInLeft 0.5s ease forwards;
 }
 
 .card-positive {
-  border-color: #86efac;
+  transform: translateX(30px);
+  animation: slideInRight 0.5s ease forwards;
 }
 
-.dark-mode .card-positive {
-  border-color: #22c55e;
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.card-negative {
-  border-color: #fca5a5;
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
-.dark-mode .card-negative {
-  border-color: #dc2626;
+.dark-mode .result-card {
+  background: #2c3e50;
+  box-shadow: 
+    5px 5px 10px rgba(0, 0, 0, 0.3),
+    -5px -5px 10px rgba(255, 255, 255, 0.05);
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
 }
 
 .positive-icon, .negative-icon {
   font-size: 28px;
-  flex-shrink: 0;
+  animation: iconPop 0.6s ease forwards;
 }
 
-.positive-icon {
-  color: #16a34a;
+@keyframes iconPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.dark-mode .positive-icon {
-  color: #86efac;
-}
-
-.negative-icon {
-  color: #dc2626;
-}
-
-.dark-mode .negative-icon {
-  color: #fca5a5;
-}
-
-.result-content {
-  flex: 1;
-}
+.positive-icon { color: #10b981; }
+.negative-icon { color: #ef4444; }
 
 .result-content strong {
   display: block;
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 4px;
-  color: #1e293b;
+  color: #5a6f88;
+  text-align: center;
 }
 
 .dark-mode .result-content strong {
-  color: #f1f5f9;
+  color: #ecf0f1;
 }
 
 .result-content .positive,
@@ -1217,151 +1501,164 @@ button[type="button"]:hover {
   font-size: 18px;
   font-weight: 800;
   margin-top: 8px;
+  animation: numberCount 0.8s ease forwards;
 }
 
-/* Risk Score Section */
+@keyframes numberCount {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* ===== RISK SCORE SECTION ===== */
 .risk-score-section {
-  margin: 32px 0;
+  margin: 32px 0 24px 0;
   display: flex;
   justify-content: center;
 }
 
 .risk-level-badge {
   padding: 32px 48px;
-  border-radius: 16px;
+  border-radius: 30px;
   text-align: center;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  max-width: 500px;
   width: 100%;
-  border: 3px solid;
-  position: relative;
-  overflow: hidden;
+  background: #e0e5ec;
+  box-shadow: 
+    10px 10px 20px rgba(184, 197, 214, 0.8),
+    -10px -10px 20px rgba(255, 255, 255, 0.9);
 }
 
-.risk-level-badge::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: currentColor;
+.dark-mode .risk-level-badge {
+  background: #2c3e50;
+  box-shadow: 
+    10px 10px 20px rgba(0, 0, 0, 0.3),
+    -10px -10px 20px rgba(255, 255, 255, 0.05);
 }
 
-.risk-level-badge.low {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  border-color: #10b981;
-  color: #065f46;
+.risk-badge-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: pulse 2s ease-in-out infinite;
 }
 
-.risk-level-badge.mid {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  border-color: #d97706;
-  color: #92400e;
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
 }
 
-.risk-level-badge.high {
-  background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-  border-color: #ef4444;
-  color: #991b1b;
-}
+.risk-level-badge.low { border-left: 6px solid #10b981; }
+.risk-level-badge.mid { border-left: 6px solid #f59e0b; }
+.risk-level-badge.high { border-left: 6px solid #ef4444; }
 
 .risk-level-badge h3 {
   font-size: 24px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
   margin-bottom: 16px;
 }
+
+.risk-level-badge.low h3 { color: #10b981; }
+.risk-level-badge.mid h3 { color: #f59e0b; }
+.risk-level-badge.high h3 { color: #ef4444; }
 
 .risk-score-value {
   font-size: 48px;
   font-weight: 900;
   margin: 20px 0;
-  font-family: 'Inter', monospace;
+  color: #5a6f88;
 }
 
-/* Tab Navigation */
+.dark-mode .risk-score-value {
+  color: #ecf0f1;
+}
+
+/* ===== TAB NAVIGATION ===== */
 .tab-navigation {
   display: flex;
-  gap: 0;
+  gap: 12px;
   margin: 32px 0 0 0;
-  border-bottom: 3px solid #e2e8f0;
-}
-
-.dark-mode .tab-navigation {
-  border-bottom-color: #334155;
 }
 
 .tab-navigation button {
-  background: transparent;
-  color: #64748b;
+  background: #e0e5ec;
+  color: #5a6f88;
   border: none;
-  border-bottom: 3px solid transparent;
   padding: 16px 32px;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
+  border-radius: 20px;
+  box-shadow: 
+    5px 5px 10px rgba(184, 197, 214, 0.8),
+    -5px -5px 10px rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
-  margin-bottom: -3px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .dark-mode .tab-navigation button {
-  color: #94a3b8;
+  background: #2c3e50;
+  color: #cbd5e1;
+  box-shadow: 
+    5px 5px 10px rgba(0, 0, 0, 0.3),
+    -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .tab-navigation button:hover {
-  color: #14b8a6;
-  background: rgba(20, 184, 166, 0.05);
+  transform: translateY(-2px);
 }
 
 .tab-navigation button.active {
-  color: #14b8a6;
-  border-bottom-color: #14b8a6;
-  background: rgba(20, 184, 166, 0.1);
-  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 
+    inset 3px 3px 6px rgba(0, 0, 0, 0.2),
+    inset -3px -3px 6px rgba(255, 255, 255, 0.1);
 }
 
-/* Results Container */
+/* ===== RESULTS CONTAINER ===== */
 .results-container {
   margin-top: 32px;
 }
 
 .results-container h3 {
   font-size: 22px;
-  color: #1e293b;
+  color: #5a6f88;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid #667eea;
 }
 
 .dark-mode .results-container h3 {
-  color: #f1f5f9;
-  border-bottom-color: #334155;
+  color: #ecf0f1;
 }
 
-/* Impact Table */
+/* ===== IMPACT TABLE ===== */
 .impact-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
   margin-top: 20px;
-  background: white;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
+  background: #e0e5ec;
+  border-radius: 25px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  box-shadow: 
+    8px 8px 16px rgba(184, 197, 214, 0.8),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
 }
 
 .dark-mode .impact-table {
-  background: #0f172a;
-  border-color: #334155;
+  background: #2c3e50;
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.3),
+    -8px -8px 16px rgba(255, 255, 255, 0.05);
 }
 
 .impact-table thead {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
@@ -1372,20 +1669,16 @@ button[type="button"]:hover {
   text-transform: uppercase;
   font-size: 13px;
   letter-spacing: 0.1em;
-  border-bottom: 3px solid #134e4a;
 }
 
 .impact-table td {
   padding: 18px 20px;
-  border-bottom: 1px solid #f1f5f9;
   font-size: 15px;
-  vertical-align: middle;
-  color: #1e293b;
+  color: #5a6f88;
 }
 
 .dark-mode .impact-table td {
-  border-bottom-color: #334155;
-  color: #f1f5f9;
+  color: #ecf0f1;
 }
 
 .impact-table tbody tr {
@@ -1393,22 +1686,14 @@ button[type="button"]:hover {
 }
 
 .impact-table tbody tr:hover {
-  background: rgba(20, 184, 166, 0.05);
+  background: rgba(102, 126, 234, 0.1);
   transform: scale(1.01);
-}
-
-.dark-mode .impact-table tbody tr:hover {
-  background: rgba(20, 184, 166, 0.15);
-}
-
-.impact-table tbody tr:last-child td {
-  border-bottom: none;
 }
 
 .rank-cell {
   font-weight: 800;
   font-size: 18px;
-  color: #14b8a6;
+  color: #667eea;
   text-align: center;
   width: 60px;
 }
@@ -1419,10 +1704,6 @@ button[type="button"]:hover {
   font-style: italic;
 }
 
-.dark-mode .guideline-text {
-  color: #94a3b8;
-}
-
 .impact-percentage {
   display: inline-block;
   margin-left: 8px;
@@ -1431,17 +1712,19 @@ button[type="button"]:hover {
   opacity: 0.8;
 }
 
-/* Risk Level Classes */
+/* ===== RISK LEVELS ===== */
 .risk-level-high {
-  background: linear-gradient(135deg, #cf8787 0%, #bb4949 100%);
+  background: linear-gradient(135deg, #fca5a5 0%, #ef4444 100%);
   color: #991b1b;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 15px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 2px solid #f87171;
+  box-shadow: 
+    3px 3px 6px rgba(184, 197, 214, 0.5),
+    -3px -3px 6px rgba(255, 255, 255, 0.5);
 }
 
 .risk-level-high::before {
@@ -1449,15 +1732,17 @@ button[type="button"]:hover {
 }
 
 .risk-level-medium {
-  background: linear-gradient(135deg, #d7c88a 0%, #bca443 100%);
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   color: #92400e;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 15px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 2px solid #fbbf24;
+  box-shadow: 
+    3px 3px 6px rgba(184, 197, 214, 0.5),
+    -3px -3px 6px rgba(255, 255, 255, 0.5);
 }
 
 .risk-level-medium::before {
@@ -1465,37 +1750,43 @@ button[type="button"]:hover {
 }
 
 .risk-level-low {
-  background: linear-gradient(135deg, #7cc59f 0%, #3ecb89 100%);
+  background: linear-gradient(135deg, #86efac 0%, #10b981 100%);
   color: #065f46;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 15px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  border: 2px solid #34d399;
+  box-shadow: 
+    3px 3px 6px rgba(184, 197, 214, 0.5),
+    -3px -3px 6px rgba(255, 255, 255, 0.5);
 }
 
 .risk-level-low::before {
   content: '✓';
 }
 
-/* SHAP Section */
+/* ===== SHAP SECTION ===== */
 .shap-section {
-  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
+  background: #e0e5ec;
+  border-radius: 25px;
   padding: 32px;
   margin-top: 24px;
+  box-shadow: 
+    inset 5px 5px 10px rgba(184, 197, 214, 0.5),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.3);
 }
 
 .dark-mode .shap-section {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border-color: #334155;
+  background: #2c3e50;
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.3),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.05);
 }
 
 .shap-section h3 {
-  color: #14b8a6;
+  color: #667eea;
   font-size: 24px;
   margin-bottom: 24px;
   display: flex;
@@ -1504,23 +1795,22 @@ button[type="button"]:hover {
 }
 
 .shap-section h3::before {
-  content: '📊';
   font-size: 28px;
 }
 
 .shap-section h4 {
-  color: #1e293b;
+  color: #5a6f88;
   font-size: 18px;
   margin: 24px 0 12px 0;
   font-weight: 700;
 }
 
 .dark-mode .shap-section h4 {
-  color: #f1f5f9;
+  color: #ecf0f1;
 }
 
 .shap-section p {
-  color: #475569;
+  color: #5a6f88;
   font-size: 16px;
   line-height: 1.7;
 }
@@ -1531,33 +1821,62 @@ button[type="button"]:hover {
 
 .shap-section img {
   max-width: 100%;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 
+    8px 8px 16px rgba(184, 197, 214, 0.8),
+    -8px -8px 16px rgba(255, 255, 255, 0.9);
   margin: 20px 0;
 }
 
 .dark-mode .shap-section img {
-  border-color: #334155;
+  box-shadow: 
+    8px 8px 16px rgba(0, 0, 0, 0.3),
+    -8px -8px 16px rgba(255, 255, 255, 0.05);
 }
 
-/* Info Box */
+/* ===== INTERACTIVE CHART ===== */
+.interactive-chart-container {
+  background: #e0e5ec;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 
+    inset 5px 5px 10px rgba(184, 197, 214, 0.5),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.3);
+  margin: 24px 0;
+  min-height: 400px;
+}
+
+.dark-mode .interactive-chart-container {
+  background: #2c3e50;
+  box-shadow: 
+    inset 5px 5px 10px rgba(0, 0, 0, 0.3),
+    inset -5px -5px 10px rgba(255, 255, 255, 0.05);
+}
+
+.interactive-chart-container canvas {
+  max-height: 500px;
+}
+
+/* ===== INFO BOX ===== */
 .info-box {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-  border: 2px solid #93c5fd;
-  border-radius: 12px;
+  background: #e0e5ec;
+  border-radius: 20px;
   padding: 24px 28px;
   margin: 24px 0;
-  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
+  box-shadow: 
+    6px 6px 12px rgba(184, 197, 214, 0.8),
+    -6px -6px 12px rgba(255, 255, 255, 0.9);
 }
 
 .dark-mode .info-box {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
-  border-color: #3b82f6;
+  background: #2c3e50;
+  box-shadow: 
+    6px 6px 12px rgba(0, 0, 0, 0.3),
+    -6px -6px 12px rgba(255, 255, 255, 0.05);
 }
 
 .info-box h5 {
-  color: #2563eb;
+  color: #667eea;
   font-weight: 700;
   font-size: 18px;
   margin-bottom: 16px;
@@ -1566,19 +1885,15 @@ button[type="button"]:hover {
   gap: 8px;
 }
 
-.dark-mode .info-box h5 {
-  color: #93c5fd;
-}
-
 .info-box p {
   font-size: 15px;
   line-height: 1.6;
-  color: #1e40af;
+  color: #5a6f88;
   margin-bottom: 12px;
 }
 
 .dark-mode .info-box p {
-  color: #dbeafe;
+  color: #cbd5e1;
 }
 
 .info-box ul {
@@ -1589,48 +1904,15 @@ button[type="button"]:hover {
 .info-box li {
   font-size: 15px;
   line-height: 1.8;
-  color: #1e40af;
+  color: #5a6f88;
   margin-bottom: 8px;
 }
 
 .dark-mode .info-box li {
-  color: #dbeafe;
+  color: #cbd5e1;
 }
 
-.info-box strong {
-  font-weight: 700;
-}
-
-/* Scrollbar Styles */
-::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 10px;
-}
-
-.dark-mode ::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
-  border-radius: 10px;
-  border: 2px solid #f1f5f9;
-}
-
-.dark-mode ::-webkit-scrollbar-thumb {
-  border-color: #1e293b;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%);
-}
-
-/* Responsive Design */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .container {
     grid-template-columns: 1fr;
@@ -1665,17 +1947,9 @@ button[type="button"]:hover {
   .risk-score-value {
     font-size: 36px;
   }
-  
-  .button-group.multi-row {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 @media (max-width: 480px) {
-  .button-group.multi-row {
-    grid-template-columns: repeat(4, 1fr);
-  }
-  
   .container {
     padding: 0 12px;
   }
