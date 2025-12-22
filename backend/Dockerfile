@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 80
 
 # Start Flask app using Gunicorn
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:80"]
+CMD ["gunicorn", "api:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:80"]
