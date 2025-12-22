@@ -474,6 +474,8 @@ export default {
         Kidney: this.formData.Kidney,
         Stroke: this.formData.Stroke
       };
+console.log("Calling API at:", process.env.VUE_APP_API_URL + "/predict");
+console.log("Payload:", apiData);
 
       try {
         const response = await axios.post(`${process.env.VUE_APP_API_URL}/predict`, apiData);

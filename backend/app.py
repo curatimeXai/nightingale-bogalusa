@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_from_directory
+import os
 import pandas as pd
 import joblib
 import numpy as np
@@ -12,25 +13,34 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 import re
-import xgboost as xgb
-
-# Import the shared preprocessor and feature list
+import tensorflow as tf
 from common_preprocess import preprocess_df, FEATURES
 
 app = Flask(__name__, static_folder="static")
-CORS(app, origins=[
-    "http://localhost:8080",
-    "https://bogalusa.nightingaleheart.com",
-    "https://master.d3oamy7whkzfxr.amplifyapp.com"
-])
-
+CORS(app,
+     resources={r"/*": {
+         "origins": [
+             "https://master.d3oamy7whkzfxr.amplifyapp.com",
+             "https://nightingame-2048.com",
+             "https://www.nightingame-2048.com",
+             "https://bogalusafrontend.nightingaleheart.com"
+         ],
+         "allow_headers": ["Content-Type"],
+         "methods": ["POST", "GET", "OPTIONS"],
+         "supports_credentials": False
+     }})
 # Load trained models
-svm_model = joblib.load('models/svm_model.pkl')
-xgb_model = xgb.XGBClassifier()
-xgb_model.load_model('models/xgb_model.json')
-keras_model = load_model('models/keras_model.h5')
-scaler = joblib.load('models/scaler.pkl')
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "models")
 
+svm_model = joblib.load(os.path.join(MODELS_DIR, "svm_model.pkl"))
+xgb_model = joblib.load(os.path.join(MODELS_DIR, "xgb_model.pkl"))
+
+keras_model = tf.keras.models.load_model(
+    os.path.join(MODELS_DIR, "keras_model.h5")
+)
+
+scaler = joblib.load(os.path.join(MODELS_DIR, "scaler.pkl"))
 
 def calculate_risk_score(predictions):
     """Calculate weighted risk score from multiple models"""
@@ -118,7 +128,7 @@ def analyze_lifestyle_factors(data):
 
 @app.route('/')
 def home():
-    return send_from_directory('static', 'index.html')
+    return {"status": "ok", "message": "Backend is running successfully!"}
 
 
 @app.route('/predict', methods=['POST'])
@@ -297,6 +307,25 @@ def get_shap_explanation(model, input_scaled, feature_names):
             "shap_summary_text": "SHAP explanation unavailable"
         }
 
+@app.after_request
+def add_cors_headers(response):
+    # IMPORTANT: Replace "*" with your frontend URLs if you want to restrict access
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Methods"] = "POST, GET, OPTIONS"
+    return response
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# ---- HEALTH CHECK ENDPOINT ----
+@app.route("/health", methods=["GET"])
+def health_check():
+    return {"status": "ok"}, 200
+
+
+# ---- RUN CONFIGURATION ----
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 80))
+    app.run(host="0.0.0.0", port=port)
+
+# ---- REQUIRED FOR ELASTIC BEANSTALK ----
+application = app

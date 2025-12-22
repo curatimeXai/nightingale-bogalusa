@@ -318,6 +318,10 @@ def add_cors_headers(response):
     return response
 
 # ---- HEALTH CHECK ENDPOINT ----
+@app.route("/", methods=["GET"])
+def root_health():
+    return {"status": "ok"}, 200
+
 @app.route("/health", methods=["GET"])
 def health_check():
     return {"status": "ok"}, 200
