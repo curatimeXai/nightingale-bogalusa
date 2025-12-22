@@ -119,7 +119,6 @@ xgb = XGBClassifier(
     colsample_bytree=0.8,
     eval_metric="logloss",
     scale_pos_weight=7369 / 946,
-    use_label_encoder=False,
     enable_categorical=False,
     tree_method="hist",
 )
