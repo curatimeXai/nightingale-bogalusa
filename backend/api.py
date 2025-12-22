@@ -1,9 +1,14 @@
 import joblib
 import pandas as pd
 import numpy as np
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 import shap
 from fastapi.middleware.cors import CORSMiddleware
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ============================================================
 #         LOAD MODEL + METADATA REQUIRED FOR THE API
@@ -96,11 +101,33 @@ app = FastAPI(title="Heart Disease Risk API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=[
+        "http://localhost:8080",
+        "https://bogalusa.nightingaleheart.com",
+        "https://master.d3oamy7whkzfxr.amplifyapp.com",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ============================================================
+#                     HEALTH CHECK ENDPOINTS
+# ============================================================
+
+@app.get("/")
+def root():
+    """Root endpoint - API info"""
+    return {
+        "service": "Heart Disease Risk API",
+        "version": "1.0",
+        "status": "running"
+    }
+
+@app.get("/health")
+def health_check():
+    """Health check endpoint for load balancers"""
+    return {"status": "healthy"}
 
 # ============================================================
 #                     /predict ENDPOINT
@@ -108,31 +135,49 @@ app.add_middleware(
 
 @app.post("/predict")
 def predict(payload: dict):
+    try:
+        logger.info(f"Received prediction request")
 
-    df = pd.DataFrame([payload])
+        df = pd.DataFrame([payload])
 
-    # Compute BMI (API MUST do this)
-    df["BMI"] = df["Weight of respondent (kg)"] / (df["Height of respondent (cm)"] / 100)**2
+        # Validate height is not zero
+        height = df["Height of respondent (cm)"].iloc[0]
+        if height <= 0:
+            raise HTTPException(status_code=400, detail="Height must be greater than 0")
 
-    # Map binary values
-    for col in BINARY_FEATURES:
-        df[col] = df[col].map(binary_map)
+        # Compute BMI (API MUST do this)
+        df["BMI"] = df["Weight of respondent (kg)"] / (df["Height of respondent (cm)"] / 100)**2
 
-    # Preprocess inputs
-    df_num = model.named_steps["preprocess"].transform(df)
+        # Map binary values
+        for col in BINARY_FEATURES:
+            df[col] = df[col].map(binary_map)
 
-    # Predict risk
-    risk = xgb_model.predict_proba(df_num)[0, 1]
+        # Preprocess inputs
+        df_num = model.named_steps["preprocess"].transform(df)
 
-    # SHAP explanation
-    shap_row = explainer(df_num).values[0]
-    grouped = group_shap_values(shap_row)
+        # Predict risk
+        risk = xgb_model.predict_proba(df_num)[0, 1]
 
-    return {
-        "risk": float(risk),
-        "risk_percent": f"{risk*100:.2f}%",
-        "feature_impacts_percent": grouped
-    }
+        # SHAP explanation
+        shap_row = explainer(df_num).values[0]
+        grouped = group_shap_values(shap_row)
+
+        logger.info(f"Prediction successful: risk={risk:.4f}")
+
+        return {
+            "risk": float(risk),
+            "risk_percent": f"{risk*100:.2f}%",
+            "feature_impacts_percent": grouped
+        }
+
+    except HTTPException:
+        raise
+    except KeyError as e:
+        logger.error(f"Missing field: {e}")
+        raise HTTPException(status_code=400, detail=f"Missing required field: {e}")
+    except Exception as e:
+        logger.error(f"Prediction error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == "__main__":

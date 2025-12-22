@@ -1160,7 +1160,7 @@ export default {
 
 				// Uncomment when backend is ready:
 				const response = await axios.post(
-					"http://localhost:8000/predict",
+					"https://bogalusabackend.nightingaleheart.com/predict",
 					apiData,
 				);
 
