@@ -4,8 +4,8 @@ gunicorn
 pandas
 numpy
 scikit-learn
-xgboost==1.6.2
-tensorflow
+xgboost>=1.7.0,<2.0.0
+tensorflow-cpu==2.15.0
 keras
 shap>=0.41.0
 joblib
