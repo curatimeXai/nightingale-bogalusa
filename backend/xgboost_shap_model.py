@@ -54,7 +54,7 @@ ALL_FEATURES = (
 #                 LOAD & CLEAN DATA
 # ============================================================
 
-df = pd.read_csv("dataset.csv")
+df = pd.read_csv("https://bogalusa-nightingaleheart.s3.eu-central-1.amazonaws.com/dataset.csv")
 
 # Calculate BMI BEFORE dropping rows
 df["BMI"] = df["Weight of respondent (kg)"] / (df["Height of respondent (cm)"] / 100)**2
