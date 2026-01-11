@@ -23,6 +23,8 @@ background_raw = joblib.load("shap_background.pkl")
 xgb_clf = model.named_steps["xgb"]
 if not hasattr(xgb_clf, 'use_label_encoder'):
     xgb_clf.use_label_encoder = False
+if not hasattr(xgb_clf, 'gpu_id'):
+    xgb_clf.gpu_id = None
 
 binary_map = {
     "Male": 1, "Female": 0,

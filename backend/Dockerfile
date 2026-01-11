@@ -5,6 +5,16 @@ WORKDIR /app
 # Set environment variable to disable GPU
 ENV CUDA_VISIBLE_DEVICES=-1
 
+# Install debugging tools
+RUN apt-get update && apt-get install -y \
+    vim \
+    curl \
+    wget \
+    net-tools \
+    procps \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
 # Install dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir --timeout=300 -r requirements.txt
