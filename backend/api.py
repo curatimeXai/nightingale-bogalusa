@@ -27,6 +27,39 @@ binary_map = {
     "Marked": 1, "Not marked": 0,
 }
 
+# Mapping for ordinal features (string -> numeric)
+# Fruit and Vegetable consumption (1-7 scale)
+fruit_veg_map = {
+    "Never": 1,
+    "Less than once a week": 2,
+    "Less than 4 times a week but at least once a week": 3,
+    "Less than once a day but at least 4 times a week": 4,
+    "Once a day": 5,
+    "Twice a day": 6,
+    "Three times or more a day": 7,
+}
+
+# Smoking behavior (1-6 scale)
+smoking_map = {
+    "I have never smoked": 1,
+    "I used to smoke daily, but now I never smoke": 2,
+    "I used to smoke daily, but now smoke not daily": 3,
+    "I smoke, but not daily": 4,
+    "I smoke daily, 9 or fewer cigarettes": 5,
+    "I smoke daily, 10 or more cigarettes": 6,
+}
+
+# Alcohol frequency (1-7 scale)
+alcohol_map = {
+    "Never": 1,
+    "Not in the last 12 months": 2,
+    "Once a month or less": 3,
+    "2-4 days a month": 4,
+    "2-3 days a week": 5,
+    "5-6 days a week": 6,
+    "Every day": 7,
+}
+
 BINARY_FEATURES = [
     "Gender",
     "Health problems, last 12 months: high blood pressure",
@@ -58,9 +91,7 @@ ALL_FEATURES = [
 background_fixed = background_raw.copy()
 background_fixed["BMI"] = background_fixed["Weight of respondent (kg)"] / (background_fixed["Height of respondent (cm)"] / 100)**2
 
-for col in BINARY_FEATURES:
-    background_fixed[col] = background_fixed[col].map(binary_map)
-
+# Background data from training is already numeric, no mapping needed
 background_numeric = model.named_steps["preprocess"].transform(background_fixed)
 
 # ============================================================
@@ -154,6 +185,22 @@ def predict(payload: dict):
         # Map binary values
         for col in BINARY_FEATURES:
             df[col] = df[col].map(binary_map)
+
+        # Map ordinal string values to numeric (if they are strings)
+        fruit_col = "How often eat fruit, excluding drinking juice"
+        veg_col = "How often eat vegetables or salad, excluding potatoes"
+        smoke_col = "Cigarette smoking behaviour"
+        alcohol_col = "How often drink alcohol"
+
+        # Convert strings to numeric if needed
+        if df[fruit_col].dtype == object:
+            df[fruit_col] = df[fruit_col].map(fruit_veg_map)
+        if df[veg_col].dtype == object:
+            df[veg_col] = df[veg_col].map(fruit_veg_map)
+        if df[smoke_col].dtype == object:
+            df[smoke_col] = df[smoke_col].map(smoking_map)
+        if df[alcohol_col].dtype == object:
+            df[alcohol_col] = df[alcohol_col].map(alcohol_map)
 
         # Preprocess inputs
         df_num = model.named_steps["preprocess"].transform(df)
