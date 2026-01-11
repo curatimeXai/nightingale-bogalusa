@@ -19,6 +19,11 @@ RAW_MAP = joblib.load("raw_feature_map.pkl")
 transform_names = joblib.load("transformed_feature_names.pkl")
 background_raw = joblib.load("shap_background.pkl")
 
+# Patch for XGBoost compatibility (model trained with older version)
+xgb_clf = model.named_steps["xgb"]
+if not hasattr(xgb_clf, 'use_label_encoder'):
+    xgb_clf.use_label_encoder = False
+
 binary_map = {
     "Male": 1, "Female": 0,
     "Marked": 1, "Not marked": 0,
