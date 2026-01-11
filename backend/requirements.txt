@@ -4,6 +4,6 @@ gunicorn
 pandas
 numpy
 scikit-learn
-xgboost==1.5.2
+xgboost==2.0.3
 shap>=0.41.0
 joblib

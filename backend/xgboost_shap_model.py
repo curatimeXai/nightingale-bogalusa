@@ -5,7 +5,7 @@ import joblib
 
 from sklearn.model_selection import train_test_split
 from sklearn.compose import ColumnTransformer
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 from xgboost import XGBClassifier
@@ -56,53 +56,61 @@ ALL_FEATURES = (
 
 df = pd.read_csv("https://bogalusa-nightingaleheart.s3.eu-central-1.amazonaws.com/dataset.csv")
 
+# Rename columns to expected names
+df = df.rename(columns={
+    'agea': 'Age of respondent, calculated',
+    'dosprt': 'Do sports or other physical activity, how many of last 7 days',
+    'height': 'Height of respondent (cm)',
+    'weighta': 'Weight of respondent (kg)',
+    'icgndra': 'Gender',
+    'hltprhb': 'Health problems, last 12 months: high blood pressure',
+    'hltprdi': 'Health problems, last 12 months: diabetes',
+    'paccnois': 'Problems with accomodation: noise',
+    'etfruit': 'How often eat fruit, excluding drinking juice',
+    'eatveg': 'How often eat vegetables or salad, excluding potatoes',
+    'cgtsmok': 'Cigarette smoking behaviour',
+    'alcfreq': 'How often drink alcohol',
+    'hltprhc': 'Health problems, last 12 months: heart or circulation problem',
+})
+
 # Calculate BMI BEFORE dropping rows
 df["BMI"] = df["Weight of respondent (kg)"] / (df["Height of respondent (cm)"] / 100)**2
 
 # Remove rows with missing values in required features
 df = df.dropna(subset=ALL_FEATURES + [TARGET])
 
+# CSV already has numeric values:
+# Gender: 1=Male, 2=Female -> convert 2 to 0
+# Other binary columns: already 0/1
+# Target: already 0/1
+
+# Convert Gender: 2 (Female) -> 0
+df["Gender"] = df["Gender"].replace(2, 0)
+
+# Binary map for API (string to int) - kept for reference
 binary_map = {
     "Male": 1, "Female": 0,
     "Marked": 1, "Not marked": 0,
 }
-
-# Apply binary mapping
-for col in BINARY_FEATURES:
-    df[col] = df[col].map(binary_map)
-
-df[TARGET] = df[TARGET].map(binary_map)
-
-
-# Ordinal encoding
-ordinal_order = [
-    "Never",
-    "Less than once a week",
-    "Less than 4 times a week but at least once a week",
-    "Less than once a day but at least 4 times a week",
-    "Once a day",
-    "Twice a day",
-    "Three times or more a day",
-]
-
-ordinal_encoder = OrdinalEncoder(
-    categories=[ordinal_order, ordinal_order],
-    handle_unknown="use_encoded_value",
-    unknown_value=-1
-)
 
 
 # ============================================================
 #                 PREPROCESSING PIPELINE
 # ============================================================
 
+# All data is already numeric in CSV:
+# - Ordinal features (fruit, veg): 1-7 scale
+# - Smoking: 1-6 categories
+# - Alcohol: 1-7 categories
+# Just scale numeric features, passthrough the rest
+
 preprocessor = ColumnTransformer(
     transformers=[
         ("num", StandardScaler(), NUMERIC_FEATURES),
         ("bin", "passthrough", BINARY_FEATURES),
-        ("ord", ordinal_encoder, ORDINAL_FEATURES),
-        ("smoke", OneHotEncoder(handle_unknown="ignore"), SMOKING_FEATURE),
-        ("alcohol", OneHotEncoder(handle_unknown="ignore"), ALCOHOL_FEATURE),
+        ("ord", "passthrough", ORDINAL_FEATURES),
+        ("smoke", "passthrough", SMOKING_FEATURE),
+        ("alcohol", "passthrough", ALCOHOL_FEATURE),
     ]
 )
 
