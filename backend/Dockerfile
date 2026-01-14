@@ -15,5 +15,5 @@ COPY . .
 # Expose port
 EXPOSE 80
 
-# Start Flask app using Gunicorn
-CMD ["gunicorn", "app:app", "--bind", "0.0.0.0:80"]
+# Start FastAPI app using Uvicorn (pas Gunicorn!)
+CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "80"]

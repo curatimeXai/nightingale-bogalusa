@@ -1,1216 +1,894 @@
 <template>
-	<Disclaimer v-if="showDisclaimer" @accepted="showDisclaimer = false" />
-	<div id="home-app" :class="{ 'dark-mode': darkMode }">
-		<div class="container">
-			<!-- Sidebar -->
-			<div class="sidebar">
-				<h2>Enter Your Health & Lifestyle Information</h2>
-				<form @submit.prevent="computeRisk" class="scrollable-form">
-					<!-- CONTEXT CATEGORY -->
-					<div class="feature-category">
-						<h3 class="category-title">Context</h3>
+  <Disclaimer v-if="showDisclaimer" @accepted="showDisclaimer = false" />
+  <div id="home-app" :class="{ 'dark-mode': darkMode }">
+    <div class="container">
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <h2>🏥 Enter Your Health & Lifestyle Information</h2>
+        <form @submit.prevent="computeRisk" class="scrollable-form">
+          
+          <!-- CONTEXT CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">👤 Context</h3>
+            
+            <!-- Gender -->
+            <div class="feature-item">
+              <label>Gender *</label>
+              <div class="button-group">
+                <button type="button" 
+                        :class="{ active: formData.Gender === 'Male' }"
+                        @click="formData.Gender = 'Male'">
+                  Male
+                </button>
+                <button type="button"
+                        :class="{ active: formData.Gender === 'Female' }"
+                        @click="formData.Gender = 'Female'">
+                  Female
+                </button>
+              </div>
+            </div>
 
-						<!-- Gender -->
-						<div class="feature-item">
-							<label>Gender *</label>
-							<div class="button-group">
-								<button
-									type="button"
-									:class="{
-										active: formData.Gender === 'Male',
-									}"
-									@click="formData.Gender = 'Male'"
-								>
-									Male
-								</button>
-								<button
-									type="button"
-									:class="{
-										active: formData.Gender === 'Female',
-									}"
-									@click="formData.Gender = 'Female'"
-								>
-									Female
-								</button>
-							</div>
-						</div>
+            <!-- Age -->
+            <div class="feature-item">
+              <label>Age of respondent *</label>
+              <select v-model="formData.AgeCategory" required>
+                <option disabled value="">Select Age Range</option>
+                <option>18-24</option>
+                <option>25-29</option>
+                <option>30-34</option>
+                <option>35-39</option>
+                <option>40-44</option>
+                <option>45-49</option>
+                <option>50-54</option>
+                <option>55-59</option>
+                <option>60-64</option>
+                <option>65-69</option>
+                <option>70-74</option>
+                <option>75-79</option>
+              </select>
+            </div>
+          </div>
 
-						<!-- Age -->
-						<div class="feature-item">
-							<label>Age of respondent *</label>
-							<select v-model="formData.AgeCategory" required>
-								<option disabled value="">
-									Select Age Range
-								</option>
-								<option>18-24</option>
-								<option>25-29</option>
-								<option>30-34</option>
-								<option>35-39</option>
-								<option>40-44</option>
-								<option>45-49</option>
-								<option>50-54</option>
-								<option>55-59</option>
-								<option>60-64</option>
-								<option>65-69</option>
-								<option>70-74</option>
-								<option>75-79</option>
-							</select>
-						</div>
-					</div>
+          <!-- LIFESTYLE CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🏃 Lifestyle</h3>
+            
+            <!-- Physical Activity -->
+            <div class="feature-item">
+              <label>Sports or physical activity (days per week) *</label>
+              <div class="button-group multi-row">
+                <button type="button" 
+                        v-for="day in [0, 1, 2, 3, 4, 5, 6, 7]" 
+                        :key="day"
+                        :class="{ active: formData.PhysicalActivityDays === day }"
+                        @click="formData.PhysicalActivityDays = day">
+                  {{ day }}
+                </button>
+              </div>
+            </div>
 
-					<!-- LIFESTYLE CATEGORY -->
-					<div class="feature-category">
-						<h3 class="category-title">Lifestyle</h3>
+            <!-- Fruit -->
+            <div class="feature-item">
+              <label>How often eat fruit (excluding juice) *</label>
+              <select v-model="formData.FruitFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Three times or more a day</option>
+                <option>Twice a day</option>
+                <option>Once a day</option>
+                <option>Less than once a day but at least 4 times a week</option>
+                <option>Less than 4 times a week but at least once a week</option>
+                <option>Less than once a week</option>
+                <option>Never</option>
+              </select>
+            </div>
 
-						<!-- Physical Activity -->
-						<div class="feature-item">
-							<label
-								>Sports or physical activity (days per week)
-								*</label
-							>
-							<div class="button-group multi-row">
-								<button
-									type="button"
-									v-for="day in [0, 1, 2, 3, 4, 5, 6, 7]"
-									:key="day"
-									:class="{
-										active:
-											formData.PhysicalActivityDays ===
-											day,
-									}"
-									@click="formData.PhysicalActivityDays = day"
-								>
-									{{ day }}
-								</button>
-							</div>
-						</div>
+            <!-- Vegetables -->
+            <div class="feature-item">
+              <label>How often eat vegetables or salad (excluding potatoes) *</label>
+              <select v-model="formData.VegetableFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Three times or more a day</option>
+                <option>Twice a day</option>
+                <option>Once a day</option>
+                <option>Less than once a day but at least 4 times a week</option>
+                <option>Less than 4 times a week but at least once a week</option>
+                <option>Less than once a week</option>
+                <option>Never</option>
+              </select>
+            </div>
 
-						<!-- Fruit -->
-						<div class="feature-item">
-							<label
-								>How often eat fruit (excluding juice) *</label
-							>
-							<select v-model="formData.FruitFrequency" required>
-								<option disabled value="">
-									Select frequency
-								</option>
-								<option>Three times or more a day</option>
-								<option>Twice a day</option>
-								<option>Once a day</option>
-								<option>
-									Less than once a day but at least 4 times a
-									week
-								</option>
-								<option>
-									Less than 4 times a week but at least once a
-									week
-								</option>
-								<option>Less than once a week</option>
-								<option>Never</option>
-							</select>
-						</div>
+            <!-- Smoking -->
+            <div class="feature-item">
+              <label>Cigarette smoking behaviour *</label>
+              <select v-model="formData.Smoking" required>
+                <option disabled value="">Select smoking status</option>
+                <option>I smoke daily, 10 or more cigarettes</option>
+                <option>I smoke daily, 9 or fewer cigarettes</option>
+                <option>I smoke but not every day</option>
+                <option>I don't smoke now but I used to</option>
+                <option>I have only smoked a few times</option>
+                <option>I have never smoked</option>
+              </select>
+            </div>
 
-						<!-- Vegetables -->
-						<div class="feature-item">
-							<label
-								>How often eat vegetables or salad (excluding
-								potatoes) *</label
-							>
-							<select
-								v-model="formData.VegetableFrequency"
-								required
-							>
-								<option disabled value="">
-									Select frequency
-								</option>
-								<option>Three times or more a day</option>
-								<option>Twice a day</option>
-								<option>Once a day</option>
-								<option>
-									Less than once a day but at least 4 times a
-									week
-								</option>
-								<option>
-									Less than 4 times a week but at least once a
-									week
-								</option>
-								<option>Less than once a week</option>
-								<option>Never</option>
-							</select>
-						</div>
+            <!-- Alcohol -->
+            <div class="feature-item">
+              <label>How often drink alcohol *</label>
+              <select v-model="formData.AlcoholFrequency" required>
+                <option disabled value="">Select frequency</option>
+                <option>Every day</option>
+                <option>5-6 days a week</option>
+                <option>3-4 days a week</option>
+                <option>Once or twice a week</option>
+                <option>2-3 times a month</option>
+                <option>Once a month</option>
+                <option>Less than once a month</option>
+                <option>Never</option>
+              </select>
+            </div>
 
-						<!-- Smoking -->
-						<div class="feature-item">
-							<label>Cigarette smoking behaviour *</label>
-							<select v-model="formData.Smoking" required>
-								<option disabled value="">
-									Select smoking status
-								</option>
-								<option>
-									I smoke daily, 10 or more cigarettes
-								</option>
-								<option>
-									I smoke daily, 9 or fewer cigarettes
-								</option>
-								<option>I smoke but not every day</option>
-								<option>I don't smoke now but I used to</option>
-								<option>I have only smoked a few times</option>
-								<option>I have never smoked</option>
-							</select>
-						</div>
+            <!-- Height -->
+            <div class="feature-item">
+              <label>Height (cm) *</label>
+              <input v-model.number="formData.Height" 
+                     type="number" 
+                     placeholder="Height (90-240cm)" 
+                     min="90" 
+                     max="240" 
+                     required />
+            </div>
 
-						<!-- Alcohol -->
-						<div class="feature-item">
-							<label>How often drink alcohol *</label>
-							<select
-								v-model="formData.AlcoholFrequency"
-								required
-							>
-								<option disabled value="">
-									Select frequency
-								</option>
-								<option>Every day</option>
-								<option>5-6 days a week</option>
-								<option>3-4 days a week</option>
-								<option>Once or twice a week</option>
-								<option>2-3 times a month</option>
-								<option>Once a month</option>
-								<option>Less than once a month</option>
-								<option>Never</option>
-							</select>
-						</div>
+            <!-- Weight -->
+            <div class="feature-item">
+              <label>Weight (kg) *</label>
+              <input v-model.number="formData.Weight" 
+                     type="number" 
+                     placeholder="Weight (30-400kg)" 
+                     min="30" 
+                     max="400" 
+                     required />
+            </div>
+          </div>
+          
+          <!-- BMI Display -->
+          <div v-if="calculatedBMI" class="bmi-display">
+            <h4>📊 Your BMI</h4>
+            <div class="bmi-value" :class="bmiCategory.class">
+              {{ calculatedBMI }}
+            </div>
+            <div class="bmi-category">{{ bmiCategory.label }}</div>
+          </div>
 
-						<!-- Height -->
-						<div class="feature-item">
-							<label>Height (cm) *</label>
-							<input
-								v-model.number="formData.Height"
-								type="number"
-								placeholder="Height (90-240cm)"
-								min="90"
-								max="240"
-								required
-							/>
-						</div>
+          <!-- MEDICAL RISK FACTORS CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🩺 Medical Risk Factors</h3>
+            
+            <!-- High Blood Pressure -->
+            <div class="feature-item">
+              <label>High blood pressure (last 12 months) *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.HighBloodPressure === false }"
+                        @click="formData.HighBloodPressure = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.HighBloodPressure === true }"
+                        @click="formData.HighBloodPressure = true">
+                  Yes
+                </button>
+              </div>
+            </div>
 
-						<!-- Weight -->
-						<div class="feature-item">
-							<label>Weight (kg) *</label>
-							<input
-								v-model.number="formData.Weight"
-								type="number"
-								placeholder="Weight (30-400kg)"
-								min="30"
-								max="400"
-								required
-							/>
-						</div>
-					</div>
-					<!-- BMI Display -->
-					<div v-if="calculatedBMI" class="bmi-display">
-						<h4>Your BMI</h4>
-						<div class="bmi-value" :class="bmiCategory.class">
-							{{ calculatedBMI }}
-						</div>
-						<div class="bmi-category">{{ bmiCategory.label }}</div>
-					</div>
+            <!-- Diabetes -->
+            <div class="feature-item">
+              <label>Diabetes (last 12 months) *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.Diabetes === false }"
+                        @click="formData.Diabetes = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.Diabetes === true }"
+                        @click="formData.Diabetes = true">
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
 
-					<!-- MEDICAL RISK FACTORS CATEGORY -->
-					<div class="feature-category">
-						<h3 class="category-title">Medical Risk Factors</h3>
+          <!-- ENVIRONMENTAL CATEGORY -->
+          <div class="feature-category">
+            <h3 class="category-title">🌍 Environmental</h3>
+            
+            <!-- Noise Problems -->
+            <div class="feature-item">
+              <label>Problems with accommodation: noise *</label>
+              <div class="button-group">
+                <button type="button"
+                        :class="{ active: formData.NoiseProblems === false }"
+                        @click="formData.NoiseProblems = false">
+                  No
+                </button>
+                <button type="button"
+                        :class="{ active: formData.NoiseProblems === true }"
+                        @click="formData.NoiseProblems = true">
+                  Yes
+                </button>
+              </div>
+            </div>
+          </div>
 
-						<!-- High Blood Pressure -->
-						<div class="feature-item">
-							<label
-								>High blood pressure (last 12 months) *</label
-							>
-							<div class="button-group">
-								<button
-									type="button"
-									:class="{
-										active:
-											formData.HighBloodPressure ===
-											false,
-									}"
-									@click="formData.HighBloodPressure = false"
-								>
-									No
-								</button>
-								<button
-									type="button"
-									:class="{
-										active:
-											formData.HighBloodPressure === true,
-									}"
-									@click="formData.HighBloodPressure = true"
-								>
-									Yes
-								</button>
-							</div>
-						</div>
+          <button type="submit">🔬 Analyze</button>
+          <button type="button" @click="randomizeData">🔀 Randomize</button>
+        </form>
+      </div>
 
-						<!-- Diabetes -->
-						<div class="feature-item">
-							<label>Diabetes (last 12 months) *</label>
-							<div class="button-group">
-								<button
-									type="button"
-									:class="{
-										active: formData.Diabetes === false,
-									}"
-									@click="formData.Diabetes = false"
-								>
-									No
-								</button>
-								<button
-									type="button"
-									:class="{
-										active: formData.Diabetes === true,
-									}"
-									@click="formData.Diabetes = true"
-								>
-									Yes
-								</button>
-							</div>
-						</div>
-					</div>
+      <!-- Results -->
+      <div class="results">
+        <h2>❤️ Heart Disease Risk Prediction Results</h2>
+        <p>Based on your health data, here's how your lifestyle factors contribute to your risk</p>
 
-					<!-- ENVIRONMENTAL CATEGORY -->
-					<div class="feature-category">
-						<h3 class="category-title">Environmental</h3>
+        <div v-if="result">
+          <div class="results-layout">
+            <!-- Negative Factors -->
+            <div class="negative-factors">
+              <h3>🛑 Negative Factors</h3>
+              <div class="factors-column">
+                <div v-for="(value, key, index) in negativeFactors" 
+                     :key="key" 
+                     class="result-card card-negative"
+                     :style="{ animationDelay: `${index * 0.15}s` }">
+                  <i class="bi bi-hand-thumbs-down-fill negative-icon"></i>
+                  <div class="result-content">
+                    <strong>{{ key }}</strong>: {{ value.text }}
+                    <div class="negative">{{ value.percentage.toFixed(2) }}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
-						<!-- Noise Problems -->
-						<div class="feature-item">
-							<label>Problems with accommodation: noise *</label>
-							<div class="button-group">
-								<button
-									type="button"
-									:class="{
-										active:
-											formData.NoiseProblems === false,
-									}"
-									@click="formData.NoiseProblems = false"
-								>
-									No
-								</button>
-								<button
-									type="button"
-									:class="{
-										active: formData.NoiseProblems === true,
-									}"
-									@click="formData.NoiseProblems = true"
-								>
-									Yes
-								</button>
-							</div>
-						</div>
-					</div>
+            <!-- Positive Factors -->
+            <div class="positive-factors">
+              <h3>✅ Favorable Factors</h3>
+              <div class="factors-column">
+                <div v-for="(value, key, index) in positiveFactors" 
+                     :key="key" 
+                     class="result-card card-positive"
+                     :style="{ animationDelay: `${index * 0.15}s` }">
+                  <i class="bi bi-hand-thumbs-up-fill positive-icon"></i>
+                  <div class="result-content">
+                    <strong>{{ key }}</strong>: {{ value.text }}
+                    <div class="positive">{{ value.percentage.toFixed(2) }}%</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
 
-					<button type="submit">Analyze</button>
-					<button type="button" @click="randomizeData">
-						🔀 Randomize
-					</button>
-				</form>
-			</div>
+          <!-- Risk Score Section -->
+          <div class="risk-score-section" v-if="result && result.risk !== undefined">
+            <div class="risk-level-badge" :class="getRiskLevelClass(result.risk)">
+              <div class="risk-badge-icon">{{ getRiskIcon(result.risk) }}</div>
+              <h3>{{ getRiskLevelLabel(result.risk) }}</h3>
+              <div class="risk-score-value">
+                {{ (result.risk * 100).toFixed(1) }}%
+              </div>
+              <p>{{ getRiskDescription(result.risk) }}</p>
+            </div>
+          </div>
 
-			<!-- Results -->
-			<div class="results">
-				<h2>Heart Disease Risk Prediction Results</h2>
-				<p>
-					Based on your health data, here's how your lifestyle factors
-					contribute to your risk
-				</p>
+          <!-- Tab Navigation -->
+          <div class="tab-navigation">
+            <button 
+              :class="{ active: activeTab === 'table' }" 
+              @click="activeTab = 'table'">
+              📋 Table View
+            </button>
+            <button 
+              :class="{ active: activeTab === 'chart' }" 
+              @click="activeTab = 'chart'">
+              📈 Impact Chart
+            </button>
+          </div>
 
-				<div v-if="result">
-					<div class="results-layout">
-						<!-- Negative Factors -->
-						<div class="negative-factors">
-							<h3>🛑 Negative Factor</h3>
-							<div class="factors-column">
-								<div
-									v-for="(
-										value, key, index
-									) in negativeFactors"
-									:key="key"
-									class="result-card card-negative"
-									:style="{
-										animationDelay: `${index * 0.15}s`,
-									}"
-								>
-									<i
-										class="bi bi-hand-thumbs-down-fill negative-icon"
-									></i>
-									<div class="result-content">
-										<strong>{{ key }}</strong
-										>: {{ value.text }}
-										<div class="negative">
-											{{
-												Math.abs(
-													value.percentage,
-												).toFixed(2)
-											}}%
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
+          <!-- Table View -->
+          <div v-show="activeTab === 'table'" class="results-container">
+            <h3>Risk Factors Analysis (Sorted by Impact)</h3>
+            <table class="impact-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Factor</th>
+                  <th>Currently</th>
+                  <th>WHO Recommendation</th>
+                  <th>Impact Level</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(item, index) in sortedResults" :key="item.key">
+                  <td class="rank-cell">{{ index + 1 }}</td>
+                  <td><strong>{{ item.key }}</strong></td>
+                  <td>{{ item.value.text }}</td>
+                  <td class="guideline-text">{{ getGuideline(item.key) }}</td>
+                  <td :class="getRiskClass(item.value.impact)">
+                    {{ item.value.impact }} 
+                    <span class="impact-percentage">({{ item.value.percentage > 0 ? '+' : '' }}{{ item.value.percentage.toFixed(1) }}%)</span>
+                  </td>
+                  <td :style="{
+                    color: item.value.forceRed ? '#dc3545' : '#28a745',
+                    fontWeight: 'bold'
+                  }">
+                    {{ item.value.icon }} 
+                    {{ item.value.forceRed ? 'At Risk' : 'Good' }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-						<!-- Positive Factors -->
-						<div class="positive-factors">
-							<h3>✅ Favorable Factor</h3>
-							<div class="factors-column">
-								<div
-									v-for="(value, key) in positiveFactors"
-									:key="key"
-									class="result-card card-positive"
-								>
-									<i
-										class="bi bi-hand-thumbs-up-fill positive-icon"
-									></i>
-									<div class="result-content">
-										<strong>{{ key }}</strong
-										>: {{ value.text }}
-										<div class="positive">
-											{{
-												Math.abs(
-													value.percentage,
-												).toFixed(2)
-											}}%
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
+          <!-- Chart View -->
+          <div v-show="activeTab === 'chart'" class="shap-section">
+            <h3>📊 Interactive Risk Analysis</h3>
 
-					<!-- Risk Score Section -->
-					<div
-						class="risk-score-section"
-						v-if="result && result.risk !== undefined"
-					>
-						<div
-							class="risk-level-badge"
-							:class="getRiskLevelClass(result.risk)"
-						>
-							<div class="risk-badge-icon">
-								{{ getRiskIcon(result.risk) }}
-							</div>
-							<h3>{{ getRiskLevelLabel(result.risk) }}</h3>
-							<div class="risk-score-value">
-								{{ (result.risk * 100).toFixed(1) }}%
-							</div>
-							<p>{{ getRiskDescription(result.risk) }}</p>
-						</div>
-					</div>
+            <!-- Interactive Chart -->
+            <div class="interactive-chart-container">
+              <canvas ref="riskChart"></canvas>
+            </div>
 
-					<!-- Tab Navigation -->
-					<div class="tab-navigation">
-						<button
-							:class="{ active: activeTab === 'table' }"
-							@click="activeTab = 'table'"
-						>
-							Table View
-						</button>
-						<button
-							:class="{ active: activeTab === 'chart' }"
-							@click="activeTab = 'chart'"
-						>
-							📈 Impact Chart
-						</button>
-					</div>
+            <div v-if="isValidBase64(result.shap_plot)">
+              <h4>Detailed SHAP Analysis</h4>
+              <img :src="'data:image/png;base64,' + result.shap_plot" alt="SHAP Impact Chart" />
+            </div>
 
-					<!-- Table View -->
-					<div
-						v-show="activeTab === 'table'"
-						class="results-container"
-					>
-						<h3>Risk Factors Analysis (Sorted by Impact)</h3>
-						<table class="impact-table">
-							<thead>
-								<tr>
-									<th>Rank</th>
-									<th>Factor</th>
-									<th>Currently</th>
-									<th>WHO Recommendation</th>
-									<th>Impact Level</th>
-									<th>Status</th>
-								</tr>
-							</thead>
-							<tbody>
-								<tr
-									v-for="(item, index) in sortedResults"
-									:key="item.key"
-								>
-									<td class="rank-cell">{{ index + 1 }}</td>
-									<td>
-										<strong>{{ item.key }}</strong>
-									</td>
-									<td>{{ item.value.text }}</td>
-									<td class="guideline-text">
-										{{ getGuideline(item.key) }}
-									</td>
-									<td
-										:class="getRiskClass(item.value.impact)"
-									>
-										{{ item.value.impact }}
-										<span class="impact-percentage"
-											>({{
-												Math.abs(
-													item.value.percentage,
-												).toFixed(1)
-											}}%)</span
-										>
-									</td>
-									<td
-										:style="{
-											color: item.value.forceRed
-												? '#dc3545'
-												: '#28a745',
-											fontWeight: 'bold',
-										}"
-									>
-										{{ item.value.icon }}
-										{{
-											item.value.forceRed
-												? "At Risk"
-												: "Good"
-										}}
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+            <!-- Info Box -->
+            <div class="info-box">
+              <h5>ℹ️ How This Chart Works</h5>
+              <p>This chart shows which health factors had the biggest effect on your heart disease risk.</p>
+              <ul>
+                <li><strong>Green bars</strong> = lower your risk</li>
+                <li><strong style="color:#dc3545;">Red bars</strong> = increase your risk</li>
+                <li>The longer the bar, the more important the effect</li>
+              </ul>
+              <p>
+                Even if you don't have a condition like stroke or kidney disease, it may still appear. 
+                That's because your good health (not having it) helped lower your risk — and the model shows that.
+              </p>
+            </div>
 
-					<!-- Chart View -->
-					<div v-show="activeTab === 'chart'" class="shap-section">
-						<h3>Interactive Risk Analysis</h3>
+            <div v-if="shap_summary_text">
+              <h4>Main Risk Factors Identified</h4>
+              <p>{{ shap_summary_text }}</p>
+            </div>
+          </div>
+        </div>
 
-						<!-- Interactive Chart -->
-						<div class="interactive-chart-container">
-							<canvas ref="riskChart"></canvas>
-						</div>
-
-						<div v-if="isValidBase64(result.shap_plot)">
-							<h4>Detailed SHAP Analysis</h4>
-							<img
-								:src="
-									'data:image/png;base64,' + result.shap_plot
-								"
-								alt="SHAP Impact Chart"
-							/>
-						</div>
-
-						<!-- Info Box -->
-						<div class="info-box">
-							<h5>How This Chart Works</h5>
-							<p>
-								This chart shows which health factors had the
-								biggest effect on your heart disease risk.
-							</p>
-							<ul>
-								<li>
-									<strong>Green bars</strong> = lower your
-									risk
-								</li>
-								<li>
-									<strong style="color: #dc3545"
-										>Red bars</strong
-									>
-									= increase your risk
-								</li>
-								<li>
-									The longer the bar, the more important the
-									effect
-								</li>
-							</ul>
-							<p>
-								Even if you don't have a condition like stroke
-								or kidney disease, it may still appear. That's
-								because your good health (not having it) helped
-								lower your risk — and the model shows that.
-							</p>
-						</div>
-
-						<div v-if="shap_summary_text">
-							<h4>Main Risk Factors Identified</h4>
-							<p>{{ shap_summary_text }}</p>
-						</div>
-					</div>
-				</div>
-
-				<!-- Empty State -->
-				<div v-else class="empty-state">
-					<div class="empty-icon">📋</div>
-					<h3>No Analysis Yet</h3>
-					<p>
-						Fill out the form on the left and click "Analyze" to see
-						your heart disease risk assessment.
-					</p>
-				</div>
-			</div>
-		</div>
-	</div>
+        <!-- Empty State -->
+        <div v-else class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>No Analysis Yet</h3>
+          <p>Fill out the form on the left and click "Analyze" to see your heart disease risk assessment.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script>
 /* eslint-disable no-unused-vars */
-import axios from "axios";
-import Disclaimer from "../components/DisclaimerPopup.vue";
-import Chart from "chart.js/auto";
-//import { map } from 'core-js/core/array';
+import axios from 'axios';
+import Disclaimer from '../components/DisclaimerPopup.vue';
+import Chart from 'chart.js/auto';
 
 export default {
-	name: "HomePage",
-	components: {
-		Disclaimer,
-	},
-	props: {
-		darkMode: {
-			type: Boolean,
-			default: true,
-		},
-	},
-	data() {
-		return {
-			showDisclaimer: false,
-			activeTab: "table",
-			riskChartInstance: null,
-			formData: {
-				// Context
-				Gender: "",
-				AgeCategory: "",
+  name: 'HomePage',
+  components: {
+    Disclaimer
+  },
+  props: {
+    darkMode: {
+      type: Boolean,
+      default: true
+    }
+  },
+  data() {
+    return {
+      showDisclaimer: false,
+      activeTab: 'table',
+      riskChartInstance: null,
+      formData: {
+        // Context
+        Gender: '',
+        AgeCategory: '',
+        
+        // Lifestyle
+        PhysicalActivityDays: null,
+        FruitFrequency: '',
+        VegetableFrequency: '',
+        Smoking: '',
+        AlcoholFrequency: '',
+        Height: '',
+        Weight: '',
+        
+        // Medical
+        HighBloodPressure: null,
+        Diabetes: null,
+        
+        // Environmental
+        NoiseProblems: null
+      },
+      result: null,
+      shap_summary_text: '',
+      whoGuidelines: {
+        Gender: "Both genders should maintain healthy lifestyles.",
+        Age: "Age-appropriate health monitoring is essential.",
+        PhysicalActivity: "At least 150 minutes of moderate activity per week.",
+        Fruit: "≥5 servings per day recommended.",
+        Vegetables: "≥5 servings per day recommended.",
+        Smoking: "No safe level of smoking.",
+        Alcohol: "≤2 drinks/day men, ≤1 women.",
+        BMI: "Maintain healthy BMI (18.5-24.9).",
+        HighBloodPressure: "Control blood pressure to protect heart.",
+        Diabetes: "Healthy diet and activity prevent type 2 diabetes.",
+        Noise: "Chronic noise exposure may affect cardiovascular health."
+      }
+    };
+  },
+  computed: {
+    calculatedBMI() {
+      if (this.formData.Height && this.formData.Weight) {
+        const heightInMeters = this.formData.Height / 100;
+        const bmi = this.formData.Weight / (heightInMeters * heightInMeters);
+        return bmi.toFixed(1);
+      }
+      return null;
+    },
 
-				// Lifestyle
-				PhysicalActivityDays: null,
-				FruitFrequency: "",
-				VegetableFrequency: "",
-				Smoking: "",
-				AlcoholFrequency: "",
-				Height: "",
-				Weight: "",
+    bmiCategory() {
+      const bmi = parseFloat(this.calculatedBMI);
+      if (!bmi) return { label: '', class: '' };
+      if (bmi < 18.5) return { label: 'Underweight', class: 'bmi-underweight' };
+      if (bmi < 25) return { label: 'Normal weight', class: 'bmi-normal' };
+      if (bmi < 30) return { label: 'Overweight', class: 'bmi-overweight' };
+      return { label: 'Obese', class: 'bmi-obese' };
+    },
 
-				// Medical
-				HighBloodPressure: null,
-				Diabetes: null,
+    formattedResults() {
+      if (!this.result || !this.result.shap_impact) return {};
+      const shap = this.result.shap_impact;
 
-				// Environmental
-				NoiseProblems: null,
-			},
-			result: null,
-			shap_summary_text: "",
-			whoGuidelines: {
-				Gender: "Both genders should maintain healthy lifestyles.",
-				Age: "Age-appropriate health monitoring is essential.",
-				PhysicalActivity:
-					"At least 150 minutes of moderate activity per week.",
-				Fruit: "≥5 servings per day recommended.",
-				Vegetables: "≥5 servings per day recommended.",
-				Smoking: "No safe level of smoking.",
-				Alcohol: "≤2 drinks/day men, ≤1 women.",
-				Height: "—",
-				Weight: "Maintain healthy BMI (18.5-24.9).",
-				HighBloodPressure: "Control blood pressure to protect heart.",
-				Diabetes: "Healthy diet and activity prevent type 2 diabetes.",
-				Noise: "Chronic noise exposure may affect cardiovascular health.",
-			},
-		};
-	},
-	computed: {
-		calculatedBMI() {
-			if (this.formData.Height && this.formData.Weight) {
-				const heightInMeters = this.formData.Height / 100;
-				const bmi =
-					this.formData.Weight / (heightInMeters * heightInMeters);
-				return bmi.toFixed(1);
-			}
-			return null;
-		},
+      const build = (label, value, shapVal) => {
+        const actualShapVal = shapVal ?? 0;
+        const absValue = Math.abs(actualShapVal);
+        
+        // Déterminer si c'est un facteur de risque basé UNIQUEMENT sur shapVal
+        const isRiskFactor = actualShapVal > 0;
+        
+        return {
+          text: value,
+          percentage: actualShapVal,
+          icon: isRiskFactor ? "👎" : "👍",
+          forceRed: isRiskFactor,
+          impact: this.getRiskLevel(absValue, actualShapVal)
+        };
+      };
 
-		bmiCategory() {
-			const bmi = parseFloat(this.calculatedBMI);
-			if (!bmi) return { label: "", class: "" };
-			if (bmi < 18.5)
-				return { label: "Underweight", class: "bmi-underweight" };
-			if (bmi < 25)
-				return { label: "Normal weight", class: "bmi-normal" };
-			if (bmi < 30)
-				return { label: "Overweight", class: "bmi-overweight" };
-			return { label: "Obese", class: "bmi-obese" };
-		},
+      return {
+        "Gender": build(
+          "Gender",
+          this.formData.Gender,
+          shap.Gender
+        ),
+        "Age": build(
+          "Age",
+          this.formData.AgeCategory,
+          shap.Age
+        ),
+        "Physical Activity": build(
+          "PhysicalActivity",
+          `${this.formData.PhysicalActivityDays} days/week`,
+          shap.PhysicalActivityDays
+        ),
+        "Fruit Intake": build(
+          "Fruit",
+          this.formData.FruitFrequency,
+          shap.FruitFrequency
+        ),
+        "BMI": build(
+          "BMI",
+          this.calculatedBMI ? `${this.calculatedBMI}` : "—",
+          shap.BMI
+        ),
+        "Vegetable Intake": build(
+          "Vegetables",
+          this.formData.VegetableFrequency,
+          shap.VegetableFrequency
+        ),
+        "Smoking": build(
+          "Smoking",
+          this.formData.Smoking,
+          shap.Smoking
+        ),
+        "Alcohol": build(
+          "Alcohol",
+          this.formData.AlcoholFrequency,
+          shap.AlcoholFrequency
+        ),
+        "High Blood Pressure": build(
+          "HighBloodPressure",
+          this.formData.HighBloodPressure ? "Yes" : "No",
+          shap.HighBloodPressure
+        ),
+        "Diabetes": build(
+          "Diabetes",
+          this.formData.Diabetes ? "Yes" : "No",
+          shap.Diabetes
+        ),
+        "Noise Problems": build(
+          "Noise",
+          this.formData.NoiseProblems ? "Yes" : "No",
+          shap.NoiseProblems
+        )
+      };
+    },
 
-		formattedResults() {
-			if (!this.result || !this.result.shap_impact) return {};
-			const shap = this.result.shap_impact;
+    sortedResults() {
+      const results = this.formattedResults;
+      return Object.keys(results)
+        .map(key => ({
+          key: key,
+          value: results[key]
+        }))
+        .sort((a, b) => Math.abs(b.value.percentage) - Math.abs(a.value.percentage));
+    },
 
-			const build = (label, value, shapVal, icon, forceRed) => {
-				return {
-					text: value,
-					percentage: shapVal ?? 0,
-					icon,
-					forceRed,
-					impact: this.getRiskLevel(
-						Math.abs(shapVal ?? 0),
-						shapVal ?? 0,
-					),
-				};
-			};
+    negativeFactors() {
+      const results = this.formattedResults;
+      const entries = Object.entries(results)
+        .filter(([, value]) => value.forceRed)
+        .sort(([, valueA], [, valueB]) => 
+          Math.abs(valueB.percentage) - Math.abs(valueA.percentage)
+        );
+      return Object.fromEntries(entries);
+    },
+    
+    positiveFactors() {
+      const results = this.formattedResults;
+      const entries = Object.entries(results)
+        .filter(([, value]) => !value.forceRed)
+        .sort(([, valueA], [, valueB]) => 
+          Math.abs(valueB.percentage) - Math.abs(valueA.percentage)
+        );
+      return Object.fromEntries(entries);
+    }
+  },
+  watch: {
+    result() {
+      if (this.result && this.activeTab === 'chart') {
+        this.$nextTick(() => {
+          this.renderRiskChart();
+        });
+      }
+    },
+    activeTab(newTab) {
+      if (newTab === 'chart' && this.result) {
+        this.$nextTick(() => {
+          this.renderRiskChart();
+        });
+      }
+    }
+  },
+  beforeUnmount() {
+    if (this.riskChartInstance) {
+      this.riskChartInstance.destroy();
+    }
+  },
 
-			return {
-				Gender: build(
-					"Gender",
-					this.formData.Gender,
-					shap.Gender,
-					"",
-					false,
-				),
-				Age: build(
-					"Age",
-					this.formData.AgeCategory,
-					shap.Age,
-					"📅",
-					false,
-				),
-				"Physical Activity": build(
-					"PhysicalActivity",
-					`${this.formData.PhysicalActivityDays} days/week`,
-					shap.PhysicalActivityDays,
-					this.formData.PhysicalActivityDays >= 3 ? "👍" : "👎",
-					this.formData.PhysicalActivityDays < 3,
-				),
-				"Fruit Intake": build(
-					"Fruit",
-					this.formData.FruitFrequency,
-					shap.FruitFrequency,
-					this.formData.FruitFrequency.includes("Once a day") ||
-						this.formData.FruitFrequency.includes("Twice") ||
-						this.formData.FruitFrequency.includes("Three")
-						? "👍"
-						: "👎",
-					!this.formData.FruitFrequency.includes("day"),
-				),
-				BMI: build(
-					"BMI",
-					this.calculatedBMI ? `${this.calculatedBMI}` : "—",
-					shap.BMI,
-					(() => {
-						const bmi = parseFloat(this.calculatedBMI);
-						if (!bmi) return "";
-						if (bmi >= 18.5 && bmi < 25) return "👍";
-						return "👎";
-					})(),
-					(() => {
-						const bmi = parseFloat(this.calculatedBMI);
-						if (!bmi) return false;
-						return bmi < 18.5 || bmi >= 25;
-					})(),
-				),
-				"Vegetable Intake": build(
-					"Vegetables",
-					this.formData.VegetableFrequency,
-					shap.VegetableFrequency,
-					this.formData.VegetableFrequency.includes("Once a day") ||
-						this.formData.VegetableFrequency.includes("Twice") ||
-						this.formData.VegetableFrequency.includes("Three")
-						? "👍"
-						: "👎",
-					!this.formData.VegetableFrequency.includes("day"),
-				),
-				Smoking: build(
-					"Smoking",
-					this.formData.Smoking,
-					shap.Smoking,
-					this.formData.Smoking === "I have never smoked"
-						? "👍"
-						: "👎",
-					this.formData.Smoking.includes("smoke daily") ||
-						this.formData.Smoking.includes(
-							"smoke but not every day",
-						),
-				),
-				Alcohol: build(
-					"Alcohol",
-					this.formData.AlcoholFrequency,
-					shap.AlcoholFrequency,
-					this.formData.AlcoholFrequency === "Never" ||
-						this.formData.AlcoholFrequency.includes("month")
-						? "👍"
-						: "👎",
-					this.formData.AlcoholFrequency === "Every day" ||
-						this.formData.AlcoholFrequency.includes("5-6 days"),
-				),
-				Height: build(
-					"Height",
-					`${this.formData.Height} cm`,
-					shap.Height,
-					"📏",
-					false,
-				),
-				Weight: build(
-					"Weight",
-					`${this.formData.Weight} kg`,
-					shap.Weight,
-					"⚖️",
-					false,
-				),
-				"High Blood Pressure": build(
-					"HighBloodPressure",
-					this.formData.HighBloodPressure ? "Yes" : "No",
-					shap.HighBloodPressure,
-					this.formData.HighBloodPressure ? "👎" : "👍",
-					this.formData.HighBloodPressure,
-				),
-				Diabetes: build(
-					"Diabetes",
-					this.formData.Diabetes ? "Yes" : "No",
-					shap.Diabetes,
-					this.formData.Diabetes ? "👎" : "👍",
-					this.formData.Diabetes,
-				),
-				"Noise Problems": build(
-					"Noise",
-					this.formData.NoiseProblems ? "Yes" : "No",
-					shap.NoiseProblems,
-					this.formData.NoiseProblems ? "👎" : "👍",
-					this.formData.NoiseProblems,
-				),
-			};
-		},
+  methods: {
+    renderRiskChart() {
+      if (!this.$refs.riskChart) return;
+      
+      if (this.riskChartInstance) {
+        this.riskChartInstance.destroy();
+      }
 
-		sortedResults() {
-			const results = this.formattedResults;
-			return Object.keys(results)
-				.map((key) => ({
-					key: key,
-					value: results[key],
-				}))
-				.sort(
-					(a, b) =>
-						Math.abs(b.value.percentage) -
-						Math.abs(a.value.percentage),
-				);
-		},
+      const ctx = this.$refs.riskChart.getContext('2d');
+      const sortedData = this.sortedResults.slice(0, 10);
+      const labels = sortedData.map(item => item.key);
+      
+      const negativeValues = sortedData.map(item => 
+        item.value.forceRed ? Math.abs(item.value.percentage) : 0
+      );
+      
+      const positiveValues = sortedData.map(item => 
+        !item.value.forceRed ? Math.abs(item.value.percentage) : 0
+      );
 
-		negativeFactors() {
-			const results = this.formattedResults;
-			const entries = Object.entries(results)
-				.filter(([, value]) => value.forceRed)
-				.sort(
-					([, valueA], [, valueB]) =>
-						Math.abs(valueB.percentage) -
-						Math.abs(valueA.percentage),
-				);
-			return Object.fromEntries(entries);
-		},
+      this.riskChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Risk Increasing',
+              data: negativeValues,
+              backgroundColor: 'rgba(239, 68, 68, 0.85)',
+              borderColor: '#dc2626',
+              borderWidth: 2,
+              borderRadius: 8,
+              barThickness: 25,
+              categoryPercentage: 0.9,
+              barPercentage: 0.85
+            },
+            {
+              label: 'Risk Reducing',
+              data: positiveValues.map(v => -v),
+              backgroundColor: 'rgba(34, 197, 94, 0.85)',
+              borderColor: '#16a34a',
+              borderWidth: 2,
+              borderRadius: 8,
+              barThickness: 25,
+              categoryPercentage: 0.9,
+              barPercentage: 0.85
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'nearest',
+            intersect: true,
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top',
+              labels: {
+                font: { size: 14, weight: '600' },
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'rectRounded',
+                boxWidth: 15,
+                boxHeight: 15
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.9)',
+              padding: 14,
+              cornerRadius: 10,
+              titleFont: { size: 14, weight: 'bold' },
+              bodyFont: { size: 13 },
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  let value = Math.abs(context.parsed.x);
+                  return label + ': ' + value.toFixed(2) + '%';
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              stacked: false,
+              grid: { 
+                display: true,
+                color: 'rgba(0, 0, 0, 0.05)',
+                lineWidth: 1
+              },
+              ticks: {
+                callback: function(value) {
+                  return Math.abs(value) + '%';
+                },
+                font: { size: 12, weight: '600' }
+              },
+              title: {
+                display: true,
+                text: 'Impact on Risk (%)',
+                font: { size: 14, weight: 'bold' },
+                padding: 10
+              }
+            },
+            y: {
+              stacked: false,
+              grid: { display: false },
+              ticks: {
+                font: { size: 13, weight: '600' },
+                padding: 15,
+                autoSkip: false
+              },
+              afterFit: function(scale) {
+                scale.width = 180;
+              }
+            }
+          },
+          layout: {
+            padding: {
+              left: 10,
+              right: 30,
+              top: 10,
+              bottom: 10
+            }
+          }
+        }
+      });
+    },
 
-		positiveFactors() {
-			const results = this.formattedResults;
-			const entries = Object.entries(results)
-				.filter(([, value]) => !value.forceRed)
-				.sort(
-					([, valueA], [, valueB]) =>
-						Math.abs(valueB.percentage) -
-						Math.abs(valueA.percentage),
-				);
-			return Object.fromEntries(entries);
-		},
-	},
-	watch: {
-		result() {
-			if (this.result && this.activeTab === "chart") {
-				this.$nextTick(() => {
-					this.renderRiskChart();
-				});
-			}
-		},
-		activeTab(newTab) {
-			if (newTab === "chart" && this.result) {
-				this.$nextTick(() => {
-					this.renderRiskChart();
-				});
-			}
-		},
-	},
-	beforeUnmount() {
-		if (this.riskChartInstance) {
-			this.riskChartInstance.destroy();
-		}
-	},
+    getGuideline(key) {
+      const map = {
+        "Gender": "Gender",
+        "Age": "Age",
+        "BMI": "BMI",
+        "Physical Activity": "PhysicalActivity",
+        "Fruit Intake": "Fruit",
+        "Vegetable Intake": "Vegetables",
+        "Smoking": "Smoking",
+        "Alcohol": "Alcohol",
+        "High Blood Pressure": "HighBloodPressure",
+        "Diabetes": "Diabetes",
+        "Noise Problems": "Noise"
+      };
+      return this.whoGuidelines[map[key]] || "—";
+    },
 
-	methods: {
-		renderRiskChart() {
-			if (!this.$refs.riskChart) return;
+    getRiskLevel(value, shapVal) {
+      // Si shapVal est positif, c'est un facteur de RISQUE (augmente le risque)
+      // Si shapVal est négatif, c'est un facteur PROTECTEUR (diminue le risque)
+      if (shapVal > 0) {
+        // Facteur de risque - rouge/orange selon l'intensité
+        if (value >= 5) return "risk-level-high";
+        if (value >= 2) return "risk-level-medium";
+        return "risk-level-medium";
+      } else {
+        // Facteur protecteur - toujours vert (bon pour la santé)
+        return "risk-level-low";
+      }
+    },
 
-			if (this.riskChartInstance) {
-				this.riskChartInstance.destroy();
-			}
+    getRiskLevelClass(risk) {
+      const riskPercent = risk * 100;
+      if (riskPercent < 10) return 'low';
+      if (riskPercent < 30) return 'mid';
+      return 'high';
+    },
 
-			const ctx = this.$refs.riskChart.getContext("2d");
-			const sortedData = this.sortedResults.slice(0, 10); // Limit to top 10 for clarity
-			const labels = sortedData.map((item) => item.key);
+    getRiskIcon(risk) {
+      const riskPercent = risk * 100;
+      if (riskPercent < 10) return '✅';
+      if (riskPercent < 30) return '⚠️';
+      return '🚨';
+    },
 
-			const negativeValues = sortedData.map((item) =>
-				item.value.forceRed ? Math.abs(item.value.percentage) : 0,
-			);
+    getRiskLevelLabel(risk) {
+      const riskPercent = risk * 100;
+      if (riskPercent < 10) return 'Low Risk';
+      if (riskPercent < 30) return 'Medium Risk';
+      return 'High Risk';
+    },
 
-			const positiveValues = sortedData.map((item) =>
-				!item.value.forceRed ? Math.abs(item.value.percentage) : 0,
-			);
+    getRiskDescription(risk) {
+      const riskPercent = risk * 100;
+      if (riskPercent < 10) return 'Your heart disease risk is low. Keep maintaining healthy habits!';
+      if (riskPercent < 30) return 'Your risk is moderate. Consider improving key lifestyle factors.';
+      return 'Your risk is elevated. Consult a healthcare professional for personalized advice.';
+    },
 
-			this.riskChartInstance = new Chart(ctx, {
-				type: "bar",
-				data: {
-					labels: labels,
-					datasets: [
-						{
-							label: "Risk Increasing",
-							data: negativeValues,
-							backgroundColor: "rgba(239, 68, 68, 0.85)",
-							borderColor: "#dc2626",
-							borderWidth: 2,
-							borderRadius: 8,
-							barThickness: 25,
-							categoryPercentage: 0.9,
-							barPercentage: 0.85,
-						},
-						{
-							label: "Risk Reducing",
-							data: positiveValues.map((v) => -v),
-							backgroundColor: "rgba(34, 197, 94, 0.85)",
-							borderColor: "#16a34a",
-							borderWidth: 2,
-							borderRadius: 8,
-							barThickness: 25,
-							categoryPercentage: 0.9,
-							barPercentage: 0.85,
-						},
-					],
-				},
-				options: {
-					indexAxis: "y",
-					responsive: true,
-					maintainAspectRatio: false,
-					interaction: {
-						mode: "nearest",
-						intersect: true,
-					},
-					plugins: {
-						legend: {
-							display: true,
-							position: "top",
-							labels: {
-								font: { size: 14, weight: "600" },
-								padding: 20,
-								usePointStyle: true,
-								pointStyle: "rectRounded",
-								boxWidth: 15,
-								boxHeight: 15,
-							},
-						},
-						tooltip: {
-							backgroundColor: "rgba(0, 0, 0, 0.9)",
-							padding: 14,
-							cornerRadius: 10,
-							titleFont: { size: 14, weight: "bold" },
-							bodyFont: { size: 13 },
-							callbacks: {
-								label: function (context) {
-									let label = context.dataset.label || "";
-									let value = Math.abs(context.parsed.x);
-									return (
-										label + ": " + value.toFixed(2) + "%"
-									);
-								},
-							},
-						},
-					},
-					scales: {
-						x: {
-							stacked: false,
-							grid: {
-								display: true,
-								color: "rgba(0, 0, 0, 0.05)",
-								lineWidth: 1,
-							},
-							ticks: {
-								callback: function (value) {
-									return Math.abs(value) + "%";
-								},
-								font: { size: 12, weight: "600" },
-							},
-							title: {
-								display: true,
-								text: "Impact on Risk (%)",
-								font: { size: 14, weight: "bold" },
-								padding: 10,
-							},
-						},
-						y: {
-							stacked: false,
-							grid: { display: false },
-							ticks: {
-								font: { size: 13, weight: "600" },
-								padding: 15,
-								autoSkip: false,
-							},
-							afterFit: function (scale) {
-								scale.width = 180;
-							},
-						},
-					},
-					layout: {
-						padding: {
-							left: 10,
-							right: 30,
-							top: 10,
-							bottom: 10,
-						},
-					},
-				},
-			});
-		},
-		getGuideline(key) {
-			const map = {
-				Gender: "Gender",
-				Age: "Age",
-				BMI: "BMI",
-				"Physical Activity": "PhysicalActivity",
-				"Fruit Intake": "Fruit",
-				"Vegetable Intake": "Vegetables",
-				Smoking: "Smoking",
-				Alcohol: "Alcohol",
-				Height: "Height",
-				Weight: "Weight",
-				"High Blood Pressure": "HighBloodPressure",
-				Diabetes: "Diabetes",
-				"Noise Problems": "Noise",
-			};
-			return this.whoGuidelines[map[key]] || "—";
-		},
+    getRiskClass(impact) {
+      return impact;
+    },
 
-		getRiskLevel(value, shapVal) {
-			if (shapVal <= 0) return "risk-level-low";
-			if (value >= 5) return "risk-level-high";
-			if (value >= 2) return "risk-level-medium";
-			return "risk-level-low";
-		},
-		getRiskLevelClass(risk) {
-			const riskPercent = risk * 100;
-			if (riskPercent < 10) return "low";
-			if (riskPercent < 30) return "mid";
-			return "high";
-		},
+    randomizeData() {
+      const r = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const c = (arr) => arr[Math.floor(Math.random() * arr.length)];
+      
+      // Context
+      this.formData.Gender = c(["Male", "Female"]);
+      this.formData.AgeCategory = c(["18-24","25-29","30-34","35-39","40-44","45-49","50-54","55-59","60-64","65-69","70-74","75-79"]);
+      
+      // Lifestyle
+      this.formData.PhysicalActivityDays = r(0, 7);
+      this.formData.FruitFrequency = c([
+        "Three times or more a day", "Twice a day", "Once a day",
+        "Less than once a day but at least 4 times a week",
+        "Less than 4 times a week but at least once a week",
+        "Less than once a week", "Never"
+      ]);
+      this.formData.VegetableFrequency = c([
+        "Three times or more a day", "Twice a day", "Once a day",
+        "Less than once a day but at least 4 times a week",
+        "Less than 4 times a week but at least once a week",
+        "Less than once a week", "Never"
+      ]);
+      this.formData.Smoking = c([
+        "I smoke daily, 10 or more cigarettes",
+        "I smoke daily, 9 or fewer cigarettes",
+        "I smoke but not every day",
+        "I don't smoke now but I used to",
+        "I have only smoked a few times",
+        "I have never smoked"
+      ]);
+      this.formData.AlcoholFrequency = c([
+        "Every day", "5-6 days a week", "3-4 days a week",
+        "Once or twice a week", "2-3 times a month",
+        "Once a month", "Less than once a month", "Never"
+      ]);
+      this.formData.Height = r(90, 240);
+      this.formData.Weight = r(30, 220);
+      
+      // Medical
+      this.formData.HighBloodPressure = Math.random() < 0.2;
+      this.formData.Diabetes = Math.random() < 0.1;
+      
+      // Environmental
+      this.formData.NoiseProblems = Math.random() < 0.3;
+    },
 
-		getRiskIcon(risk) {
-			const riskPercent = risk * 100;
-			if (riskPercent < 10) return "✅";
-			if (riskPercent < 30) return "⚠️";
-			return "🚨";
-		},
+    async computeRisk() {
+      const ageMapping = {
+        '18-24': 21, '25-29': 27, '30-34': 32, '35-39': 37,
+        '40-44': 42, '45-49': 47, '50-54': 52, '55-59': 57,
+        '60-64': 62, '65-69': 67, '70-74': 72, '75-79': 77
+      };
 
-		getRiskLevelLabel(risk) {
-			const riskPercent = risk * 100;
-			if (riskPercent < 10) return "Low Risk";
-			if (riskPercent < 30) return "Medium Risk";
-			return "High Risk";
-		},
+      const apiData = {
+        "Gender": this.formData.Gender,
+        "Age of respondent, calculated": ageMapping[this.formData.AgeCategory],
+        "Do sports or other physical activity, how many of last 7 days": this.formData.PhysicalActivityDays,
+        "How often eat fruit, excluding drinking juice": this.formData.FruitFrequency,
+        "How often eat vegetables or salad, excluding potatoes": this.formData.VegetableFrequency,
+        "Cigarette smoking behaviour": this.formData.Smoking,
+        "How often drink alcohol": this.formData.AlcoholFrequency,
+        "Height of respondent (cm)": this.formData.Height,
+        "Weight of respondent (kg)": this.formData.Weight,
+        "Health problems, last 12 months: high blood pressure": this.formData.HighBloodPressure ? "Marked" : "Not marked",
+        "Health problems, last 12 months: diabetes": this.formData.Diabetes ? "Marked" : "Not marked",
+        "Problems with accomodation: noise": this.formData.NoiseProblems ? "Marked" : "Not marked"
+      };
 
-		getRiskDescription(risk) {
-			const riskPercent = risk * 100;
-			if (riskPercent < 10)
-				return "Your heart disease risk is low. Keep maintaining healthy habits!";
-			if (riskPercent < 30)
-				return "Your risk is moderate. Consider improving key lifestyle factors.";
-			return "Your risk is elevated. Consult a healthcare professional for personalized advice.";
-		},
+      try {
+        console.log("📤 Data prepared for backend:", apiData);
+        
+        const response = await axios.post("http://localhost:8000/predict", apiData);
+        
+        const data = response.data;
+        
+        console.log("📥 Data received from backend:", data);
+        data.shap_impact = mapBackendToFrontend(data.feature_impacts_percent);
 
-		getRiskClass(impact) {
-			return impact;
-		},
+        this.result = data;
+        
+      } catch (error) {
+        console.error("❌ Error during API request:", error);
+        alert("Error: " + error.message);
+      }
+    },
 
-		randomizeData() {
-			const r = (min, max) =>
-				Math.floor(Math.random() * (max - min + 1)) + min;
-			const c = (arr) => arr[Math.floor(Math.random() * arr.length)];
-
-			// Context
-			this.formData.Gender = c(["Male", "Female"]);
-			this.formData.AgeCategory = c([
-				"18-24",
-				"25-29",
-				"30-34",
-				"35-39",
-				"40-44",
-				"45-49",
-				"50-54",
-				"55-59",
-				"60-64",
-				"65-69",
-				"70-74",
-				"75-79",
-			]);
-
-			// Lifestyle
-			this.formData.PhysicalActivityDays = r(0, 7);
-			this.formData.FruitFrequency = c([
-				"Three times or more a day",
-				"Twice a day",
-				"Once a day",
-				"Less than once a day but at least 4 times a week",
-				"Less than 4 times a week but at least once a week",
-				"Less than once a week",
-				"Never",
-			]);
-			this.formData.VegetableFrequency = c([
-				"Three times or more a day",
-				"Twice a day",
-				"Once a day",
-				"Less than once a day but at least 4 times a week",
-				"Less than 4 times a week but at least once a week",
-				"Less than once a week",
-				"Never",
-			]);
-			this.formData.Smoking = c([
-				"I smoke daily, 10 or more cigarettes",
-				"I smoke daily, 9 or fewer cigarettes",
-				"I smoke but not every day",
-				"I don't smoke now but I used to",
-				"I have only smoked a few times",
-				"I have never smoked",
-			]);
-			this.formData.AlcoholFrequency = c([
-				"Every day",
-				"5-6 days a week",
-				"3-4 days a week",
-				"Once or twice a week",
-				"2-3 times a month",
-				"Once a month",
-				"Less than once a month",
-				"Never",
-			]);
-			this.formData.Height = r(90, 240);
-			this.formData.Weight = r(30, 220);
-
-			// Medical
-			this.formData.HighBloodPressure = Math.random() < 0.2;
-			this.formData.Diabetes = Math.random() < 0.1;
-
-			// Environmental
-			this.formData.NoiseProblems = Math.random() < 0.3;
-		},
-
-		async computeRisk() {
-			const ageMapping = {
-				"18-24": 21,
-				"25-29": 27,
-				"30-34": 32,
-				"35-39": 37,
-				"40-44": 42,
-				"45-49": 47,
-				"50-54": 52,
-				"55-59": 57,
-				"60-64": 62,
-				"65-69": 67,
-				"70-74": 72,
-				"75-79": 77,
-			};
-
-			/*const apiData = {
-        Gender: this.formData.Gender,
-        Age: ageMapping[this.formData.AgeCategory],
-        PhysicalActivityDays: this.formData.PhysicalActivityDays,
-        FruitFrequency: this.formData.FruitFrequency,
-        VegetableFrequency: this.formData.VegetableFrequency,
-        Smoking: this.formData.Smoking,
-        AlcoholFrequency: this.formData.AlcoholFrequency,
-        Height: this.formData.Height,
-        Weight: this.formData.Weight,
-        HighBloodPressure: this.formData.HighBloodPressure,
-        Diabetes: this.formData.Diabetes,
-        NoiseProblems: this.formData.NoiseProblems
-      };*/
-			const apiData = {
-				Gender: this.formData.Gender,
-				"Age of respondent, calculated":
-					ageMapping[this.formData.AgeCategory],
-				"Do sports or other physical activity, how many of last 7 days":
-					this.formData.PhysicalActivityDays,
-				"How often eat fruit, excluding drinking juice":
-					this.formData.FruitFrequency,
-				"How often eat vegetables or salad, excluding potatoes":
-					this.formData.VegetableFrequency,
-				"Cigarette smoking behaviour": this.formData.Smoking,
-				"How often drink alcohol": this.formData.AlcoholFrequency,
-				"Height of respondent (cm)": this.formData.Height,
-				"Weight of respondent (kg)": this.formData.Weight,
-				"Health problems, last 12 months: high blood pressure": this
-					.formData.HighBloodPressure
-					? "Marked"
-					: "Not marked",
-				"Health problems, last 12 months: diabetes": this.formData
-					.Diabetes
-					? "Marked"
-					: "Not marked",
-				"Problems with accomodation: noise": this.formData.NoiseProblems
-					? "Marked"
-					: "Not marked",
-			};
-
-			try {
-				console.log(" Data prepared for backend:", apiData);
-
-				// Uncomment when backend is ready:
-				const response = await axios.post(
-					"http://localhost:8000/predict",
-					apiData,
-				);
-
-				const data = response.data;
-
-				console.log(" Data received from backend:", data);
-				data.shap_impact = mapBackendToFrontend(
-					data.feature_impacts_percent,
-				); // <-- FIX ICI
-
-				this.result = data;
-
-				//alert("✅ Data prepared successfully!\n\nCheck the console (F12) to see the formatted data.\n\nUncomment the axios.post() line when your backend is ready.");
-			} catch (error) {
-				console.error("❌ Error during API request:", error);
-				alert("Error: " + error.message);
-			}
-		},
-
-		isValidBase64(base64) {
-			return (
-				typeof base64 === "string" &&
-				(base64.startsWith("iVBORw0KGgo") || base64.length > 0)
-			);
-		},
-	},
+    isValidBase64(base64) {
+      return typeof base64 === 'string' && 
+             (base64.startsWith('iVBORw0KGgo') || base64.length > 0);
+    }
+  }
 };
 
 function mapBackendToFrontend(raw) {
-	return {
-		Gender: raw["Gender"],
-		Age: raw["Age of respondent, calculated"],
-		PhysicalActivityDays:
-			raw[
-				"Do sports or other physical activity, how many of last 7 days"
-			],
-		FruitFrequency: raw["How often eat fruit, excluding drinking juice"],
-		VegetableFrequency:
-			raw["How often eat vegetables or salad, excluding potatoes"],
-		Smoking: raw["Cigarette smoking behaviour"],
-		AlcoholFrequency: raw["How often drink alcohol"],
-		Height: raw["Height of respondent (cm)"],
-		Weight: raw["Weight of respondent (kg)"],
-		BMI: raw["BMI"],
-		HighBloodPressure:
-			raw["Health problems, last 12 months: high blood pressure"],
-		Diabetes: raw["Health problems, last 12 months: diabetes"],
-		NoiseProblems: raw["Problems with accomodation: noise"],
-	};
+  return {
+    Gender: raw["Gender"],
+    Age: raw["Age of respondent, calculated"],
+    PhysicalActivityDays: raw["Do sports or other physical activity, how many of last 7 days"],
+    FruitFrequency: raw["How often eat fruit, excluding drinking juice"],
+    VegetableFrequency: raw["How often eat vegetables or salad, excluding potatoes"],
+    Smoking: raw["Cigarette smoking behaviour"],
+    AlcoholFrequency: raw["How often drink alcohol"],
+    BMI: raw["BMI"],
+    HighBloodPressure: raw["Health problems, last 12 months: high blood pressure"],
+    Diabetes: raw["Health problems, last 12 months: diabetes"],
+    NoiseProblems: raw["Problems with accomodation: noise"]
+  };
 }
+
 </script>
 
 <style scoped>
