@@ -4,12 +4,12 @@
     <div class="container">
       <!-- Sidebar -->
       <div class="sidebar">
-        <h2>🏥 Enter Your Health & Lifestyle Information</h2>
+        <h2> Enter Your Health & Lifestyle Information</h2>
         <form @submit.prevent="computeRisk" class="scrollable-form">
           
           <!-- CONTEXT CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">👤 Context</h3>
+            <h3 class="category-title"> Context</h3>
             
             <!-- Gender -->
             <div class="feature-item">
@@ -51,7 +51,7 @@
 
           <!-- LIFESTYLE CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🏃 Lifestyle</h3>
+            <h3 class="category-title"> Lifestyle</h3>
             
             <!-- Physical Activity -->
             <div class="feature-item">
@@ -161,7 +161,7 @@
 
           <!-- MEDICAL RISK FACTORS CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🩺 Medical Risk Factors</h3>
+            <h3 class="category-title"> Medical Risk Factors</h3>
             
             <!-- High Blood Pressure -->
             <div class="feature-item">
@@ -200,7 +200,7 @@
 
           <!-- ENVIRONMENTAL CATEGORY -->
           <div class="feature-category">
-            <h3 class="category-title">🌍 Environmental</h3>
+            <h3 class="category-title"> Environmental</h3>
             
             <!-- Noise Problems -->
             <div class="feature-item">
@@ -220,14 +220,14 @@
             </div>
           </div>
 
-          <button type="submit">🔬 Analyze</button>
-          <button type="button" @click="randomizeData">🔀 Randomize</button>
+          <button type="submit"> Analyze</button>
+          <button type="button" @click="randomizeData"> Randomize</button>
         </form>
       </div>
 
       <!-- Results -->
       <div class="results">
-        <h2>❤️ Heart Disease Risk Prediction Results</h2>
+        <h2> Heart Disease Risk Prediction Results</h2>
         <p>Based on your health data, here's how your lifestyle factors contribute to your risk</p>
 
         <div v-if="result">
@@ -331,7 +331,7 @@
 
           <!-- Chart View -->
           <div v-show="activeTab === 'chart'" class="shap-section">
-            <h3>📊 Interactive Risk Analysis</h3>
+            <h3> Interactive Risk Analysis</h3>
 
             <!-- Interactive Chart -->
             <div class="interactive-chart-container">
