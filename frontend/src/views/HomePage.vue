@@ -851,7 +851,10 @@ export default {
       try {
         console.log("📤 Data prepared for backend:", apiData);
         
-        const response = await axios.post("http://localhost:8000/predict", apiData);
+        				const response = await axios.post(
+					"https://bogalusabackend.nightingaleheart.com/predict",
+					apiData,
+				);
         
         const data = response.data;
         
